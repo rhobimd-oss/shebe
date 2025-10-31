@@ -1,0 +1,19 @@
+stages:
+  - test
+
+test:
+  stage: test
+  image: alpine:latest
+  script:
+    - /bin/true  # Does nothing, exits with status 0
+  interruptible: true
+  timeout: 15s
+  before_script: []  # Disable any global before_script
+  after_script: []   # Disable any global after_script
+  cache: {}          # Disable caching
+  artifacts:
+    reports: {}      # Disable artifact generation
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'  # merge requests
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'             # Only on scheduled pipelines
+    - if: '$CI_PIPELINE_SOURCE == "api"'                  # Or API triggers

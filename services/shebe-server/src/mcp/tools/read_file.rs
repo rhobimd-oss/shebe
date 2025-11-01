@@ -30,8 +30,7 @@ impl ReadFileHandler {
         // Check if session exists first
         if !self.services.storage.session_exists(session) {
             return Err(McpError::InvalidRequest(format!(
-                "Session '{}' not found. Use list_sessions to see available sessions.",
-                session
+                "Session '{session}' not found. Use list_sessions to see available sessions."
             )));
         }
 
@@ -46,7 +45,7 @@ impl ReadFileHandler {
         let reader = index
             .index()
             .reader()
-            .map_err(|e| McpError::InternalError(format!("Failed to open index reader: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Failed to open index reader: {e}")))?;
 
         let searcher = reader.searcher();
         let schema = index.schema();
@@ -54,11 +53,11 @@ impl ReadFileHandler {
         // Get file_path field
         let file_path_field = schema
             .get_field("file_path")
-            .map_err(|e| McpError::InternalError(format!("Missing file_path field: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Missing file_path field: {e}")))?;
 
         let session_field = schema
             .get_field("session")
-            .map_err(|e| McpError::InternalError(format!("Missing session field: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Missing session field: {e}")))?;
 
         // Build query for this specific file in this session
         use tantivy::query::{BooleanQuery, Occur, Query, TermQuery};
@@ -83,12 +82,11 @@ impl ReadFileHandler {
         // Search for any documents matching this file
         let top_docs = searcher
             .search(&combined_query, &tantivy::collector::Count)
-            .map_err(|e| McpError::InternalError(format!("Search failed: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Search failed: {e}")))?;
 
         if top_docs == 0 {
             return Err(McpError::InvalidRequest(format!(
-                "File '{}' not indexed in session '{}'. Check file_path or re-index the session.",
-                file_path_str, session
+                "File '{file_path_str}' not indexed in session '{session}'. Check file_path or re-index the session."
             )));
         }
 
@@ -101,19 +99,19 @@ impl ReadFileHandler {
     fn read_file_contents(&self, path: &Path) -> Result<(String, bool, usize), McpError> {
         // Get file size
         let metadata = std::fs::metadata(path)
-            .map_err(|e| McpError::InternalError(format!("Failed to read file metadata: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Failed to read file metadata: {e}")))?;
         let total_size = metadata.len() as usize;
 
         // Determine if truncation is needed
         if total_size > READ_FILE_MAX_CHARS {
             // File is large - read first READ_FILE_MAX_CHARS bytes
             let mut file = std::fs::File::open(path)
-                .map_err(|e| McpError::InternalError(format!("Failed to open file: {}", e)))?;
+                .map_err(|e| McpError::InternalError(format!("Failed to open file: {e}")))?;
 
             let mut buffer = vec![0u8; READ_FILE_MAX_CHARS];
             let bytes_read = file
                 .read(&mut buffer)
-                .map_err(|e| McpError::InternalError(format!("Failed to read file: {}", e)))?;
+                .map_err(|e| McpError::InternalError(format!("Failed to read file: {e}")))?;
 
             // Ensure UTF-8 boundary safety
             let content = ensure_utf8_boundary(&buffer[..bytes_read]);
@@ -129,7 +127,7 @@ impl ReadFileHandler {
                             .to_string(),
                     )
                 } else {
-                    McpError::InternalError(format!("Failed to read file: {}", e))
+                    McpError::InternalError(format!("Failed to read file: {e}"))
                 }
             })?;
 
@@ -246,8 +244,7 @@ impl McpToolHandler for ReadFileHandler {
 
         if args.max_size_kb > ABSOLUTE_MAX_SIZE_KB {
             return Err(McpError::InvalidParams(format!(
-                "max_size_kb cannot exceed {} KB",
-                ABSOLUTE_MAX_SIZE_KB
+                "max_size_kb cannot exceed {ABSOLUTE_MAX_SIZE_KB} KB"
             )));
         }
 

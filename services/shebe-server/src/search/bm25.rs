@@ -65,44 +65,44 @@ impl SearchService {
         let index = self.storage.open_session(session_id)?;
         let reader = index
             .reader()
-            .map_err(|e| ShebeError::SearchFailed(format!("Failed to create reader: {}", e)))?;
+            .map_err(|e| ShebeError::SearchFailed(format!("Failed to create reader: {e}")))?;
         let searcher = reader.searcher();
         let schema = index.schema();
 
         // Get schema fields
         let text_field = schema
             .get_field("text")
-            .map_err(|e| ShebeError::SearchFailed(format!("Missing text field: {}", e)))?;
+            .map_err(|e| ShebeError::SearchFailed(format!("Missing text field: {e}")))?;
         let file_path_field = schema
             .get_field("file_path")
-            .map_err(|e| ShebeError::SearchFailed(format!("Missing file_path field: {}", e)))?;
+            .map_err(|e| ShebeError::SearchFailed(format!("Missing file_path field: {e}")))?;
         let offset_start_field = schema
             .get_field("offset_start")
-            .map_err(|e| ShebeError::SearchFailed(format!("Missing offset_start field: {}", e)))?;
+            .map_err(|e| ShebeError::SearchFailed(format!("Missing offset_start field: {e}")))?;
         let offset_end_field = schema
             .get_field("offset_end")
-            .map_err(|e| ShebeError::SearchFailed(format!("Missing offset_end field: {}", e)))?;
+            .map_err(|e| ShebeError::SearchFailed(format!("Missing offset_end field: {e}")))?;
         let chunk_index_field = schema
             .get_field("chunk_index")
-            .map_err(|e| ShebeError::SearchFailed(format!("Missing chunk_index field: {}", e)))?;
+            .map_err(|e| ShebeError::SearchFailed(format!("Missing chunk_index field: {e}")))?;
 
         // Parse query
         let query_parser = QueryParser::for_index(index.index(), vec![text_field]);
 
         let query = query_parser
             .parse_query(query_str)
-            .map_err(|e| ShebeError::InvalidQuery(format!("Failed to parse query: {}", e)))?;
+            .map_err(|e| ShebeError::InvalidQuery(format!("Failed to parse query: {e}")))?;
 
         // Execute search with BM25 ranking
         let top_docs = searcher
             .search(&query, &TopDocs::with_limit(k_limit))
-            .map_err(|e| ShebeError::SearchFailed(format!("Search failed: {}", e)))?;
+            .map_err(|e| ShebeError::SearchFailed(format!("Search failed: {e}")))?;
 
         // Extract results
         let mut results = Vec::new();
         for (score, doc_address) in top_docs {
             let doc = searcher.doc(doc_address).map_err(|e| {
-                ShebeError::SearchFailed(format!("Failed to retrieve document: {}", e))
+                ShebeError::SearchFailed(format!("Failed to retrieve document: {e}"))
             })?;
 
             results.push(SearchResult {

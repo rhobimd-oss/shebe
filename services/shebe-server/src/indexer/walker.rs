@@ -45,7 +45,7 @@ impl FileWalker {
             .into_iter()
             .map(|p| {
                 Pattern::new(&p).map_err(|e| {
-                    ShebeError::ConfigError(format!("Invalid include pattern '{}': {}", p, e))
+                    ShebeError::ConfigError(format!("Invalid include pattern '{p}': {e}"))
                 })
             })
             .collect::<Result<Vec<_>>>()?;
@@ -55,7 +55,7 @@ impl FileWalker {
             .into_iter()
             .map(|p| {
                 Pattern::new(&p).map_err(|e| {
-                    ShebeError::ConfigError(format!("Invalid exclude pattern '{}': {}", p, e))
+                    ShebeError::ConfigError(format!("Invalid exclude pattern '{p}': {e}"))
                 })
             })
             .collect::<Result<Vec<_>>>()?;

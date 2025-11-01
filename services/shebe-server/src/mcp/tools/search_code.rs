@@ -49,7 +49,7 @@ impl SearchCodeHandler {
             let lang = detect_language(&result.file_path);
             let text = truncate_text(&result.text, MAX_RESULT_TEXT_CHARS);
 
-            output.push_str(&format!("```{}\n{}\n```\n\n", lang, text));
+            output.push_str(&format!("```{lang}\n{text}\n```\n\n"));
         }
 
         output

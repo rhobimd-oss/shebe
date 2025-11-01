@@ -121,9 +121,9 @@ impl IndexingPipeline {
         let contents = fs::read_to_string(path).map_err(|e| {
             // Check if it's a UTF-8 error (likely binary file)
             if e.kind() == std::io::ErrorKind::InvalidData {
-                ShebeError::IndexingFailed(format!("Skipping non-UTF-8 file: {:?}", path))
+                ShebeError::IndexingFailed(format!("Skipping non-UTF-8 file: {path:?}"))
             } else {
-                ShebeError::IndexingFailed(format!("Failed to read {:?}: {}", path, e))
+                ShebeError::IndexingFailed(format!("Failed to read {path:?}: {e}"))
             }
         })?;
 

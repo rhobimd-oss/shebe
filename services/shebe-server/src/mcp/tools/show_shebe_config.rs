@@ -87,12 +87,12 @@ impl ShowShebeConfigHandler {
 
         output.push_str("\n## Include Patterns\n");
         for pattern in &self.config.indexing.include_patterns {
-            output.push_str(&format!("- `{}`\n", pattern));
+            output.push_str(&format!("- `{pattern}`\n"));
         }
 
         output.push_str("\n## Exclude Patterns\n");
         for pattern in &self.config.indexing.exclude_patterns {
-            output.push_str(&format!("- `{}`\n", pattern));
+            output.push_str(&format!("- `{pattern}`\n"));
         }
 
         output

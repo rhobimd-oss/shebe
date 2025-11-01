@@ -23,24 +23,21 @@ impl ReindexSessionHandler {
 
     /// Validate configuration bounds
     fn validate_config(&self, chunk_size: usize, overlap: usize) -> Result<(), McpError> {
-        if chunk_size < 100 || chunk_size > 2000 {
+        if !(100..=2000).contains(&chunk_size) {
             return Err(McpError::InvalidParams(format!(
-                "chunk_size must be between 100 and 2000 (got: {})",
-                chunk_size
+                "chunk_size must be between 100 and 2000 (got: {chunk_size})"
             )));
         }
 
         if overlap > 500 {
             return Err(McpError::InvalidParams(format!(
-                "overlap must be between 0 and 500 (got: {})",
-                overlap
+                "overlap must be between 0 and 500 (got: {overlap})"
             )));
         }
 
         if overlap >= chunk_size {
             return Err(McpError::InvalidParams(format!(
-                "overlap ({}) must be less than chunk_size ({})",
-                overlap, chunk_size
+                "overlap ({overlap}) must be less than chunk_size ({chunk_size})"
             )));
         }
 
@@ -229,7 +226,7 @@ impl McpToolHandler for ReindexSessionHandler {
         self.services
             .storage
             .delete_session(&args.session)
-            .map_err(|e| McpError::InternalError(format!("Failed to delete session: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Failed to delete session: {e}")))?;
 
         // 7. Re-index repository
         let start = Instant::now();
@@ -246,7 +243,7 @@ impl McpToolHandler for ReindexSessionHandler {
                 100,   // max_file_size_mb default
                 false, // force (already deleted above)
             )
-            .map_err(|e| McpError::InternalError(format!("Re-indexing failed: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Re-indexing failed: {e}")))?;
         let duration_secs = start.elapsed().as_secs_f64();
 
         // Get updated metadata to retrieve index size
@@ -254,9 +251,7 @@ impl McpToolHandler for ReindexSessionHandler {
             .services
             .storage
             .get_session_metadata(&args.session)
-            .map_err(|e| {
-                McpError::InternalError(format!("Failed to get updated metadata: {}", e))
-            })?;
+            .map_err(|e| McpError::InternalError(format!("Failed to get updated metadata: {e}")))?;
 
         // 8. Format result
         let result = self.format_result(

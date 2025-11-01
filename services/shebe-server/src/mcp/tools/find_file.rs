@@ -31,8 +31,7 @@ impl PatternType {
             "glob" => Ok(Self::Glob),
             "regex" => Ok(Self::Regex),
             _ => Err(format!(
-                "Invalid pattern_type: '{}'. Must be 'glob' or 'regex'.",
-                s
+                "Invalid pattern_type: '{s}'. Must be 'glob' or 'regex'."
             )),
         }
     }
@@ -59,7 +58,7 @@ impl FindFileHandler {
         let reader = index
             .index()
             .reader()
-            .map_err(|e| McpError::InternalError(format!("Failed to open reader: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Failed to open reader: {e}")))?;
 
         let searcher = reader.searcher();
         let query = AllQuery;
@@ -67,18 +66,18 @@ impl FindFileHandler {
         let file_path_field = index
             .schema()
             .get_field("file_path")
-            .map_err(|e| McpError::InternalError(format!("file_path field missing: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("file_path field missing: {e}")))?;
 
         let mut files = HashSet::new();
 
         let top_docs = searcher
             .search(&query, &TopDocs::with_limit(100000))
-            .map_err(|e| McpError::InternalError(format!("Search failed: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Search failed: {e}")))?;
 
         for (_score, doc_address) in top_docs {
             let retrieved_doc: TantivyDocument = searcher
                 .doc(doc_address)
-                .map_err(|e| McpError::InternalError(format!("Doc retrieval failed: {}", e)))?;
+                .map_err(|e| McpError::InternalError(format!("Doc retrieval failed: {e}")))?;
 
             if let Some(path) = retrieved_doc
                 .get_first(file_path_field)
@@ -106,7 +105,7 @@ impl FindFileHandler {
         let matches: Vec<String> = match pattern_type {
             PatternType::Glob => {
                 let glob = GlobPattern::new(pattern).map_err(|e| {
-                    McpError::InvalidParams(format!("Invalid glob pattern '{}': {}", pattern, e))
+                    McpError::InvalidParams(format!("Invalid glob pattern '{pattern}': {e}"))
                 })?;
 
                 all_files
@@ -117,7 +116,7 @@ impl FindFileHandler {
             }
             PatternType::Regex => {
                 let re = Regex::new(pattern).map_err(|e| {
-                    McpError::InvalidParams(format!("Invalid regex pattern '{}': {}", pattern, e))
+                    McpError::InvalidParams(format!("Invalid regex pattern '{pattern}': {e}"))
                 })?;
 
                 all_files
@@ -157,7 +156,7 @@ impl FindFileHandler {
 
         output.push_str("**Matched Files:**\n");
         for path in matches {
-            output.push_str(&format!("- `{}`\n", path));
+            output.push_str(&format!("- `{path}`\n"));
         }
 
         output
@@ -244,8 +243,7 @@ impl McpToolHandler for FindFileHandler {
         // Validate limit
         if args.limit > MAX_LIMIT {
             return Err(McpError::InvalidParams(format!(
-                "limit cannot exceed {}",
-                MAX_LIMIT
+                "limit cannot exceed {MAX_LIMIT}"
             )));
         }
 

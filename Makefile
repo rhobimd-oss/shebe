@@ -23,60 +23,53 @@ DATA_DIR ?= $(PWD)/data
 
 
 # DEVELOPMENT TARGETS ----------------------------------------------------------
-# Cargo configuration
-SHEBE_INDEX_DIR ?= $(HOME)/.local/state/shebe/sessions
+# All local Rust commands run in shebe-dev container for consistency with CI/CD
+DOCKER_RUN := cd deploy && docker compose run --rm shebe-dev
 
 # Build targets
 build:
-	cd services/shebe-server && cargo build
+	@echo "Building in shebe-dev container..."
+	$(DOCKER_RUN) cargo build
 
 build-release:
-	cd services/shebe-server && cargo build --release
-
-# Run targets
-run:
-	cd services/shebe-server && SHEBE_INDEX_DIR=$(SHEBE_INDEX_DIR) cargo run --bin shebe
-
-run-release:
-	cd services/shebe-server && SHEBE_INDEX_DIR=$(SHEBE_INDEX_DIR) cargo run --release --bin shebe
+	@echo "Building release in shebe-dev container..."
+	$(DOCKER_RUN) cargo build --release
 
 # Test and quality targets
-dev-test:
-	cd services/shebe-server && cargo test
+test:
+	@echo "Running tests in shebe-dev container..."
+	$(DOCKER_RUN) cargo nextest run
 
-dev-fmt:
-	cd services/shebe-server && cargo fmt
+test-coverage:
+	@echo "Running tests with coverage in shebe-dev container..."
+	$(DOCKER_RUN) cargo tarpaulin --all-features --workspace --out Xml --output-dir . --fail-under 85
 
-dev-clippy:
-	cd services/shebe-server && cargo clippy
+fmt:
+	@echo "Formatting code in shebe-dev container..."
+	$(DOCKER_RUN) cargo fmt
 
-# Docker test targets (CI/CD and pre-commit hook)
-docker-test:
-	@echo "Running tests in Docker container..."
-	cd deploy && docker compose run --rm shebe-test
+fmt-check:
+	@echo "Checking code formatting in shebe-dev container..."
+	$(DOCKER_RUN) cargo fmt -- --check --verbose
 
-docker-test-quick:
-	@echo "Running tests in Docker (using cached dependencies)..."
-	cd deploy && docker compose run --rm shebe-test cargo test
+clippy:
+	@echo "Running clippy in shebe-dev container..."
+	$(DOCKER_RUN) cargo clippy -- -D warnings
 
-docker-clippy:
-	@echo "Running clippy in Docker container..."
-	cd deploy && docker compose run --rm shebe-test cargo clippy -- -D warnings
+check:
+	@echo "Running cargo check in shebe-dev container..."
+	$(DOCKER_RUN) cargo check
 
-docker-fmt-check:
-	@echo "Checking code formatting in Docker container..."
-	cd deploy && docker compose run --rm shebe-test cargo fmt --check
+# Interactive shell in shebe-dev container
+shell:
+	@echo "Starting interactive shell in shebe-dev container..."
+	cd deploy && docker compose run --rm shebe-dev bash
 
-# Clean Docker test artifacts
-docker-test-clean:
-	@echo "Cleaning Docker test volumes..."
-	docker volume rm shebe_cargo-registry shebe_cargo-git shebe_cargo-target 2>/dev/null || true
-	@echo "Test volumes cleaned"
-
-# Legacy aliases
-dev-build: build-release
-
-dev-run: run
+# Clean Docker artifacts
+clean:
+	@echo "Cleaning Docker volumes..."
+	docker volume rm deploy_cargo-registry deploy_cargo-git deploy_cargo-target 2>/dev/null || true
+	@echo "Docker volumes cleaned"
 
 
 # MCP TARGETS ------------------------------------------------------------------
@@ -86,16 +79,14 @@ VERSIONED_NAME := shebe-mcp-v$(VERSION)-$(ARCH)
 MCP_BINARY := services/shebe-server/target/release/shebe-mcp
 
 mcp-build:
-	cd services/shebe-server && cargo build --release --verbose --bin shebe-mcp
-	@echo "Binary built: $(MCP_BINARY)"
-	@ls -lh $(MCP_BINARY)
+	@echo "Building shebe-mcp in shebe-dev container..."
+	$(DOCKER_RUN) cargo build --release --verbose --bin shebe-mcp
 
 mcp-install: mcp-build
 	@echo "Installing $(VERSIONED_NAME) to /usr/local/lib/..."
 	sudo cp $(MCP_BINARY) /usr/local/lib/$(VERSIONED_NAME)
 	@echo "Creating symlink /usr/local/bin/shebe-mcp..."
-	sudo ln -sf /usr/local/lib/$(VERSIONED_NAME) /usr/local/bin/shebe-mcp
-	@echo "Installation complete:"
+	sudo ln -sfv /usr/local/lib/$(VERSIONED_NAME) /usr/local/bin/shebe-mcp
 	@ls -lh /usr/local/bin/shebe-mcp
 	@which shebe-mcp
 
@@ -128,23 +119,21 @@ mcp-test:
 help:
 	@echo "Shebe Makefile Targets:"
 	@echo ""
-	@echo "Development Targets:"
+	@echo "Development Targets (shebe-dev container):"
 	@echo "  build                Build debug binary"
 	@echo "  build-release        Build release binary"
 	@echo "  run                  Run server (debug mode)"
 	@echo "  run-release          Run server (release mode)"
-	@echo "  dev-test             Run cargo tests (native)"
-	@echo "  dev-fmt              Format code (native)"
-	@echo "  dev-clippy           Run clippy linter (native)"
+	@echo "  test                 Run tests with cargo nextest"
+	@echo "  test-coverage        Run tests with coverage (tarpaulin)"
+	@echo "  fmt                  Format code"
+	@echo "  fmt-check            Check code formatting"
+	@echo "  clippy               Run clippy linter"
+	@echo "  check                Run cargo check"
+	@echo "  shell                Open interactive shell in shebe-dev"
+	@echo "  clean                Clean Docker volumes"
 	@echo ""
-	@echo "Docker Test Targets:"
-	@echo "  docker-test          Run tests in Docker container (full)"
-	@echo "  docker-test-quick    Run tests in Docker (cached deps)"
-	@echo "  docker-clippy        Run clippy in Docker container"
-	@echo "  docker-fmt-check     Check formatting in Docker"
-	@echo "  docker-test-clean    Clean Docker test volumes"
-	@echo ""
-	@echo "MCP Targets:"
+	@echo "MCP Targets (shebe-dev container):"
 	@echo "  mcp-build            Build shebe-mcp binary"
 	@echo "  mcp-install          Install versioned binary to /usr/local/lib"
 	@echo "  mcp-install-config   Install config template to ~/.config/shebe/"
@@ -156,4 +145,3 @@ help:
 	@echo "  HOST_PORT=$(HOST_PORT)"
 	@echo "  DATA_DIR=$(DATA_DIR)"
 	@echo "  VERSION=$(VERSION)"
-	@echo "  SHEBE_INDEX_DIR=$(SHEBE_INDEX_DIR)"

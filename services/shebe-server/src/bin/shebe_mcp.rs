@@ -86,7 +86,7 @@ async fn main() {
 
     // Ensure XDG directories exist
     if let Err(e) = xdg.ensure_dirs_exist() {
-        eprintln!("Failed to create XDG directories: {}", e);
+        eprintln!("Failed to create XDG directories: {e}");
         std::process::exit(1);
     }
 
@@ -98,7 +98,7 @@ async fn main() {
 
     // Load configuration
     let config = Config::load().unwrap_or_else(|e| {
-        eprintln!("Failed to load configuration: {}", e);
+        eprintln!("Failed to load configuration: {e}");
         std::process::exit(1);
     });
 
@@ -112,7 +112,7 @@ async fn main() {
     let mut server = McpServer::new(services);
 
     if let Err(e) = server.run().await {
-        eprintln!("MCP server error: {}", e);
+        eprintln!("MCP server error: {e}");
         std::process::exit(1);
     }
 }

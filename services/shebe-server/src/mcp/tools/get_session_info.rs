@@ -64,7 +64,7 @@ impl GetSessionInfoHandler {
 
         output.push_str("## Statistics\n");
         let avg_chunks = metadata.chunks_created as f64 / metadata.files_indexed.max(1) as f64;
-        output.push_str(&format!("- **Avg chunks/file:** {:.2}\n", avg_chunks));
+        output.push_str(&format!("- **Avg chunks/file:** {avg_chunks:.2}\n"));
 
         if metadata.chunks_created > 0 {
             let avg_chunk_size =

@@ -100,7 +100,7 @@ impl IndexRepositoryHandler {
         // Canonicalize to prevent path traversal attacks
         let canonical = path
             .canonicalize()
-            .map_err(|e| McpError::InvalidParams(format!("Cannot resolve path: {}", e)))?;
+            .map_err(|e| McpError::InvalidParams(format!("Cannot resolve path: {e}")))?;
 
         Ok(canonical)
     }
@@ -236,7 +236,7 @@ impl McpToolHandler for IndexRepositoryHandler {
     async fn execute(&self, args: Value) -> Result<ToolResult, McpError> {
         // Parse request
         let req: IndexRequest = serde_json::from_value(args)
-            .map_err(|e| McpError::InvalidParams(format!("Invalid parameters: {}", e)))?;
+            .map_err(|e| McpError::InvalidParams(format!("Invalid parameters: {e}")))?;
 
         // Validate parameters
         let path = Self::validate_path(&req.path)?;

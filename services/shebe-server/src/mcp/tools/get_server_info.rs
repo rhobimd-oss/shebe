@@ -28,8 +28,8 @@ impl GetServerInfoHandler {
         let mut output = String::from("# Shebe MCP Server Information\n\n");
 
         output.push_str("## Version\n");
-        output.push_str(&format!("- **Version:** {}\n", version));
-        output.push_str(&format!("- **Rust Version:** {}\n\n", rust_version));
+        output.push_str(&format!("- **Version:** {version}\n"));
+        output.push_str(&format!("- **Rust Version:** {rust_version}\n\n"));
 
         output.push_str("## Server Details\n");
         output.push_str("- **Name:** shebe-mcp\n");

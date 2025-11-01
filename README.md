@@ -4,11 +4,6 @@
 
 Fast BM25 full-text search for code repositories with MCP integration for Claude Code.
 
-```bash
-# Quick start
-cd services/shebe-server/
-cargo run
-```
 
 ## Table of Contents
 
@@ -160,35 +155,6 @@ See [docs/Performance.md](./docs/Performance.md) for detailed benchmarks.
 Both share filesystem storage (no network coordination needed).
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for developer guide.
-
----
-
-## Development
-
-```bash
-cd services/shebe-server/
-
-# Build & test
-cargo build
-cargo test     # 392 tests
-cargo clippy   # Zero warnings required
-cargo fmt      # Format code
-
-# Coverage
-cargo install cargo-llvm-cov
-cargo llvm-cov --all-features --workspace --html --output-dir coverage
-# View: coverage/html/index.html
-
-# Run
-cargo run              # HTTP server
-cargo run --bin shebe-mcp  # MCP server
-```
-
-**Requirements:**
-- Rust 1.80+
-- 17 production dependencies
-- ~7,500 LOC (44 source files)
-- Test coverage: 86.76% (line coverage)
 
 ---
 

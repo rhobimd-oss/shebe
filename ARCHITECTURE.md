@@ -49,19 +49,19 @@ MCP server can index AND search without the HTTP server running.
 
 ### Where to Run Commands
 
-**⭐ IMPORTANT:** All `cargo` commands run from `services/shebe-server/`
+**IMPORTANT:** All `cargo` commands run from `services/shebe-server/`
 
 ```bash
 cd services/shebe-server/
-cargo build    # ← Run from here
-cargo test     # ← Run from here
+cargo build    # Run from here
+cargo test     # Run from here
 ```
 
 ### Repository Structure
 
 ```
 shebe/                         # Repository root
-├── services/shebe-server/     # ⭐ Main Rust service
+├── services/shebe-server/     # Main Rust service
 │   ├── src/
 │   │   ├── main.rs            # Entry: HTTP server
 │   │   ├── lib.rs             # Library root
@@ -155,7 +155,7 @@ async fn main() -> Result<()> {
 - **Chunking:** `src/indexer/chunker.rs`
 - **Storage:** `src/storage/session.rs`
 
-**⚠️ Invariant:** Chunker must respect UTF-8 boundaries
+**INVARIANT:** Chunker must respect UTF-8 boundaries
 
 ### Configuration
 
@@ -228,7 +228,7 @@ async fn main() -> Result<()> {
 
 ### Requirements
 
-⚠️ **Developers must respect:**
+**Developers must respect:**
 
 1. **Rust:** 1.80+
 2. **UTF-8:** Never split multi-byte chars
@@ -246,7 +246,7 @@ async fn main() -> Result<()> {
 │   └── tantivy/       # Index
 ```
 
-**⚠️ Invariant:** `meta.json` and Tantivy must sync
+**INVARIANT:** `meta.json` and Tantivy must sync
 
 ### Tantivy Schema (v2)
 
@@ -262,7 +262,7 @@ Schema {
 }
 ```
 
-**⚠️ Invariants:**
+**INVARIANTS:**
 - `file_path + chunk_index` = unique key
 - `chunk_index` must be INDEXED for preview_chunk queries
 - Schema version tracked in SessionMetadata
@@ -358,10 +358,10 @@ cargo run --bin shebe-mcp  # MCP
 ## Error Handling
 
 ```
-ShebeError → McpError → JSON-RPC error
+ShebeError -> McpError -> JSON-RPC error
 ```
 
-**⚠️ Invariant:** All `ShebeError` must map to `McpError`
+**INVARIANT:** All `ShebeError` must map to `McpError`
 
 ---
 

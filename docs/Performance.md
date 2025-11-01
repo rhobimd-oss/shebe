@@ -134,10 +134,10 @@ See: [performance-analysis/020-phase01-mcp-performance-test-results-v3.md](./per
 
 **Optional Enhancements (Low Priority):**
 
-1. **Query Caching:** 2ms → <1ms (optional speedup)
+1. **Query Caching:** 2ms -> <1ms (optional speedup)
 2. **Index Warming:** Eliminate cold-start latency
 3. **Parallel Search:** For >50k file repositories
-4. **Token Compression:** 210-650 → <200 tokens (minor optimization)
+4. **Token Compression:** 210-650 -> <200 tokens (minor optimization)
 
 **Priority:** Low - current performance exceeds all requirements
 

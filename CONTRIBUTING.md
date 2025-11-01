@@ -25,7 +25,7 @@ Thank you for your interest in contributing to Shebe! This document provides gui
 
 ### Prerequisites
 
-- **Rust:** 1.80+ (latest stable recommended)
+- **Rust:** 1.88+ (latest stable recommended)
 - **Cargo:** Comes with Rust
 - **Git:** For version control
 
@@ -135,12 +135,18 @@ Follow Angular commit message format:
 ```
 feat(mcp): add preview_chunk tool for context display
 
+Changes:
 Implements preview_chunk MCP tool to show N lines before and after
 search result chunks with visual boundaries and line numbers.
 
 - Configurable context lines (default: 10, max: 100)
 - Retrieves chunk metadata from Tantivy
 - Converts byte offsets to line numbers
+
+Contributes-to: rhobimd-oss/shebe
+
+Signed-off-by: OSS Contributor <oss.contributor@example.org>
+
 ```
 
 **Types:**

@@ -23,7 +23,7 @@
 ### System Requirements
 
 - **Operating System:** Linux (tested on Debian/Ubuntu), macOS
-- **Rust:** 1.70+ (for building from source)
+- **Rust:** 1.88+ (for building from source)
 - **Claude Code:** Latest version with MCP support
 - **Disk Space:** 1GB+ free (for session storage)
 - **Memory:** 2GB+ RAM recommended
@@ -39,7 +39,7 @@
 ```bash
 # Check Rust installation
 rustc --version
-# Expected: rustc 1.70.0 or higher
+# Expected: rustc 1.88.0 or higher
 
 # Check available disk space
 df -h ~

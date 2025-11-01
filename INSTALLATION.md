@@ -36,7 +36,7 @@ real-time code search during development sessions.
 
 ## Prerequisites
 
-- **Rust:** 1.80 or later ([install from rustup.rs](https://rustup.rs/))
+- **Rust:** 1.88 or later ([install from rustup.rs](https://rustup.rs/))
 - **Git:** For cloning the repository
 - **Claude Code:** Desktop app with MCP support
 - **Platform:** Linux, macOS, or Windows
@@ -48,7 +48,7 @@ real-time code search during development sessions.
 ### 1. Clone Repository
 
 ```bash
-git clone https://gitlab.com/rhobimd/lib/shebe.git
+git clone https://gitlab.com/rhobimd-oss/shebe.git
 cd shebe
 ```
 
@@ -387,7 +387,7 @@ You can run shebe alongside other MCP servers:
 
 ```bash
 # 1. Clone and build
-git clone https://gitlab.com/rhobimd/lib/shebe.git
+git clone https://gitlab.com/rhobimd-oss/shebe.git
 cd shebe
 make mcp-build
 make mcp-install

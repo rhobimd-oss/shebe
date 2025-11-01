@@ -2,7 +2,7 @@
 name = "shebe"
 version = "0.4.1"
 edition = "2021"
-rust-version = "1.80"
+rust-version = "1.88"
 authors = ["RHOBIMD HEALTH"]
 description = "BM25-based code search engine with MCP integration for Claude Code"
 license = "Apache-2.0"

@@ -14,6 +14,7 @@ variables:
       - .cargo/
       - services/shebe-server/target/
 
+
 test:shebe:
   stage: test
   image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-local

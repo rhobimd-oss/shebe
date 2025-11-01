@@ -909,7 +909,7 @@ When a repository has more files than the limit, the tool:
 ### Response Format (With Truncation)
 
 ```markdown
-⚠️ OUTPUT TRUNCATED - MAXIMUM 500 FILES DISPLAYED
+WARNING: OUTPUT TRUNCATED - MAXIMUM 500 FILES DISPLAYED
 
 Showing: 500 of 5,605 files (first 500, alphabetically sorted)
 Reason: Maximum display limit is 500 files (MCP 25k token limit)
@@ -968,7 +968,7 @@ Shows all 42 files (no truncation warning)
 You: List all files in istio-main session
 
 Claude: [Executes list_dir with session="istio-main"]
-⚠️ OUTPUT TRUNCATED - showing 100 of 5,605 files
+WARNING: OUTPUT TRUNCATED - showing 100 of 5,605 files
 Suggests using find_file for filtering
 ```
 
@@ -1065,7 +1065,7 @@ pub fn authenticate(username: &str, password: &str) -> Result<Token, AuthError> 
 ### Response Format (With Truncation)
 
 ```markdown
-⚠️ FILE TRUNCATED - SHOWING FIRST 20000 CHARACTERS
+WARNING: FILE TRUNCATED - SHOWING FIRST 20000 CHARACTERS
 
 Showing: Characters 1-20000 of 634000 total (3.2%)
 Reason: Maximum display limit is 20000 characters (MCP 25k token limit)
@@ -1132,7 +1132,7 @@ Shows full file contents with syntax highlighting (no warning)
 You: Show me the database migration file in openemr-main
 
 Claude: [Executes read_file with file_path="/sql/icd9-codes.sql"]
-⚠️ FILE TRUNCATED - showing first 20,000 characters (10.4% of 634KB file)
+WARNING: FILE TRUNCATED - showing first 20,000 characters (10.4% of 634KB file)
 Suggests using search_code to find specific content
 ```
 
@@ -1306,7 +1306,7 @@ And more. If language not detected, defaults to plaintext.
 
 1. **Start broad, then narrow:**
    ```
-   "database" → "database connection" → "database connection pool"
+   "database" -> "database connection" -> "database connection pool"
    ```
 
 2. **Use boolean operators for precision (100% accurate):**

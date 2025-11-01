@@ -296,7 +296,7 @@ Claude will use `force: true` to overwrite the existing index.
 # Indexing Status: Complete
 
 **Session:** `myapp`
-**Status:** ✓ Indexing complete
+**Status:**  Indexing complete
 
 ## Summary
 

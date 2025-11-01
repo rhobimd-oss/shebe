@@ -45,25 +45,16 @@ pub const READ_FILE_MAX_CHARS: usize = 20_000;
 pub fn build_list_dir_warning(shown_count: usize, total_count: usize, session: &str) -> String {
     let not_shown = total_count.saturating_sub(shown_count);
     format!(
-        "⚠️ OUTPUT TRUNCATED - MAXIMUM {} FILES DISPLAYED\n\n\
-         Showing: {} of {} files (first {}, alphabetically sorted)\n\
-         Reason: Maximum display limit is {} files (MCP 25k token limit)\n\
-         Not shown: {} files\n\n\
+        "⚠️ OUTPUT TRUNCATED - MAXIMUM {LIST_DIR_MAX_LIMIT} FILES DISPLAYED\n\n\
+         Showing: {shown_count} of {total_count} files (first {shown_count}, alphabetically sorted)\n\
+         Reason: Maximum display limit is {LIST_DIR_MAX_LIMIT} files (MCP 25k token limit)\n\
+         Not shown: {not_shown} files\n\n\
          💡 SUGGESTIONS:\n\
-         - Use `find_file` with patterns to filter: find_file(session=\"{}\", pattern=\"*.yaml\")\n\
+         - Use `find_file` with patterns to filter: find_file(session=\"{session}\", pattern=\"*.yaml\")\n\
          - For pagination support, see: docs/work-plans/011-phase02-mcp-pagination-implementation.md\n\
          - For full file list, use bash: find /path/to/repo -type f | sort\n\n\
          ---\n\n\
-         **Files 1-{} (of {} total):**\n\n",
-        LIST_DIR_MAX_LIMIT,
-        shown_count,
-        total_count,
-        shown_count,
-        LIST_DIR_MAX_LIMIT,
-        not_shown,
-        session,
-        shown_count,
-        total_count
+         **Files 1-{shown_count} (of {total_count} total):**\n\n"
     )
 }
 
@@ -96,27 +87,17 @@ pub fn build_read_file_warning(
     };
 
     format!(
-        "⚠️ FILE TRUNCATED - SHOWING FIRST {} CHARACTERS\n\n\
-         Showing: Characters 1-{} of {} total ({:.1}%)\n\
-         Reason: Maximum display limit is {} characters (MCP 25k token limit)\n\
-         Not shown: {} characters\n\n\
+        "⚠️ FILE TRUNCATED - SHOWING FIRST {READ_FILE_MAX_CHARS} CHARACTERS\n\n\
+         Showing: Characters 1-{shown_chars} of {total_chars} total ({percent:.1}%)\n\
+         Reason: Maximum display limit is {READ_FILE_MAX_CHARS} characters (MCP 25k token limit)\n\
+         Not shown: {not_shown} characters\n\n\
          💡 SUGGESTIONS:\n\
          - Use `search_code` to find specific content in this file\n\
          - Use `preview_chunk` to view specific sections\n\
-         - For full file, use bash: cat {}\n\n\
+         - For full file, use bash: cat {file_path}\n\n\
          ---\n\n\
-         **File:** `{}`\n\
-         **Showing:** First {} characters (~{} lines)\n\n",
-        READ_FILE_MAX_CHARS,
-        shown_chars,
-        total_chars,
-        percent,
-        READ_FILE_MAX_CHARS,
-        not_shown,
-        file_path,
-        file_path,
-        shown_chars,
-        estimated_lines
+         **File:** `{file_path}`\n\
+         **Showing:** First {shown_chars} characters (~{estimated_lines} lines)\n\n"
     )
 }
 

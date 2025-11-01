@@ -120,7 +120,7 @@ impl McpToolHandler for DeleteSessionHandler {
         self.services
             .storage
             .delete_session(&args.session)
-            .map_err(|e| McpError::InternalError(format!("Failed to delete session: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Failed to delete session: {e}")))?;
 
         // Format summary
         let summary = self.format_summary(

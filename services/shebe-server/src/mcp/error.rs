@@ -32,35 +32,35 @@ impl From<crate::error::ShebeError> for McpError {
         match err {
             ShebeError::SessionNotFound(s) => McpError::ToolError(
                 crate::mcp::protocol::SESSION_NOT_FOUND,
-                format!("Session not found: {}", s),
+                format!("Session not found: {s}"),
             ),
             ShebeError::SessionAlreadyExists(s) => McpError::ToolError(
                 crate::mcp::protocol::SESSION_ALREADY_EXISTS,
-                format!("Session already exists: {}", s),
+                format!("Session already exists: {s}"),
             ),
             ShebeError::InvalidSession(s) => {
-                McpError::InvalidParams(format!("Invalid session: {}", s))
+                McpError::InvalidParams(format!("Invalid session: {s}"))
             }
-            ShebeError::InvalidPath(p) => McpError::InvalidParams(format!("Invalid path: {}", p)),
-            ShebeError::InvalidQuery(s) => McpError::InvalidParams(format!("Invalid query: {}", s)),
+            ShebeError::InvalidPath(p) => McpError::InvalidParams(format!("Invalid path: {p}")),
+            ShebeError::InvalidQuery(s) => McpError::InvalidParams(format!("Invalid query: {s}")),
             ShebeError::ConfigError(s) => {
-                McpError::InvalidParams(format!("Configuration error: {}", s))
+                McpError::InvalidParams(format!("Configuration error: {s}"))
             }
             ShebeError::IndexingFailed(s) => McpError::ToolError(
                 crate::mcp::protocol::INDEXING_FAILED,
-                format!("Indexing failed: {}", s),
+                format!("Indexing failed: {s}"),
             ),
             ShebeError::SearchFailed(s) => McpError::ToolError(
                 crate::mcp::protocol::SEARCH_FAILED,
-                format!("Search failed: {}", s),
+                format!("Search failed: {s}"),
             ),
-            ShebeError::StorageError(s) => McpError::InternalError(format!("Storage error: {}", s)),
-            ShebeError::IoError(e) => McpError::InternalError(format!("I/O error: {}", e)),
+            ShebeError::StorageError(s) => McpError::InternalError(format!("Storage error: {s}")),
+            ShebeError::IoError(e) => McpError::InternalError(format!("I/O error: {e}")),
             ShebeError::SerdeError(e) => {
-                McpError::InternalError(format!("Serialization error: {}", e))
+                McpError::InternalError(format!("Serialization error: {e}"))
             }
             ShebeError::TomlError(e) => {
-                McpError::InternalError(format!("Configuration parse error: {}", e))
+                McpError::InternalError(format!("Configuration parse error: {e}"))
             }
         }
     }

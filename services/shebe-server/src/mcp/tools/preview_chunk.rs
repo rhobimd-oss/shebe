@@ -45,7 +45,7 @@ impl PreviewChunkHandler {
         let reader: IndexReader = index
             .index()
             .reader()
-            .map_err(|e| McpError::InternalError(format!("Failed to open reader: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Failed to open reader: {e}")))?;
 
         let searcher = reader.searcher();
         let schema = index.schema();
@@ -53,16 +53,16 @@ impl PreviewChunkHandler {
         // Get required fields
         let file_path_field = schema
             .get_field("file_path")
-            .map_err(|e| McpError::InternalError(format!("file_path field missing: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("file_path field missing: {e}")))?;
         let chunk_index_field = schema
             .get_field("chunk_index")
-            .map_err(|e| McpError::InternalError(format!("chunk_index field missing: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("chunk_index field missing: {e}")))?;
         let offset_start_field = schema
             .get_field("offset_start")
-            .map_err(|e| McpError::InternalError(format!("offset_start field missing: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("offset_start field missing: {e}")))?;
         let offset_end_field = schema
             .get_field("offset_end")
-            .map_err(|e| McpError::InternalError(format!("offset_end field missing: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("offset_end field missing: {e}")))?;
 
         // Query for specific chunk
         let file_term = Term::from_field_text(file_path_field, file_path);
@@ -75,13 +75,12 @@ impl PreviewChunkHandler {
 
         let top_docs = searcher
             .search(&query, &tantivy::collector::TopDocs::with_limit(1))
-            .map_err(|e| McpError::InternalError(format!("Search failed: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Search failed: {e}")))?;
 
         if top_docs.is_empty() {
             return Err(McpError::InvalidRequest(format!(
-                "Chunk not found: file '{}', chunk index {}. \
-                 File may not be indexed or chunk index invalid.",
-                file_path, chunk_index
+                "Chunk not found: file '{file_path}', chunk index {chunk_index}. \
+                 File may not be indexed or chunk index invalid."
             )));
         }
 
@@ -89,7 +88,7 @@ impl PreviewChunkHandler {
         let (_score, doc_address) = &top_docs[0];
         let retrieved_doc: TantivyDocument = searcher
             .doc(*doc_address)
-            .map_err(|e| McpError::InternalError(format!("Doc retrieval failed: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Doc retrieval failed: {e}")))?;
 
         let offset_start = retrieved_doc
             .get_first(offset_start_field)
@@ -129,7 +128,7 @@ impl PreviewChunkHandler {
             } else if e.kind() == std::io::ErrorKind::InvalidData {
                 McpError::InvalidRequest("File contains non-UTF-8 data (binary file).".to_string())
             } else {
-                McpError::InternalError(format!("Failed to read file: {}", e))
+                McpError::InternalError(format!("Failed to read file: {e}"))
             }
         })?;
 
@@ -151,7 +150,7 @@ impl PreviewChunkHandler {
             .enumerate()
             .map(|(i, line)| {
                 let line_num = start_line + i + 1; // 1-indexed
-                format!("{:4} | {}", line_num, line)
+                format!("{line_num:4} | {line}")
             })
             .collect();
 
@@ -235,7 +234,7 @@ impl PreviewChunkHandler {
         );
 
         // Add visual chunk boundaries
-        output.push_str(&format!("```{}\n", lang));
+        output.push_str(&format!("```{lang}\n"));
 
         for (i, line) in extraction.lines.iter().enumerate() {
             let line_num = extraction.context_start_line + i;
@@ -350,8 +349,7 @@ impl McpToolHandler for PreviewChunkHandler {
         // Validate context_lines
         if args.context_lines > MAX_CONTEXT_LINES {
             return Err(McpError::InvalidParams(format!(
-                "context_lines cannot exceed {}",
-                MAX_CONTEXT_LINES
+                "context_lines cannot exceed {MAX_CONTEXT_LINES}"
             )));
         }
 

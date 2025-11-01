@@ -1,43 +1,28 @@
 services:
-  shebe-server:
-    build:
-      context: ..
-      dockerfile: services/shebe-server/Dockerfile
-    image: shebe:latest
-    container_name: shebe-server
-    ports:
-      - "3000:3000"
+
+  shebe-dev:
+    image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-local
+    container_name: shebe-dev
+    working_dir: /workspace
     volumes:
-      # Persistent index data
-      - shebe-data:/data
-      # Mount source code for indexing (read-only)
-      # Adjust path as needed for your environment
-      - /home/orodha/github/openemr/openemr:/code:ro
+      # Mount only the Rust service directory
+      - ../services/shebe-server:/workspace:rw
+      # Cache cargo registry and git checkouts (speeds up subsequent runs)
+      - cargo-registry:/usr/local/cargo/registry
+      - cargo-git:/usr/local/cargo/git
     environment:
-      SHEBE_HOST: 0.0.0.0
-      SHEBE_PORT: 3000
-      SHEBE_LOG_LEVEL: info
-      SHEBE_DATA_DIR: /data
-      SHEBE_CHUNK_SIZE: 512
-      SHEBE_OVERLAP: 64
-      SHEBE_MAX_FILE_SIZE_MB: 10
       RUST_BACKTRACE: 1
-    restart: unless-stopped
-    healthcheck:
-      test:
-        - "CMD"
-        - "curl"
-        - "-f"
-        - "http://localhost:3000/health"
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
-    networks:
-      - shebe-network
+      CARGO_HOME: /usr/local/cargo
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    stdin_open: true
+    tty: true
+    command: bash
 
   shebe-test:
-    image: rust:1.83-slim
+    image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251031-b1.88-slim
     container_name: shebe-test
     working_dir: /workspace/services/shebe-server
     volumes:
@@ -52,16 +37,7 @@ services:
       RUST_BACKTRACE: 1
       CARGO_HOME: /usr/local/cargo
     # Default command: run all tests
-    command: >
-      bash -c "
-        apt-get update -qq &&
-        apt-get install -y -qq pkg-config libssl-dev curl > /dev/null 2>&1 &&
-        cargo test --color=always
-      "
-    networks:
-      - shebe-network
-    profiles:
-      - test  # Only start with 'docker compose --profile test up'
+    command: cargo nextest run --color=always
 
 volumes:
   shebe-data:

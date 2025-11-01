@@ -6,7 +6,7 @@
 use crate::error::Result;
 use crate::storage::StorageManager;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use walkdir::WalkDir;
 
 /// Metadata validation report
@@ -175,6 +175,7 @@ mod tests {
     use super::*;
     use crate::error::ShebeError;
     use crate::storage::SessionConfig;
+    use std::path::PathBuf;
     use tempfile::tempdir;
 
     #[test]

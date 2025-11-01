@@ -290,7 +290,7 @@ impl Config {
     /// Load configuration from TOML file
     pub fn from_file(path: impl AsRef<Path>) -> Result<Self> {
         let contents = fs::read_to_string(path)
-            .map_err(|e| ShebeError::ConfigError(format!("Failed to read config file: {}", e)))?;
+            .map_err(|e| ShebeError::ConfigError(format!("Failed to read config file: {e}")))?;
 
         let config: Config = toml::from_str(&contents)?;
         Ok(config)

@@ -29,8 +29,7 @@ impl SortOrder {
             "size" => Ok(Self::Size),
             "indexed" => Ok(Self::Indexed),
             _ => Err(format!(
-                "Invalid sort order: '{}'. Must be 'alpha', 'size', or 'indexed'.",
-                s
+                "Invalid sort order: '{s}'. Must be 'alpha', 'size', or 'indexed'."
             )),
         }
     }
@@ -68,7 +67,7 @@ impl ListDirHandler {
         let reader = index
             .index()
             .reader()
-            .map_err(|e| McpError::InternalError(format!("Failed to open reader: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Failed to open reader: {e}")))?;
 
         let searcher = reader.searcher();
 
@@ -79,19 +78,19 @@ impl ListDirHandler {
         let file_path_field = index
             .schema()
             .get_field("file_path")
-            .map_err(|e| McpError::InternalError(format!("file_path field missing: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("file_path field missing: {e}")))?;
 
         let mut file_map: HashMap<String, FileEntry> = HashMap::new();
 
         // Collect documents (we need to aggregate by file_path)
         let top_docs = searcher
             .search(&query, &TopDocs::with_limit(100000))
-            .map_err(|e| McpError::InternalError(format!("Search failed: {}", e)))?;
+            .map_err(|e| McpError::InternalError(format!("Search failed: {e}")))?;
 
         for (_score, doc_address) in top_docs {
             let retrieved_doc: TantivyDocument = searcher
                 .doc(doc_address)
-                .map_err(|e| McpError::InternalError(format!("Doc retrieval failed: {}", e)))?;
+                .map_err(|e| McpError::InternalError(format!("Doc retrieval failed: {e}")))?;
 
             // Extract file_path
             let file_path = retrieved_doc

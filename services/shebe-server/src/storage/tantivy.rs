@@ -78,12 +78,12 @@ impl TantivyIndex {
 
         // Create Tantivy index
         let index = Index::create_in_dir(index_dir, schema.clone())
-            .map_err(|e| ShebeError::StorageError(format!("Failed to create index: {}", e)))?;
+            .map_err(|e| ShebeError::StorageError(format!("Failed to create index: {e}")))?;
 
         // Create index writer (50MB heap)
         let writer = index
             .writer(50_000_000)
-            .map_err(|e| ShebeError::StorageError(format!("Failed to create writer: {}", e)))?;
+            .map_err(|e| ShebeError::StorageError(format!("Failed to create writer: {e}")))?;
 
         Ok(Self {
             index,
@@ -95,13 +95,13 @@ impl TantivyIndex {
     /// Open an existing Tantivy index
     pub fn open(index_dir: &Path) -> Result<Self> {
         let index = Index::open_in_dir(index_dir)
-            .map_err(|e| ShebeError::StorageError(format!("Failed to open index: {}", e)))?;
+            .map_err(|e| ShebeError::StorageError(format!("Failed to open index: {e}")))?;
 
         let schema = index.schema();
 
         let writer = index
             .writer(50_000_000)
-            .map_err(|e| ShebeError::StorageError(format!("Failed to create writer: {}", e)))?;
+            .map_err(|e| ShebeError::StorageError(format!("Failed to create writer: {e}")))?;
 
         Ok(Self {
             index,
@@ -116,31 +116,31 @@ impl TantivyIndex {
         let text_field = self
             .schema
             .get_field("text")
-            .map_err(|e| ShebeError::StorageError(format!("Missing text field: {}", e)))?;
+            .map_err(|e| ShebeError::StorageError(format!("Missing text field: {e}")))?;
         let file_path_field = self
             .schema
             .get_field("file_path")
-            .map_err(|e| ShebeError::StorageError(format!("Missing file_path field: {}", e)))?;
+            .map_err(|e| ShebeError::StorageError(format!("Missing file_path field: {e}")))?;
         let session_field = self
             .schema
             .get_field("session")
-            .map_err(|e| ShebeError::StorageError(format!("Missing session field: {}", e)))?;
+            .map_err(|e| ShebeError::StorageError(format!("Missing session field: {e}")))?;
         let offset_start_field = self
             .schema
             .get_field("offset_start")
-            .map_err(|e| ShebeError::StorageError(format!("Missing offset_start field: {}", e)))?;
+            .map_err(|e| ShebeError::StorageError(format!("Missing offset_start field: {e}")))?;
         let offset_end_field = self
             .schema
             .get_field("offset_end")
-            .map_err(|e| ShebeError::StorageError(format!("Missing offset_end field: {}", e)))?;
+            .map_err(|e| ShebeError::StorageError(format!("Missing offset_end field: {e}")))?;
         let chunk_index_field = self
             .schema
             .get_field("chunk_index")
-            .map_err(|e| ShebeError::StorageError(format!("Missing chunk_index field: {}", e)))?;
+            .map_err(|e| ShebeError::StorageError(format!("Missing chunk_index field: {e}")))?;
         let indexed_at_field = self
             .schema
             .get_field("indexed_at")
-            .map_err(|e| ShebeError::StorageError(format!("Missing indexed_at field: {}", e)))?;
+            .map_err(|e| ShebeError::StorageError(format!("Missing indexed_at field: {e}")))?;
 
         let now = Utc::now();
 
@@ -161,7 +161,7 @@ impl TantivyIndex {
 
             self.writer
                 .add_document(doc)
-                .map_err(|e| ShebeError::StorageError(format!("Failed to add document: {}", e)))?;
+                .map_err(|e| ShebeError::StorageError(format!("Failed to add document: {e}")))?;
         }
 
         Ok(())
@@ -171,7 +171,7 @@ impl TantivyIndex {
     pub fn commit(&mut self) -> Result<()> {
         self.writer
             .commit()
-            .map_err(|e| ShebeError::StorageError(format!("Failed to commit: {}", e)))?;
+            .map_err(|e| ShebeError::StorageError(format!("Failed to commit: {e}")))?;
         Ok(())
     }
 
@@ -179,7 +179,7 @@ impl TantivyIndex {
     pub fn reader(&self) -> Result<IndexReader> {
         self.index
             .reader()
-            .map_err(|e| ShebeError::StorageError(format!("Failed to create reader: {}", e)))
+            .map_err(|e| ShebeError::StorageError(format!("Failed to create reader: {e}")))
     }
 
     /// Get the schema

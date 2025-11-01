@@ -1,20 +1,50 @@
 stages:
   - test
 
+variables:
+  CARGO_HOME: $CI_PROJECT_DIR/.cargo
+  RUST_BACKTRACE: "1"
 
-test:
+.rust_cache:
+  cache:
+    key:
+      files:
+        - services/shebe-server/Cargo.lock
+    paths:
+      - .cargo/
+      - services/shebe-server/target/
+
+test:shebe:
   stage: test
-  image: alpine:latest
+  image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-local
+  extends: .rust_cache
+  before_script:
+    - cd services/shebe-server
+    - rustc --version
+    - cargo --version
+    - cargo nextest --version
+    - cargo tarpaulin --version
   script:
-    - /bin/true  # Does nothing, exits with status 0
+    - cargo fmt -- --check --verbose
+    - cargo clippy -- -D warnings
+    - cargo nextest run --all-features --workspace
+    - cargo tarpaulin --all-features --workspace --out Xml --output-dir . --fail-under 70
   interruptible: true
-  timeout: 15s
-  before_script: []  # Disable any global before_script
-  after_script: []   # Disable any global after_script
-  cache: {}          # Disable caching
-  artifacts:
-    reports: {}      # Disable artifact generation
+  timeout: 30m
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'  # merge requests
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'             # Only on scheduled pipelines
-    - if: '$CI_PIPELINE_SOURCE == "api"'                  # Or API triggers
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - services/shebe-server/Cargo.toml
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - services/shebe-server/Cargo.toml
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "api"'
+  coverage: '/^\d+\.\d+% coverage/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: services/shebe-server/cobertura.xml
+    expire_in: 1 week
+    when: always

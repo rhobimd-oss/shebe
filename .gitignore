@@ -31,6 +31,7 @@ Cargo.lock
 coverage/
 *.profraw
 *.profdata
+cobertura.xml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -132,7 +132,7 @@ impl ProtocolHandlers {
                 return Ok(self.create_error_response(
                     request.id,
                     INVALID_PARAMS,
-                    format!("Invalid params: {}", e),
+                    format!("Invalid params: {e}"),
                 ));
             }
         };
@@ -165,8 +165,8 @@ impl ProtocolHandlers {
                     McpError::InvalidParams(msg) => (INVALID_PARAMS, msg.clone()),
                     McpError::InternalError(msg) => (INTERNAL_ERROR, msg.clone()),
                     McpError::ToolError(code, msg) => (*code, msg.clone()),
-                    McpError::Io(e) => (INTERNAL_ERROR, format!("I/O error: {}", e)),
-                    McpError::Json(e) => (INTERNAL_ERROR, format!("JSON error: {}", e)),
+                    McpError::Io(e) => (INTERNAL_ERROR, format!("I/O error: {e}")),
+                    McpError::Json(e) => (INTERNAL_ERROR, format!("JSON error: {e}")),
                 };
 
                 Ok(self.create_error_response(request.id, code, message))

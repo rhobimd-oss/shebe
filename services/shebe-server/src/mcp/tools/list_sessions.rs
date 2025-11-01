@@ -8,7 +8,6 @@ use crate::mcp::services::ShebeServices;
 use crate::storage::SessionMetadata;
 use async_trait::async_trait;
 use serde_json::{json, Value};
-use std::path::PathBuf;
 use std::sync::Arc;
 
 pub struct ListSessionsHandler {
@@ -90,6 +89,7 @@ mod tests {
     use super::*;
     use crate::config::Config;
     use crate::storage::SessionConfig;
+    use std::path::PathBuf;
     use tempfile::TempDir;
 
     async fn setup_test_handler() -> (ListSessionsHandler, TempDir) {

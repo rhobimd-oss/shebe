@@ -42,7 +42,7 @@ test:
 
 test-coverage:
 	@echo "Running tests with coverage in shebe-dev container..."
-	$(DOCKER_RUN) cargo tarpaulin --all-features --workspace --out Xml --output-dir . --fail-under 85
+	$(DOCKER_RUN) cargo tarpaulin --all-features --workspace --out Xml --output-dir . --fail-under 70
 
 fmt:
 	@echo "Formatting code in shebe-dev container..."

@@ -230,7 +230,7 @@ async fn main() -> Result<()> {
 
 **Developers must respect:**
 
-1. **Rust:** 1.80+
+1. **Rust:** 1.88+
 2. **UTF-8:** Never split multi-byte chars
 3. **Sessions:** All ops scoped to session
 4. **Line length:** Max 120 chars
@@ -334,21 +334,20 @@ cargo run --bin shebe-mcp  # MCP
 
 ## MCP Tools (12)
 
-**Core:**
-1. search_code - BM25 (2ms latency, 210-650 tokens/query)
-2. list_sessions - Rich metadata (<10ms)
-3. get_session_info - Calculated stats (<5ms)
-4. index_repository - Ultra-fast (1,928-11,210 files/sec measured)
-5. get_server_info - Server capabilities
-6. show_shebe_config - Configuration display
-
-**Ergonomic:**
-7.  read_file - Auto-truncation at 20KB (<10ms)
-8.  delete_session - Safety confirmation required
-9.  list_dir - Token-aware pagination (500 file limit)
-10. find_file - Glob + regex pattern matching (<10ms)
-11. preview_chunk - Context display (v0.3.0: schema v2 fix)
-12. reindex_session - Re-index using stored path (v0.3.0: schema v3 feature)
+| Tool               | Category  | Description                                  | Performance                 |
+|--------------------|-----------|----------------------------------------------|-----------------------------|
+| search_code        | Core      | BM25 full-text search                        | 2ms latency, 210-650 tokens |
+| list_sessions      | Core      | List all indexed sessions                    | <10ms                       |
+| get_session_info   | Core      | Detailed session metadata and stats          | <5ms                        |
+| index_repository   | Core      | Index repository for search                  | 1,928-11,210 files/sec      |
+| get_server_info    | Core      | Server version and capabilities              | <5ms                        |
+| show_shebe_config  | Core      | Display current configuration                | <5ms                        |
+| read_file          | Ergonomic | Read file with auto-truncation               | <10ms, 20KB limit           |
+| delete_session     | Ergonomic | Delete session with confirmation             | <10ms                       |
+| list_dir           | Ergonomic | List directory contents with pagination      | <10ms, 500 file limit       |
+| find_file          | Ergonomic | Find files by glob/regex patterns            | <10ms                       |
+| preview_chunk      | Ergonomic | Show chunk context (v0.3.0: schema v2 fix)   | <5ms                        |
+| reindex_session    | Ergonomic | Re-index using stored path (v0.3.0: v3 feat) | Same as index_repository    |
 
 **Pattern:** All implement `McpToolHandler`
 **Performance:** Validated on 30/30 test scenarios (100% success rate)

@@ -597,7 +597,7 @@ No parameters required.
 
 ## Version
 - **Version:** 0.3.0
-- **Rust Version:** 1.83
+- **Rust Version:** 1.88
 
 ## Server Details
 - **Name:** shebe-mcp
@@ -647,7 +647,7 @@ No tool-specific errors. Uses standard JSON-RPC error codes only.
 You: What version of shebe-mcp is running?
 
 Claude: [Executes get_server_info]
-Running shebe-mcp v0.3.0 with Rust 1.83
+Running shebe-mcp v0.3.0 with Rust 1.88
 ```
 
 **List available tools:**

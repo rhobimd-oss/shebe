@@ -21,7 +21,8 @@ Fast BM25 full-text search for code repositories with MCP integration for Claude
 
 ## What is Shebe?
 
-Shebe provides **content search** for code - find functions, APIs, and patterns across large codebases using keyword search.
+Shebe provides **content search** for code - find functions, APIs, and patterns across 
+large codebases using keyword search.
 
 **Key Features:**
 - **Fast:** 2ms query latency (10x better than 20ms target)
@@ -30,7 +31,6 @@ Shebe provides **content search** for code - find functions, APIs, and patterns 
 - **Simple:** BM25 only, no embeddings/GPU needed
 - **UTF-8 Safe:** Handles emoji, CJK, all Unicode
 - **12 MCP Tools:** Direct Claude Code integration
-- **Well-tested:** 392 tests (100% pass rate), 86.76% line coverage
 
 **Positioning:** Complements structural tools (Serena MCP) with content search.
 **Validated:** 30/30 performance test scenarios + 384 unit tests passed
@@ -132,15 +132,13 @@ Shebe focuses on **content search** and works alongside structural tools:
 
 **Validated on Istio (5,605 files, Go-heavy) and OpenEMR (6,364 files, PHP polyglot):**
 
-| Metric             | Result                                           | vs Target    |
-|--------------------|--------------------------------------------------|--------------|
-| Query latency      | **2ms** (consistent across all query types)      | 10x better   |
-| Indexing (Istio)   | **11,210 files/sec** (0.5s for 5,605 files)      | 22.4x faster |
-| Indexing (OpenEMR) | **1,928 files/sec** (3.3s for 6,364 files)       | 3.9x faster  |
-| Token usage        | **210-650** tokens/query                         | 8-24x better |
-| Polyglot coverage  | **11 file types** in single query                | Excellent    |
-| Test coverage      | **384 unit tests** + **30/30 performance tests** | 100% pass    |
-| Line coverage      | **86.76%** (44 source files, ~7,500 LOC)         | Excellent    |
+| Metric             | Result                                           |
+|--------------------|--------------------------------------------------|
+| Query latency      | **2ms** (consistent across all query types)      |
+| Indexing (Istio)   | **11,210 files/sec** (0.5s for 5,605 files)      |
+| Indexing (OpenEMR) | **1,928 files/sec** (3.3s for 6,364 files)       |
+| Token usage        | **210-650** tokens/query                         |
+| Polyglot coverage  | **11 file types** in single query                |
 
 See [docs/Performance.md](./docs/Performance.md) for detailed benchmarks.
 
@@ -173,7 +171,7 @@ See [docs/Performance.md](./docs/Performance.md) for detailed performance benchm
 
 ## License
 
-See LICENSE file.
+See [LICENSE](./LICENSE).
 
 ---
 

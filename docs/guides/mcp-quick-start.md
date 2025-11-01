@@ -9,7 +9,7 @@ Get Shebe MCP running with Claude Code in 5 minutes.
 ## Prerequisites
 
 - [x] Shebe repository cloned
-- [x] Rust installed (1.70+)
+- [x] Rust installed (1.88+)
 - [x] Claude Code installed
 - [x] Terminal access
 

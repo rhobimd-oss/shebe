@@ -17,7 +17,7 @@ variables:
 
 test:shebe:
   stage: test
-  image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-local
+  image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-b1.88-slim
   extends: .rust_cache
   before_script:
     - cd services/shebe-server

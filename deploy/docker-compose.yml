@@ -1,7 +1,7 @@
 services:
 
   shebe-dev:
-    image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-local
+    image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-b1.88-slim
     container_name: shebe-dev
     working_dir: /workspace
     volumes:
@@ -22,7 +22,7 @@ services:
     command: bash
 
   shebe-test:
-    image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251031-b1.88-slim
+    image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-b1.88-slim
     container_name: shebe-test
     working_dir: /workspace/services/shebe-server
     volumes:

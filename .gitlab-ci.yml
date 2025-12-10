@@ -1,10 +1,27 @@
+#--------------------------------------------------------------------------------------
+# Shebe CI/CD Pipeline
+#
+# Stages:
+#   - test: Run tests, fmt check, clippy, coverage
+#   - build: Build release binaries (tags only)
+#   - release: Create GitLab release with artifacts (tags only)
+#
+# Scripts:
+#   - scripts/ci-build.sh: Build binaries and create tarballs
+#   - scripts/ci-release.sh: Create GitLab release via API
+#--------------------------------------------------------------------------------------
+
 stages:
   - test
+  - build
+  - release
 
 variables:
   CARGO_HOME: $CI_PROJECT_DIR/.cargo
   RUST_BACKTRACE: "1"
+  SHEBE_SERVICE_DIR: services/shebe-server
 
+# Cache configuration for Rust builds
 .rust_cache:
   cache:
     key:
@@ -14,33 +31,57 @@ variables:
       - .cargo/
       - services/shebe-server/target/
 
+# Rules for shebe service changes
+.shebe-rules: &shebe-rules
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    changes:
+      - services/shebe-server/Cargo.toml
+      - services/shebe-server/VERSION
+  - if: '$CI_COMMIT_BRANCH == "main"'
+    changes:
+      - services/shebe-server/Cargo.toml
+      - services/shebe-server/VERSION
+  - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  - if: '$CI_PIPELINE_SOURCE == "api"'
+
+# Rules for tag-based releases
+.release-rules: &release-rules
+  - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
+
+
+#--------------------------------------------------------------------------------------
+# Test Stage
+#--------------------------------------------------------------------------------------
 
 test:shebe:
   stage: test
   image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-b1.88-slim
   extends: .rust_cache
-  before_script:
-    - cd services/shebe-server
-    - rustc --version
-    - cargo --version
-    - cargo nextest --version
-    - cargo tarpaulin --version
   script:
-    - cargo fmt -- --check --verbose
-    - cargo clippy -- -D warnings
-    - cargo nextest run --all-features --workspace
-    - cargo tarpaulin --all-features --workspace --out Xml --output-dir . --fail-under 70
+    - |
+      set -euo pipefail
+      cd ${SHEBE_SERVICE_DIR}
+
+      echo "=== Toolchain versions ==="
+      rustc --version
+      cargo --version
+      cargo nextest --version
+      cargo tarpaulin --version
+
+      echo "=== Format check ==="
+      cargo fmt -- --check --verbose
+
+      echo "=== Clippy ==="
+      cargo clippy -- -D warnings
+
+      echo "=== Tests ==="
+      cargo nextest run --all-features --workspace
+
+      echo "=== Coverage ==="
+      cargo tarpaulin --all-features --workspace --out Xml --output-dir . --fail-under 70
   interruptible: true
   timeout: 30m
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      changes:
-        - services/shebe-server/Cargo.toml
-    - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - services/shebe-server/Cargo.toml
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "api"'
+  rules: *shebe-rules
   coverage: '/^\d+\.\d+% coverage/'
   artifacts:
     reports:
@@ -49,3 +90,53 @@ test:shebe:
         path: services/shebe-server/cobertura.xml
     expire_in: 1 week
     when: always
+
+#--------------------------------------------------------------------------------------
+# Build Stage
+#--------------------------------------------------------------------------------------
+
+build:shebe:
+  stage: build
+  image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-b1.88-slim
+  extends: .rust_cache
+  variables:
+    CARGO_TERM_COLOR: always
+  script:
+    - ./scripts/ci-build.sh
+  interruptible: true
+  timeout: 30m
+  rules: *release-rules
+  artifacts:
+    name: "shebe-${CI_COMMIT_TAG}"
+    paths:
+      - releases/
+      - build.env
+    reports:
+      dotenv: build.env
+    expire_in: 1 year
+    when: on_success
+
+#--------------------------------------------------------------------------------------
+# Release Stage
+# Uses CI_JOB_TOKEN for API authentication (no manual token needed)
+#--------------------------------------------------------------------------------------
+
+release:shebe:
+  stage: release
+  image: registry.gitlab.com/rhobimd-oss/cicd/alpine:20251111-b3.13-alpine3.22-bc832d850
+  variables:
+    GIT_STRATEGY: clone
+    GIT_DEPTH: 0
+  before_script:
+    - git config --global --add safe.directory "${CI_PROJECT_DIR}"
+  script:
+    - ./scripts/ci-release.sh
+  rules: *release-rules
+  needs:
+    - job: build:shebe
+      artifacts: true
+  artifacts:
+    paths:
+      - RELEASE_NOTES.md
+      - CHANGELOG.md
+    expire_in: 1 year

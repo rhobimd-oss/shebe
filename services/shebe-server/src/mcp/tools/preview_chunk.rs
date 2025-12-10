@@ -4,9 +4,9 @@
 
 use super::handler::{text_content, McpToolHandler};
 use super::helpers::detect_language;
+use crate::core::services::Services;
 use crate::mcp::error::McpError;
 use crate::mcp::protocol::{ToolResult, ToolSchema};
-use crate::mcp::services::ShebeServices;
 use async_trait::async_trait;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -20,11 +20,11 @@ const DEFAULT_CONTEXT_LINES: usize = 10;
 const MAX_CONTEXT_LINES: usize = 100;
 
 pub struct PreviewChunkHandler {
-    services: Arc<ShebeServices>,
+    services: Arc<Services>,
 }
 
 impl PreviewChunkHandler {
-    pub fn new(services: Arc<ShebeServices>) -> Self {
+    pub fn new(services: Arc<Services>) -> Self {
         Self { services }
     }
 
@@ -454,8 +454,8 @@ mod tests {
 
     // Helper function to create test handler
     fn create_test_handler() -> PreviewChunkHandler {
-        let config = crate::config::Config::default();
-        let services = Arc::new(crate::mcp::services::ShebeServices::new(config));
+        let config = crate::core::config::Config::default();
+        let services = Arc::new(crate::core::services::Services::new(config));
 
         PreviewChunkHandler::new(services)
     }

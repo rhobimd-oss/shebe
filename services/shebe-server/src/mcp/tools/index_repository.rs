@@ -4,10 +4,10 @@
 //! directly from Claude Code without requiring the HTTP server.
 
 use super::handler::{text_content, McpToolHandler};
+use crate::core::services::Services;
 use crate::mcp::error::McpError;
 use crate::mcp::protocol::ToolResult;
 use crate::mcp::protocol::ToolSchema;
-use crate::mcp::services::ShebeServices;
 use async_trait::async_trait;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -64,12 +64,12 @@ fn default_overlap() -> usize {
 
 /// Handler for index_repository MCP tool
 pub struct IndexRepositoryHandler {
-    services: Arc<ShebeServices>,
+    services: Arc<Services>,
 }
 
 impl IndexRepositoryHandler {
     /// Create new index_repository handler
-    pub fn new(services: Arc<ShebeServices>) -> Self {
+    pub fn new(services: Arc<Services>) -> Self {
         Self { services }
     }
 

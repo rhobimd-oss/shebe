@@ -2,9 +2,9 @@
 
 use super::handler::{text_content, McpToolHandler};
 use super::helpers::format_bytes;
+use crate::core::services::Services;
 use crate::mcp::error::McpError;
 use crate::mcp::protocol::{ToolResult, ToolSchema};
-use crate::mcp::services::ShebeServices;
 use async_trait::async_trait;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -13,11 +13,11 @@ use std::time::Instant;
 
 /// Re-index session handler
 pub struct ReindexSessionHandler {
-    services: Arc<ShebeServices>,
+    services: Arc<Services>,
 }
 
 impl ReindexSessionHandler {
-    pub fn new(services: Arc<ShebeServices>) -> Self {
+    pub fn new(services: Arc<Services>) -> Self {
         Self { services }
     }
 
@@ -47,8 +47,8 @@ impl ReindexSessionHandler {
     /// Compare configurations
     fn compare_configs(
         &self,
-        old: &crate::storage::SessionConfig,
-        new: &crate::storage::SessionConfig,
+        old: &crate::core::storage::SessionConfig,
+        new: &crate::core::storage::SessionConfig,
     ) -> ConfigComparison {
         ConfigComparison {
             chunk_size_changed: old.chunk_size != new.chunk_size,
@@ -61,10 +61,10 @@ impl ReindexSessionHandler {
     fn format_result(
         &self,
         session: &str,
-        stats: &crate::types::IndexStats,
+        stats: &crate::core::types::IndexStats,
         index_size_bytes: u64,
-        old_config: &crate::storage::SessionConfig,
-        new_config: &crate::storage::SessionConfig,
+        old_config: &crate::core::storage::SessionConfig,
+        new_config: &crate::core::storage::SessionConfig,
         duration_secs: f64,
     ) -> String {
         let mut output = format!(
@@ -160,7 +160,7 @@ impl McpToolHandler for ReindexSessionHandler {
     }
 
     async fn execute(&self, args: Value) -> Result<ToolResult, McpError> {
-        use crate::error::ShebeError;
+        use crate::core::error::ShebeError;
 
         // Parse arguments
         let args: ReindexArgs =
@@ -201,7 +201,7 @@ impl McpToolHandler for ReindexSessionHandler {
 
         // 3. Merge configuration (stored + overrides)
         let old_config = metadata.config.clone();
-        let new_config = crate::storage::SessionConfig {
+        let new_config = crate::core::storage::SessionConfig {
             chunk_size: args.chunk_size.unwrap_or(old_config.chunk_size),
             overlap: args.overlap.unwrap_or(old_config.overlap),
             include_patterns: old_config.include_patterns.clone(), // Preserve patterns
@@ -287,8 +287,8 @@ struct ConfigComparison {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::Config;
-    use crate::storage::SessionConfig;
+    use crate::core::config::Config;
+    use crate::core::storage::SessionConfig;
     use tempfile::TempDir;
 
     async fn setup_test_handler() -> (ReindexSessionHandler, TempDir) {
@@ -296,14 +296,14 @@ mod tests {
         let mut config = Config::default();
         config.storage.index_dir = temp_dir.path().to_path_buf();
 
-        let services = Arc::new(ShebeServices::new(config));
+        let services = Arc::new(Services::new(config));
         let handler = ReindexSessionHandler::new(services);
 
         (handler, temp_dir)
     }
 
     async fn create_test_session(
-        services: &Arc<ShebeServices>,
+        services: &Arc<Services>,
         repo_path: &std::path::Path,
         session_id: &str,
     ) {

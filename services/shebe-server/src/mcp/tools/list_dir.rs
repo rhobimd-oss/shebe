@@ -1,9 +1,9 @@
 //! List directory (all files) tool handler
 
 use super::handler::{text_content, McpToolHandler};
+use crate::core::services::Services;
 use crate::mcp::error::McpError;
 use crate::mcp::protocol::{ToolResult, ToolSchema};
-use crate::mcp::services::ShebeServices;
 use crate::mcp::utils::{build_list_dir_warning, LIST_DIR_DEFAULT_LIMIT, LIST_DIR_MAX_LIMIT};
 use async_trait::async_trait;
 use serde::Deserialize;
@@ -43,11 +43,11 @@ struct FileEntry {
 }
 
 pub struct ListDirHandler {
-    services: Arc<ShebeServices>,
+    services: Arc<Services>,
 }
 
 impl ListDirHandler {
-    pub fn new(services: Arc<ShebeServices>) -> Self {
+    pub fn new(services: Arc<Services>) -> Self {
         Self { services }
     }
 
@@ -268,9 +268,9 @@ impl McpToolHandler for ListDirHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::Config;
-    use crate::storage::SessionConfig;
-    use crate::types::Chunk;
+    use crate::core::config::Config;
+    use crate::core::storage::SessionConfig;
+    use crate::core::types::Chunk;
     use std::fs;
     use std::io::Write;
     use std::path::PathBuf;
@@ -281,14 +281,14 @@ mod tests {
         let mut config = Config::default();
         config.storage.index_dir = temp_dir.path().to_path_buf();
 
-        let services = Arc::new(ShebeServices::new(config));
+        let services = Arc::new(Services::new(config));
         let handler = ListDirHandler::new(services);
 
         (handler, temp_dir)
     }
 
     async fn create_test_session_with_files(
-        services: &Arc<ShebeServices>,
+        services: &Arc<Services>,
         session_id: &str,
         files: Vec<(&str, &str)>,
     ) {

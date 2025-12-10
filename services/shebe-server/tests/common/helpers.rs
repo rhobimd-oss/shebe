@@ -1,14 +1,14 @@
 // Test helper functions
 
-use shebe::api::state::AppState;
-use shebe::config::Config;
-use shebe::indexer::IndexingPipeline;
-use shebe::storage::SessionConfig;
-use shebe::types::IndexStats;
-use std::path::{Path, PathBuf};
+use shebe::core::config::Config;
+use shebe::core::indexer::IndexingPipeline;
+use shebe::core::services::Services;
+use shebe::core::storage::SessionConfig;
+use shebe::core::types::IndexStats;
+use std::path::Path;
 
-/// Create test app state with temporary storage
-pub fn create_test_app_state() -> AppState {
+/// Create test services with temporary storage
+pub fn create_test_services() -> Services {
     let mut config = Config::default();
 
     // Use temporary directory for tests
@@ -17,7 +17,7 @@ pub fn create_test_app_state() -> AppState {
     // Keep temp dir alive for duration of test
     std::mem::forget(temp_dir);
 
-    AppState::new(config)
+    Services::new(config)
 }
 
 /// Assert that index stats are valid
@@ -48,22 +48,22 @@ pub fn assert_valid_stats(stats: &IndexStats) {
 
 /// Index a test repository and return the session ID
 pub async fn index_test_repository(
-    state: &AppState,
+    services: &Services,
     repo_path: &Path,
     session_id: &str,
 ) -> IndexStats {
-    index_test_repository_with_patterns(state, repo_path, session_id, vec![], vec![]).await
+    index_test_repository_with_patterns(services, repo_path, session_id, vec![], vec![]).await
 }
 
 /// Index a test repository with custom patterns
 pub async fn index_test_repository_with_patterns(
-    state: &AppState,
+    services: &Services,
     repo_path: &Path,
     session_id: &str,
     include_patterns: Vec<String>,
     exclude_patterns: Vec<String>,
 ) -> IndexStats {
-    let config = &state.config;
+    let config = &services.config;
 
     // Prepare patterns for both pipeline and SessionConfig
     let include_for_config = if include_patterns.is_empty() {
@@ -99,7 +99,7 @@ pub async fn index_test_repository_with_patterns(
         .expect("Failed to index directory");
 
     // Create session
-    let mut index = state
+    let mut index = services
         .storage
         .create_session(
             session_id,
@@ -124,11 +124,11 @@ pub async fn index_test_repository_with_patterns(
     let duration_ms = start.elapsed().as_millis() as u64;
 
     // Update session metadata after indexing (critical fix for bug)
-    let session_path = state.storage.get_session_path(session_id);
+    let session_path = services.storage.get_session_path(session_id);
     let index_size_bytes = calculate_index_size(&session_path);
 
     use chrono::Utc;
-    use shebe::storage::SessionMetadata;
+    use shebe::core::storage::SessionMetadata;
     let now = Utc::now();
     let metadata = SessionMetadata {
         id: session_id.to_string(),
@@ -147,7 +147,7 @@ pub async fn index_test_repository_with_patterns(
         schema_version: 3,
     };
 
-    state
+    services
         .storage
         .update_session_metadata(session_id, &metadata)
         .expect("Failed to update session metadata");

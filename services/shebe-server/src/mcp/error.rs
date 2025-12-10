@@ -26,9 +26,9 @@ pub enum McpError {
     Json(#[from] serde_json::Error),
 }
 
-impl From<crate::error::ShebeError> for McpError {
-    fn from(err: crate::error::ShebeError) -> Self {
-        use crate::error::ShebeError;
+impl From<crate::core::error::ShebeError> for McpError {
+    fn from(err: crate::core::error::ShebeError) -> Self {
+        use crate::core::error::ShebeError;
         match err {
             ShebeError::SessionNotFound(s) => McpError::ToolError(
                 crate::mcp::protocol::SESSION_NOT_FOUND,

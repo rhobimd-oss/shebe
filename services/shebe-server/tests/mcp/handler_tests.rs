@@ -3,10 +3,10 @@
 #[cfg(test)]
 mod tests {
     use serde_json::json;
-    use shebe::config::Config;
+    use shebe::core::config::Config;
+    use shebe::core::services::Services;
     use shebe::mcp::handlers::ProtocolHandlers;
     use shebe::mcp::protocol::*;
-    use shebe::mcp::ShebeServices;
     use std::sync::Arc;
     use tempfile::TempDir;
 
@@ -14,7 +14,7 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let mut config = Config::default();
         config.storage.index_dir = temp_dir.path().to_path_buf();
-        let services = Arc::new(ShebeServices::new(config));
+        let services = Arc::new(Services::new(config));
         (ProtocolHandlers::new(services), temp_dir)
     }
 

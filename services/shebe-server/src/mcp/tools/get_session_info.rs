@@ -2,21 +2,21 @@
 
 use super::handler::{text_content, McpToolHandler};
 use super::helpers::format_bytes;
+use crate::core::services::Services;
+use crate::core::storage::SessionMetadata;
 use crate::mcp::error::McpError;
 use crate::mcp::protocol::{ToolResult, ToolSchema};
-use crate::mcp::services::ShebeServices;
-use crate::storage::SessionMetadata;
 use async_trait::async_trait;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::sync::Arc;
 
 pub struct GetSessionInfoHandler {
-    services: Arc<ShebeServices>,
+    services: Arc<Services>,
 }
 
 impl GetSessionInfoHandler {
-    pub fn new(services: Arc<ShebeServices>) -> Self {
+    pub fn new(services: Arc<Services>) -> Self {
         Self { services }
     }
 
@@ -141,9 +141,9 @@ impl McpToolHandler for GetSessionInfoHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::Config;
-    use crate::storage::SessionConfig;
-    use crate::types::Chunk;
+    use crate::core::config::Config;
+    use crate::core::storage::SessionConfig;
+    use crate::core::types::Chunk;
     use std::path::PathBuf;
     use tempfile::TempDir;
 
@@ -152,7 +152,7 @@ mod tests {
         let mut config = Config::default();
         config.storage.index_dir = temp_dir.path().to_path_buf();
 
-        let services = Arc::new(ShebeServices::new(config));
+        let services = Arc::new(Services::new(config));
         let handler = GetSessionInfoHandler::new(services);
 
         (handler, temp_dir)

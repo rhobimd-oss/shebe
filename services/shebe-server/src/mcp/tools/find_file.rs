@@ -1,9 +1,9 @@
 //! Find file by pattern tool handler
 
 use super::handler::{text_content, McpToolHandler};
+use crate::core::services::Services;
 use crate::mcp::error::McpError;
 use crate::mcp::protocol::{ToolResult, ToolSchema};
-use crate::mcp::services::ShebeServices;
 use async_trait::async_trait;
 use glob::Pattern as GlobPattern;
 use regex::Regex;
@@ -38,11 +38,11 @@ impl PatternType {
 }
 
 pub struct FindFileHandler {
-    services: Arc<ShebeServices>,
+    services: Arc<Services>,
 }
 
 impl FindFileHandler {
-    pub fn new(services: Arc<ShebeServices>) -> Self {
+    pub fn new(services: Arc<Services>) -> Self {
         Self { services }
     }
 
@@ -267,9 +267,9 @@ impl McpToolHandler for FindFileHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::Config;
-    use crate::storage::SessionConfig;
-    use crate::types::Chunk;
+    use crate::core::config::Config;
+    use crate::core::storage::SessionConfig;
+    use crate::core::types::Chunk;
     use std::fs;
     use std::io::Write;
     use std::path::PathBuf;
@@ -280,14 +280,14 @@ mod tests {
         let mut config = Config::default();
         config.storage.index_dir = temp_dir.path().to_path_buf();
 
-        let services = Arc::new(ShebeServices::new(config));
+        let services = Arc::new(Services::new(config));
         let handler = FindFileHandler::new(services);
 
         (handler, temp_dir)
     }
 
     async fn create_test_session_with_files(
-        services: &Arc<ShebeServices>,
+        services: &Arc<Services>,
         session_id: &str,
         files: Vec<(&str, &str)>,
     ) {

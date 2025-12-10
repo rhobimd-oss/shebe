@@ -3,7 +3,7 @@
 //! Returns the current configuration of the running shebe-mcp server.
 
 use super::handler::{text_content, McpToolHandler};
-use crate::config::Config;
+use crate::core::config::Config;
 use crate::mcp::error::McpError;
 use crate::mcp::protocol::{ToolResult, ToolSchema};
 use async_trait::async_trait;
@@ -147,7 +147,7 @@ impl McpToolHandler for ShowShebeConfigHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::Config;
+    use crate::core::config::Config;
 
     fn setup_test_handler() -> ShowShebeConfigHandler {
         let config = Arc::new(Config::default());

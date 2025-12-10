@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI/CD pipeline for automated releases (`scripts/ci-build.sh`, `scripts/ci-release.sh`)
 - GitLab release automation using CI_JOB_TOKEN
 
+### Changed
+- Reorganized codebase into `core/`, `http/`, `mcp/` top-level modules
+- Created unified `Services` struct replacing duplicate `ShebeServices` and `AppState`
+- Renamed `src/api/` to `src/http/` for consistency with adapter naming
+- Restructured test directory to mirror source layout (`tests/core/`, `tests/http/`, `tests/mcp/`)
+- Test count: 392 -> 285 (consolidated duplicate test modules)
+
 ## [0.4.1] - 2025-10-28
 
 ### Added

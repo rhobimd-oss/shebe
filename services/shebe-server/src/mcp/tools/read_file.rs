@@ -2,9 +2,9 @@
 
 use super::handler::{text_content, McpToolHandler};
 use super::helpers::{detect_language, format_bytes};
+use crate::core::services::Services;
 use crate::mcp::error::McpError;
 use crate::mcp::protocol::{ToolResult, ToolSchema};
-use crate::mcp::services::ShebeServices;
 use crate::mcp::utils::{build_read_file_warning, READ_FILE_MAX_CHARS};
 use async_trait::async_trait;
 use serde::Deserialize;
@@ -17,11 +17,11 @@ const DEFAULT_MAX_SIZE_KB: usize = 1024; // 1 MB default
 const ABSOLUTE_MAX_SIZE_KB: usize = 10240; // 10 MB absolute max
 
 pub struct ReadFileHandler {
-    services: Arc<ShebeServices>,
+    services: Arc<Services>,
 }
 
 impl ReadFileHandler {
-    pub fn new(services: Arc<ShebeServices>) -> Self {
+    pub fn new(services: Arc<Services>) -> Self {
         Self { services }
     }
 
@@ -288,9 +288,9 @@ impl McpToolHandler for ReadFileHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::Config;
-    use crate::storage::SessionConfig;
-    use crate::types::Chunk;
+    use crate::core::config::Config;
+    use crate::core::storage::SessionConfig;
+    use crate::core::types::Chunk;
     use std::fs;
     use std::io::Write;
     use tempfile::TempDir;
@@ -300,14 +300,14 @@ mod tests {
         let mut config = Config::default();
         config.storage.index_dir = temp_dir.path().to_path_buf();
 
-        let services = Arc::new(ShebeServices::new(config));
+        let services = Arc::new(Services::new(config));
         let handler = ReadFileHandler::new(services);
 
         (handler, temp_dir)
     }
 
     async fn create_test_session_with_file(
-        services: &Arc<ShebeServices>,
+        services: &Arc<Services>,
         session_id: &str,
         file_path: &str,
         content: &str,

@@ -1,9 +1,9 @@
 //! MCP server implementation
 
+use crate::core::services::Services;
 use crate::mcp::error::McpError;
 use crate::mcp::handlers::ProtocolHandlers;
 use crate::mcp::protocol::*;
-use crate::mcp::services::ShebeServices;
 use crate::mcp::transport::StdioTransport;
 use serde_json::Value;
 use std::sync::Arc;
@@ -16,7 +16,7 @@ pub struct McpServer {
 }
 
 impl McpServer {
-    pub fn new(services: Arc<ShebeServices>) -> Self {
+    pub fn new(services: Arc<Services>) -> Self {
         Self {
             transport: StdioTransport::new(),
             handlers: Arc::new(ProtocolHandlers::new(services)),
@@ -118,4 +118,4 @@ impl McpServer {
     }
 }
 
-// McpServer now requires ShebeServices, so Default is not implemented
+// McpServer now requires Services, so Default is not implemented

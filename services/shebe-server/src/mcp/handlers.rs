@@ -1,8 +1,8 @@
 //! MCP protocol method handlers
 
+use crate::core::services::Services;
 use crate::mcp::error::McpError;
 use crate::mcp::protocol::*;
-use crate::mcp::services::ShebeServices;
 use crate::mcp::tools::{
     DeleteSessionHandler, FindFileHandler, GetServerInfoHandler, GetSessionInfoHandler,
     IndexRepositoryHandler, ListDirHandler, ListSessionsHandler, PreviewChunkHandler,
@@ -20,7 +20,7 @@ pub struct ProtocolHandlers {
 }
 
 impl ProtocolHandlers {
-    pub fn new(services: Arc<ShebeServices>) -> Self {
+    pub fn new(services: Arc<Services>) -> Self {
         let mut registry = ToolRegistry::new();
 
         // Register all available tools
@@ -204,4 +204,4 @@ impl ProtocolHandlers {
     }
 }
 
-// ProtocolHandlers now requires ShebeServices, so Default is not implemented
+// ProtocolHandlers now requires Services, so Default is not implemented

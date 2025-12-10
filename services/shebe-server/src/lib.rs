@@ -6,10 +6,20 @@
 //!
 //! # Architecture
 //!
-//! - **API Layer**: REST endpoints via Axum
-//! - **Service Layer**: Business logic and orchestration
-//! - **Repository Layer**: Data access and management
-//! - **Storage Layer**: Tantivy indexes and metadata
+//! The codebase is organized into three main modules:
+//!
+//! - **core**: Domain logic (protocol-agnostic)
+//!   - config, error, types, xdg
+//!   - storage (session management, Tantivy)
+//!   - search (BM25 queries)
+//!   - indexer (file walking, chunking)
+//!   - services (unified service container)
+//!
+//! - **http**: REST API adapter (depends on core)
+//!   - handlers, middleware
+//!
+//! - **mcp**: MCP adapter (depends on core)
+//!   - server, tools, protocol
 //!
 //! # Key Features
 //!
@@ -17,28 +27,24 @@
 //! - BM25 search via Tantivy (no vector embeddings)
 //! - Session-based indexing (isolated indexes)
 //! - REST API (5 endpoints)
+//! - MCP server (12 tools)
 //! - Production ready (Docker, logging, metrics)
 
-// Phase 2: Core types and error handling (complete)
-pub mod config;
-pub mod error;
-pub mod types;
-pub mod xdg;
+// Core domain logic (protocol-agnostic)
+pub mod core;
 
-// Phase 3: UTF-8 safe chunker (complete)
-pub mod indexer;
+// HTTP REST adapter
+pub mod http;
 
-// Phase 5: Tantivy storage layer (complete)
-pub mod storage;
-
-// Phase 6: BM25 search implementation (complete)
-pub mod search;
-
-// Phase 7: REST API with Axum (complete)
-pub mod api;
-
-// Stage 2 Phase 2: MCP server integration (in progress)
+// MCP (Model Context Protocol) adapter
 pub mod mcp;
+
+// Re-export commonly used types for convenience
+pub use core::config::Config;
+pub use core::error::{Result, ShebeError};
+pub use core::services::Services;
+pub use core::storage::{SessionConfig, SessionMetadata, StorageManager};
+pub use core::types::*;
 
 #[cfg(test)]
 mod tests {

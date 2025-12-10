@@ -2,9 +2,9 @@
 
 **Content Search for Code - Developer's Guide to the Codebase**
 
-**Version:** 0.3.0 <br>
-**Updated:** 2025-10-28 <br>
-**Status:** 12 MCP Tools, 392 Tests (Production Ready)
+**Version:** 0.4.0 <br>
+**Updated:** 2025-12-10 <br>
+**Status:** 12 MCP Tools, 285 Tests (Production Ready)
 
 
 > **Purpose:** This document helps you understand where to find code and how to make changes.
@@ -30,14 +30,14 @@ Shebe is a **dual-binary RAG service** that provides BM25 full-text search for c
                 │                                        │
                 │  Direct filesystem access              │ Direct filesystem access
                 │                                        │
-                └────────────────┬───────────────────────┘
-                                 │
-                                 ▼
-                ┌─────────────────────────────────────────────┐
-                │  ~/.local/state/shebe/sessions/             │
-                │  (Tantivy indexes + session metadata)       │
-                │  - Shared Storage (filesystem)              │
-                └─────────────────────────────────────────────┘
+                └────────────────────┬───────────────────┘
+                                     │
+                                     ▼
+               ┌─────────────────────────────────────────────┐
+               │  ~/.local/state/shebe/sessions/             │
+               │  (Tantivy indexes + session metadata)       │
+               │  - Shared Storage (filesystem)              │
+               └─────────────────────────────────────────────┘
 ```
 
 **Key Insight:** Both binaries are **independent peers** accessing shared storage. 
@@ -59,42 +59,80 @@ cargo test     # Run from here
 
 ### Repository Structure
 
+The codebase is organized into three top-level modules: `core/`, `http/`, and `mcp/`.
+This separation provides clear boundaries between protocol-agnostic domain logic
+and protocol-specific adapters.
+
 ```
 shebe/                         # Repository root
 ├── services/shebe-server/     # Main Rust service
 │   ├── src/
 │   │   ├── main.rs            # Entry: HTTP server
-│   │   ├── lib.rs             # Library root
+│   │   ├── lib.rs             # Library root (exports core, http, mcp)
 │   │   ├── bin/
 │   │   │   └── shebe_mcp.rs   # Entry: MCP server
-│   │   ├── config.rs          # Config (TOML + env)
-│   │   ├── types.rs           # Data structures
-│   │   ├── error.rs           # Error types
-│   │   ├── indexer/           # Indexing pipeline
-│   │   │   ├── chunker.rs     # UTF-8 safe chunking
-│   │   │   ├── walker.rs      # File traversal
-│   │   │   └── pipeline.rs    # Orchestration
-│   │   ├── storage/           # Persistence
-│   │   │   ├── tantivy.rs     # Index wrapper
-│   │   │   └── session.rs     # Session mgmt
-│   │   ├── search/            # Search
-│   │   │   └── bm25.rs        # BM25 service
-│   │   ├── api/               # REST API
-│   │   │   └── handlers.rs    # 5 endpoints
-│   │   └── mcp/               # MCP integration
-│   │       ├── server.rs      # Event loop
-│   │       ├── handlers.rs    # Protocol
-│   │       ├── services.rs    # Wrapper
-│   │       └── tools/         # 11 tools
-│   ├── tests/                 # 384 tests
+│   │   │
+│   │   ├── core/              # Domain logic (protocol-agnostic)
+│   │   │   ├── mod.rs         # Core module root
+│   │   │   ├── config.rs      # Config (TOML + env)
+│   │   │   ├── error.rs       # Error types
+│   │   │   ├── types.rs       # Data structures
+│   │   │   ├── services.rs    # Unified Services struct
+│   │   │   ├── xdg.rs         # XDG directory handling
+│   │   │   ├── storage/       # Persistence
+│   │   │   │   ├── session.rs # Session management
+│   │   │   │   ├── tantivy.rs # Index wrapper
+│   │   │   │   └── validator.rs # Metadata validation
+│   │   │   ├── search/        # Search
+│   │   │   │   └── bm25.rs    # BM25 service
+│   │   │   └── indexer/       # Indexing pipeline
+│   │   │       ├── chunker.rs # UTF-8 safe chunking
+│   │   │       ├── walker.rs  # File traversal
+│   │   │       └── pipeline.rs # Orchestration
+│   │   │
+│   │   ├── http/              # HTTP adapter (depends on core)
+│   │   │   ├── mod.rs         # HTTP module root
+│   │   │   ├── handlers.rs    # 5 REST endpoints
+│   │   │   └── middleware.rs  # Request logging
+│   │   │
+│   │   └── mcp/               # MCP adapter (depends on core)
+│   │       ├── mod.rs         # MCP module root
+│   │       ├── server.rs      # Stdio event loop
+│   │       ├── handlers.rs    # Protocol routing
+│   │       ├── protocol.rs    # JSON-RPC types
+│   │       ├── transport.rs   # Stdio transport
+│   │       ├── error.rs       # MCP error types
+│   │       └── tools/         # 12 tool handlers
+│   │
+│   ├── tests/                 # 285 tests
 │   └── Cargo.toml             # 17 prod deps
 ├── docs/
-│   ├── CONTEXT.md             # Status tracker
 │   ├── Performance.md         # Benchmarks
 │   └── guides/                # User guides
+├── dev-docs/
+│   └── CONTEXT.md             # Status tracker (dev only)
 ├── ARCHITECTURE.md            # This doc
 └── README.md                  # Overview
 ```
+
+**Module Dependencies (one-way):**
+```
+                    ┌─────────────────┐
+                    │     core/       │
+                    │  (domain logic) │
+                    └────────┬────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              │                             │
+              ▼                             ▼
+    ┌─────────────────┐           ┌─────────────────┐
+    │     http/       │           │      mcp/       │
+    │  (REST adapter) │           │ (stdio adapter) │
+    └─────────────────┘           └─────────────────┘
+```
+
+**Rule:** `http/` and `mcp/` can import from `core/`, but never from each other,
+and `core/` never imports from adapters.
 
 ---
 
@@ -103,31 +141,36 @@ shebe/                         # Repository root
 ### HTTP Server: `src/main.rs`
 
 ```rust
+use shebe::core::{Config, Services};
+use shebe::http;
+
 #[tokio::main]
 async fn main() -> Result<()> {
-    // 1. Load config (config.rs)
-    // 2. Create StorageManager (storage/session.rs)
-    // 3. Create SearchService (search/bm25.rs)
-    // 4. Build Axum router (api/handlers.rs)
-    // 5. Start server
+    // 1. Load config (core/config.rs)
+    // 2. Create Services (core/services.rs)
+    // 3. Build Axum router (http/handlers.rs)
+    // 4. Start server
 }
 ```
 
-**Add REST endpoints:** `api/handlers.rs`
+**Add REST endpoints:** `src/http/handlers.rs`
 
 ### MCP Server: `src/bin/shebe_mcp.rs`
 
 ```rust
+use shebe::core::{Config, Services};
+use shebe::mcp::McpServer;
+
 #[tokio::main]
 async fn main() -> Result<()> {
-    // 1. Load config
-    // 2. Create ShebeServices
+    // 1. Load config (core/config.rs)
+    // 2. Create Services (core/services.rs)
     // 3. Register tools (mcp/handlers.rs)
     // 4. Run stdio loop (mcp/server.rs)
 }
 ```
 
-**Add MCP tools:** `mcp/tools/*.rs`
+**Add MCP tools:** `src/mcp/tools/*.rs`
 
 ---
 
@@ -145,21 +188,21 @@ async fn main() -> Result<()> {
 
 ### Modifying Search
 
-- **Query parsing:** `src/search/bm25.rs`
+- **Query parsing:** `src/core/search/bm25.rs`
 - **Ranking:** Tantivy BM25 (not customizable)
 - **Formatting:** `src/mcp/tools/search_code.rs`
 
 ### Changing Indexing
 
-- **File walking:** `src/indexer/walker.rs`
-- **Chunking:** `src/indexer/chunker.rs`
-- **Storage:** `src/storage/session.rs`
+- **File walking:** `src/core/indexer/walker.rs`
+- **Chunking:** `src/core/indexer/chunker.rs`
+- **Storage:** `src/core/storage/session.rs`
 
 **INVARIANT:** Chunker must respect UTF-8 boundaries
 
 ### Configuration
 
-- **Struct:** `src/config.rs`
+- **Struct:** `src/core/config.rs`
 - **Env vars:** `SHEBE_*` prefix
 
 ---
@@ -273,22 +316,22 @@ Schema {
 
 17 production crates:
 
-| Crate              | Purpose      | Why             |
-|--------------------|--------------|-----------------|
-| tantivy 0.22       | BM25         | Pure Rust       |
-| axum 0.7           | HTTP         | Tokio-native    |
-| tower/tower-http   | HTTP         | Middleware      |
-| tokio 1.x          | Async        | Standard        |
-| serde/serde_json   | JSON         | API             |
-| walkdir            | Files        | Simple          |
-| glob               | Patterns     | Familiar        |
-| regex              | Pattern match| File discovery  |
-| thiserror          | Errors       | Derive          |
-| tracing*           | Logs         | Async           |
-| toml               | Config       | Config files    |
-| chrono             | Timestamps   | Metadata        |
-| async-trait        | Traits       | MCP             |
-| dirs               | XDG paths    | Cross-platform  |
+| Crate               | Purpose       | Why              |
+|---------------------|---------------|------------------|
+| tantivy 0.22        | BM25          | Pure Rust        |
+| axum 0.7            | HTTP          | Tokio-native     |
+| tower/tower-http    | HTTP          | Middleware       |
+| tokio 1.x           | Async         | Standard         |
+| serde/serde_json    | JSON          | API              |
+| walkdir             | Files         | Simple           |
+| glob                | Patterns      | Familiar         |
+| regex               | Pattern match | File discovery   |
+| thiserror           | Errors        | Derive           |
+| tracing*            | Logs          | Async            |
+| toml                | Config        | Config files     |
+| chrono              | Timestamps    | Metadata         |
+| async-trait         | Traits        | MCP              |
+| dirs                | XDG paths     | Cross-platform   |
 
 ---
 

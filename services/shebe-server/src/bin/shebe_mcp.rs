@@ -3,10 +3,11 @@
 //! A stdio-based MCP server that exposes Shebe's search capabilities
 //! as tools for Claude Code and other MCP clients.
 
-use shebe::config::Config;
-use shebe::mcp::{McpServer, ShebeServices};
-use shebe::storage::MetadataValidator;
-use shebe::xdg::{migrate_legacy_paths, XdgDirs};
+use shebe::core::config::Config;
+use shebe::core::services::Services;
+use shebe::core::storage::MetadataValidator;
+use shebe::core::xdg::{migrate_legacy_paths, XdgDirs};
+use shebe::mcp::McpServer;
 use std::sync::Arc;
 
 fn init_logging() {
@@ -19,7 +20,7 @@ fn init_logging() {
 }
 
 /// Validate all session metadata on startup
-fn validate_sessions_on_startup(services: &ShebeServices) {
+fn validate_sessions_on_startup(services: &Services) {
     tracing::info!("Validating session metadata...");
 
     let validator = MetadataValidator::new(&services.storage);
@@ -103,7 +104,7 @@ async fn main() {
     });
 
     // Create services
-    let services = Arc::new(ShebeServices::new(config));
+    let services = Arc::new(Services::new(config));
 
     // Validate session metadata on startup
     validate_sessions_on_startup(&services);

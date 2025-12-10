@@ -2,10 +2,10 @@
 
 use super::handler::{text_content, McpToolHandler};
 use super::helpers::{detect_language, truncate_text};
+use crate::core::services::Services;
+use crate::core::types::SearchRequest;
 use crate::mcp::error::McpError;
 use crate::mcp::protocol::{ToolResult, ToolSchema};
-use crate::mcp::services::ShebeServices;
-use crate::types::SearchRequest;
 use async_trait::async_trait;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -14,15 +14,15 @@ use std::sync::Arc;
 const MAX_RESULT_TEXT_CHARS: usize = 2000;
 
 pub struct SearchCodeHandler {
-    services: Arc<ShebeServices>,
+    services: Arc<Services>,
 }
 
 impl SearchCodeHandler {
-    pub fn new(services: Arc<ShebeServices>) -> Self {
+    pub fn new(services: Arc<Services>) -> Self {
         Self { services }
     }
 
-    fn format_results(&self, response: &crate::types::SearchResponse) -> String {
+    fn format_results(&self, response: &crate::core::types::SearchResponse) -> String {
         let mut output = format!(
             "Found {} results for query '{}' ({}ms):\n\n",
             response.count, response.query, response.duration_ms
@@ -168,9 +168,9 @@ impl McpToolHandler for SearchCodeHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::Config;
-    use crate::storage::SessionConfig;
-    use crate::types::Chunk;
+    use crate::core::config::Config;
+    use crate::core::storage::SessionConfig;
+    use crate::core::types::Chunk;
     use std::path::PathBuf;
     use tempfile::TempDir;
 
@@ -179,13 +179,13 @@ mod tests {
         let mut config = Config::default();
         config.storage.index_dir = temp_dir.path().to_path_buf();
 
-        let services = Arc::new(ShebeServices::new(config));
+        let services = Arc::new(Services::new(config));
         let handler = SearchCodeHandler::new(services);
 
         (handler, temp_dir)
     }
 
-    async fn create_test_session(services: &Arc<ShebeServices>, session_id: &str) {
+    async fn create_test_session(services: &Arc<Services>, session_id: &str) {
         let mut index = services
             .storage
             .create_session(
@@ -320,9 +320,9 @@ mod tests {
     async fn test_format_results_markdown() {
         let (handler, _temp) = setup_test_handler().await;
 
-        let response = crate::types::SearchResponse {
+        let response = crate::core::types::SearchResponse {
             query: "test query".to_string(),
-            results: vec![crate::types::SearchResult {
+            results: vec![crate::core::types::SearchResult {
                 score: 12.45,
                 text: "fn test() {}".to_string(),
                 file_path: "test.rs".to_string(),
@@ -350,7 +350,7 @@ mod tests {
     async fn test_format_results_empty() {
         let (handler, _temp) = setup_test_handler().await;
 
-        let response = crate::types::SearchResponse {
+        let response = crate::core::types::SearchResponse {
             query: "nonexistent".to_string(),
             results: vec![],
             count: 0,

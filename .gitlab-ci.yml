@@ -53,6 +53,20 @@ variables:
 # Test Stage
 #--------------------------------------------------------------------------------------
 
+dummy:job:
+  stage: test
+  image: registry.gitlab.com/rhobimd-oss/cicd/alpine:20251111-b3.13-alpine3.22-bc832d850
+  script:
+    - /bin/true  # Does nothing, exits with status 0
+  interruptible: true
+  timeout: 15s
+  before_script: []  # Disable any global before_script
+  after_script: []   # Disable any global after_script
+  cache: {}          # Disable caching
+  artifacts:
+    reports: {}      # Disable artifact generation
+
+
 test:shebe:
   stage: test
   image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-b1.88-slim

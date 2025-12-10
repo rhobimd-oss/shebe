@@ -9,6 +9,6 @@ pub mod helpers;
 pub use fixtures::{OpenEmrData, TestRepo};
 #[allow(unused_imports)]
 pub use helpers::{
-    assert_valid_stats, create_test_app_state, index_test_repository,
+    assert_valid_stats, create_test_services, index_test_repository,
     index_test_repository_with_patterns,
 };

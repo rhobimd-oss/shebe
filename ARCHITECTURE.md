@@ -2,9 +2,9 @@
 
 **Content Search for Code - Developer's Guide to the Codebase**
 
-**Version:** 0.4.0 <br>
-**Updated:** 2025-12-10 <br>
-**Status:** 12 MCP Tools, 285 Tests (Production Ready)
+**Version:** 0.5.0 <br>
+**Updated:** 2025-12-11 <br>
+**Status:** 14 MCP Tools, 392 Tests (Production Ready)
 
 
 > **Purpose:** This document helps you understand where to find code and how to make changes.
@@ -23,7 +23,7 @@ Shebe is a **dual-binary RAG service** that provides BM25 full-text search for c
                ▼
     ┌────────────────────────────────┐      ┌────────────────────────────────┐
     │   shebe-mcp (MCP Binary)       │      │   shebe (HTTP Server)          │
-    │   - 12 MCP tools               │      │   - REST API (5 endpoints)     │
+    │   - 14 MCP tools               │      │   - REST API (5 endpoints)     │
     │   - stdio transport            │      │   - Initial indexing           │
     │   - Independent operation      │      │   - Optional (not required)    │
     └───────────┬────────────────────┘      └────────────┬───────────────────┘
@@ -59,7 +59,7 @@ cargo test     # Run from here
 
 ### Repository Structure
 
-The codebase is organized into three top-level modules: `core/`, `http/`, and `mcp/`.
+The codebase is organized into three top-level modules: `core/`, `http/` and `mcp/`.
 This separation provides clear boundaries between protocol-agnostic domain logic
 and protocol-specific adapters.
 
@@ -102,7 +102,7 @@ shebe/                         # Repository root
 │   │       ├── protocol.rs    # JSON-RPC types
 │   │       ├── transport.rs   # Stdio transport
 │   │       ├── error.rs       # MCP error types
-│   │       └── tools/         # 12 tool handlers
+│   │       └── tools/         # 14 tool handlers
 │   │
 │   ├── tests/                 # 285 tests
 │   └── Cargo.toml             # 17 prod deps
@@ -375,7 +375,7 @@ cargo run --bin shebe-mcp  # MCP
 
 ---
 
-## MCP Tools (12)
+## MCP Tools (14)
 
 | Tool               | Category  | Description                                  | Performance                 |
 |--------------------|-----------|----------------------------------------------|-----------------------------|
@@ -389,8 +389,10 @@ cargo run --bin shebe-mcp  # MCP
 | delete_session     | Ergonomic | Delete session with confirmation             | <10ms                       |
 | list_dir           | Ergonomic | List directory contents with pagination      | <10ms, 500 file limit       |
 | find_file          | Ergonomic | Find files by glob/regex patterns            | <10ms                       |
+| find_references    | Ergonomic | Find symbol references with confidence       | <500ms typical              |
 | preview_chunk      | Ergonomic | Show chunk context (v0.3.0: schema v2 fix)   | <5ms                        |
 | reindex_session    | Ergonomic | Re-index using stored path (v0.3.0: v3 feat) | Same as index_repository    |
+| upgrade_session    | Ergonomic | Upgrade session schema to latest version     | <100ms                      |
 
 **Pattern:** All implement `McpToolHandler`
 **Performance:** Validated on 30/30 test scenarios (100% success rate)
@@ -417,8 +419,8 @@ ShebeError -> McpError -> JSON-RPC error
 ---
 
 **Document Status:** Living document
-**Version:** 0.3.0 (12 tools, 392 tests, schema v3)
-**Updated:** 2025-10-28
+**Version:** 0.5.0 (14 tools, 392 tests, schema v3)
+**Updated:** 2025-12-11
 **Performance:** Validated with 30/30 test scenarios (100% success rate)
 - **Indexing:** 1,928-11,210 files/sec (Istio: 5,605 files in 0.5s, OpenEMR: 6,364 files in 3.3s)
 - **Search:** 2ms latency, 210-650 tokens/query, 11 file types in single query

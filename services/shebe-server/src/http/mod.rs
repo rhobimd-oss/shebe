@@ -2,7 +2,7 @@
 //!
 //! Depends only on core/. Never imports from mcp/.
 //!
-//! Provides HTTP endpoints for indexing, searching, and session
+//! Provides HTTP endpoints for indexing, searching and session
 //! management via Axum web framework.
 
 pub mod handlers;

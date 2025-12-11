@@ -24,7 +24,7 @@ pub const LIST_DIR_MAX_LIMIT: usize = 500;
 ///
 /// This conservative limit ensures:
 /// - Well under MCP 25k token limit (5k tokens + markdown overhead < 10k tokens)
-/// - Room for warning messages, syntax highlighting, and metadata
+/// - Room for warning messages, syntax highlighting and metadata
 /// - UTF-8 safety with character-based truncation
 pub const READ_FILE_MAX_CHARS: usize = 20_000;
 

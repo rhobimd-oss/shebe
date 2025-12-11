@@ -100,7 +100,7 @@ exit
 
 The container has:
 - Working directory: `/workspace` (maps to `services/shebe-server`)
-- Cached volumes: cargo registry, git, and build artifacts
+- Cached volumes: cargo registry, git and build artifacts
 - Environment: `RUST_BACKTRACE=1`, `CARGO_HOME=/usr/local/cargo`
 
 ---
@@ -217,7 +217,7 @@ All commands use the shebe-dev container via Makefile targets.
 | `make build-release` | 2-3 min | 30-60s     | Release build               |
 
 **First run:** Downloads dependencies and builds from scratch
-**Cached run:** Uses Docker volumes for registry, git, and build artifacts
+**Cached run:** Uses Docker volumes for registry, git and build artifacts
 
 **Test suite:** 392 tests across 7 categories (unit, integration, API, session, MCP, UTF-8, doc)
 

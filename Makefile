@@ -19,12 +19,13 @@ BUILD_CONTEXT := services/shebe-server
 
 # Runtime configuration
 HOST_PORT ?= 3000
-DATA_DIR ?= $(PWD)/data
+PROJECT_DIR ?= $(PWD)
 
 
 # DEVELOPMENT TARGETS ----------------------------------------------------------
 # All local Rust commands run in shebe-dev container for consistency with CI/CD
-DOCKER_RUN := cd deploy && docker compose run --rm shebe-dev
+DOCKER_RUN := docker compose --file ${PROJECT_DIR}/deploy/docker-compose.yml run --rm shebe-dev
+
 
 # Build targets
 build:
@@ -38,7 +39,7 @@ build-release:
 # Test and quality targets
 test:
 	@echo "Running tests in shebe-dev container..."
-	$(DOCKER_RUN) cargo nextest run
+	$(DOCKER_RUN) cargo nextest run --color=always
 
 test-coverage:
 	@echo "Running tests with coverage in shebe-dev container..."
@@ -79,11 +80,11 @@ clean:
 VERSION ?= $(shell cat services/shebe-server/VERSION)
 ARCH := linux-x86_64
 VERSIONED_NAME := shebe-mcp-v$(VERSION)-$(ARCH)
-MCP_BINARY := services/shebe-server/target/release/shebe-mcp
+MCP_BINARY := services/shebe-server/build/release/shebe-mcp
 
 mcp-build:
 	@echo "Building shebe-mcp in shebe-dev container..."
-	$(DOCKER_RUN) cargo build --release --verbose --bin shebe-mcp
+	$(DOCKER_RUN) cargo build --release --bin shebe-mcp --target-dir /workspace/build
 
 mcp-install: mcp-build
 	@echo "Installing $(VERSIONED_NAME) to /usr/local/lib/..."
@@ -146,5 +147,4 @@ help:
 	@echo "Variables:"
 	@echo "  IMAGE_TAG=$(IMAGE_TAG)"
 	@echo "  HOST_PORT=$(HOST_PORT)"
-	@echo "  DATA_DIR=$(DATA_DIR)"
 	@echo "  VERSION=$(VERSION)"

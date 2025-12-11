@@ -64,13 +64,13 @@ All options are organized into logical sections. Each option can be set via TOML
 
 These settings control how Shebe chunks and indexes repository files.
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| toml: `chunk_size`<br>env: `SHEBE_CHUNK_SIZE` | integer | `512` | Number of Unicode characters per chunk. Larger values provide more context per chunk but use<br>more storage. Must be > 0 and > overlap. **Measured in characters, not bytes** to ensure UTF-8<br>safety across emoji, CJK, and special characters. |
-| toml: `overlap`<br>env: `SHEBE_OVERLAP` | integer | `64` | Number of characters to overlap between consecutive chunks. Ensures search terms near chunk<br>boundaries are found. Must be < chunk_size. Higher values improve boundary matching but<br>increase index size. |
-| toml: `max_file_size_mb`<br>env: `SHEBE_MAX_FILE_SIZE_MB` | integer | `10` | Maximum file size in megabytes. Files larger than this are skipped during indexing to prevent<br>memory issues and slow indexing. Common for vendored dependencies or generated files. |
-| toml: `include_patterns`<br>env: N/A | array of<br>strings | See below | Glob patterns for files to index (e.g., `*.rs`, `*.py`). Only files matching these patterns<br>are indexed. Use `**` for recursive matching. |
-| toml: `exclude_patterns`<br>env: N/A | array of<br>strings | See below | Glob patterns for files to skip (e.g., `**/node_modules/**`). Applied after include patterns.<br>Use to skip build artifacts, dependencies, and binary files. |
+| Option                                                    | Type                | Default   | Description                                                                                                                                                                                                                                         |
+|-----------------------------------------------------------|---------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| toml: `chunk_size`<br>env: `SHEBE_CHUNK_SIZE`             | integer             | `512`     | Number of Unicode characters per chunk. Larger values provide more context per chunk but use<br>more storage. Must be > 0 and > overlap. **Measured in characters, not bytes** to ensure UTF-8<br>safety across emoji, CJK and special characters. |
+| toml: `overlap`<br>env: `SHEBE_OVERLAP`                   | integer             | `64`      | Number of characters to overlap between consecutive chunks. Ensures search terms near chunk<br>boundaries are found. Must be < chunk_size. Higher values improve boundary matching but<br>increase index size.                                      |
+| toml: `max_file_size_mb`<br>env: `SHEBE_MAX_FILE_SIZE_MB` | integer             | `10`      | Maximum file size in megabytes. Files larger than this are skipped during indexing to prevent<br>memory issues and slow indexing. Common for vendored dependencies or generated files.                                                              |
+| toml: `include_patterns`<br>env: N/A                      | array of<br>strings | See below | Glob patterns for files to index (e.g., `*.rs`, `*.py`). Only files matching these patterns<br>are indexed. Use `**` for recursive matching.                                                                                                        |
+| toml: `exclude_patterns`<br>env: N/A                      | array of<br>strings | See below | Glob patterns for files to skip (e.g., `**/node_modules/**`). Applied after include patterns.<br>Use to skip build artifacts, dependencies and binary files.                                                                                       |
 
 **Default include patterns:** `*.rs`, `*.toml`, `*.md`, `*.txt`, `*.php`, `*.js`, `*.ts`, `*.py`, `*.go`, `*.java`, `*.c`, `*.cpp`, `*.h`
 
@@ -80,45 +80,45 @@ These settings control how Shebe chunks and indexes repository files.
 
 Controls where indexed data is stored.
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| toml: `index_dir`<br>env: `SHEBE_DATA_DIR` | path | `~/.local/share/`<br>`shebe/sessions/` | Directory where session indexes are stored. Each indexed repository gets a subdirectory here.<br>Uses XDG data directory by default. Set `SHEBE_DATA_DIR` to use a custom location. |
+| Option                                     | Type  | Default                                | Description                                                                                                                                                                         |
+|--------------------------------------------|-------|----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| toml: `index_dir`<br>env: `SHEBE_DATA_DIR` | path  | `~/.local/share/`<br>`shebe/sessions/` | Directory where session indexes are stored. Each indexed repository gets a subdirectory here.<br>Uses XDG data directory by default. Set `SHEBE_DATA_DIR` to use a custom location. |
 
 ### Search Options
 
 Controls search behavior and result limits.
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| toml: `default_k`<br>env: `SHEBE_DEFAULT_K` | integer | `10` | Number of search results returned when the MCP client doesn't specify a limit. Balance between<br>result comprehensiveness and token usage. Must be > 0 and <= max_k. |
-| toml: `max_k`<br>env: `SHEBE_MAX_K` | integer | `100` | Hard limit on maximum search results per query. Prevents excessive token usage even if client<br>requests more. Enforced server-side for resource protection. |
-| toml: `max_query_length`<br>env: `SHEBE_MAX_QUERY_LENGTH` | integer | `500` | Maximum length of search query string in characters. Prevents pathologically long queries that<br>could cause performance issues. BM25 works best with 2-10 keywords. |
+| Option                                                    | Type    | Default  | Description                                                                                                                                                           |
+|-----------------------------------------------------------|---------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| toml: `default_k`<br>env: `SHEBE_DEFAULT_K`               | integer | `10`     | Number of search results returned when the MCP client doesn't specify a limit. Balance between<br>result comprehensiveness and token usage. Must be > 0 and <= max_k. |
+| toml: `max_k`<br>env: `SHEBE_MAX_K`                       | integer | `100`    | Hard limit on maximum search results per query. Prevents excessive token usage even if client<br>requests more. Enforced server-side for resource protection.         |
+| toml: `max_query_length`<br>env: `SHEBE_MAX_QUERY_LENGTH` | integer | `500`    | Maximum length of search query string in characters. Prevents pathologically long queries that<br>could cause performance issues. BM25 works best with 2-10 keywords. |
 
 ### Resource Limits
 
 Controls concurrency and timeouts.
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| toml: `max_concurrent_indexes`<br>env: `SHEBE_MAX_CONCURRENT_INDEXES` | integer | `1` | Maximum number of repositories that can be indexed simultaneously. Set to `1` to prevent<br>CPU/memory exhaustion. Increase only on powerful machines with sufficient RAM (2GB+ per<br>concurrent index). |
-| toml: `request_timeout_sec`<br>env: `SHEBE_REQUEST_TIMEOUT_SEC` | integer | `300` | Timeout in seconds for indexing and search requests. Indexing large repositories (>10k files)<br>may need longer timeouts. Search queries typically complete in milliseconds. |
+| Option                                                                | Type    | Default  | Description                                                                                                                                                                                               |
+|-----------------------------------------------------------------------|---------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| toml: `max_concurrent_indexes`<br>env: `SHEBE_MAX_CONCURRENT_INDEXES` | integer | `1`      | Maximum number of repositories that can be indexed simultaneously. Set to `1` to prevent<br>CPU/memory exhaustion. Increase only on powerful machines with sufficient RAM (2GB+ per<br>concurrent index). |
+| toml: `request_timeout_sec`<br>env: `SHEBE_REQUEST_TIMEOUT_SEC`       | integer | `300`    | Timeout in seconds for indexing and search requests. Indexing large repositories (>10k files)<br>may need longer timeouts. Search queries typically complete in milliseconds.                             |
 
 ### Logging Options
 
 Controls diagnostic output (written to stderr, not stdout, to preserve MCP protocol on stdout).
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
+| Option                                      | Type   | Default  | Description                                                                                                                                                                                                         |
+|---------------------------------------------|--------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | toml: `log_level`<br>env: `SHEBE_LOG_LEVEL` | string | `"info"` | Logging verbosity level. Options: `trace` (very verbose, development), `debug` (detailed<br>diagnostics), `info` (normal operations), `warn` (problems only), `error` (critical issues only).<br>Logs go to stderr. |
 
 ### Server Options (HTTP mode only)
 
 These settings apply only when running `shebe` HTTP server, not `shebe-mcp`:
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| toml: `host`<br>env: `SHEBE_HOST` | string | `"127.0.0.1"` | HTTP server bind address. Use `"127.0.0.1"` for localhost only, or `"0.0.0.0"` to accept<br>external connections. **Not used by shebe-mcp** (MCP uses stdio). |
-| toml: `port`<br>env: `SHEBE_PORT` | integer | `3000` | HTTP server port. **Not used by shebe-mcp** (MCP uses stdio). Only relevant for `shebe` HTTP<br>mode. |
+| Option                            | Type    | Default       | Description                                                                                                                                                   |
+|-----------------------------------|---------|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| toml: `host`<br>env: `SHEBE_HOST` | string  | `"127.0.0.1"` | HTTP server bind address. Use `"127.0.0.1"` for localhost only, or `"0.0.0.0"` to accept<br>external connections. **Not used by shebe-mcp** (MCP uses stdio). |
+| toml: `port`<br>env: `SHEBE_PORT` | integer | `3000`        | HTTP server port. **Not used by shebe-mcp** (MCP uses stdio). Only relevant for `shebe` HTTP<br>mode.                                                         |
 
 ## Example Configurations
 

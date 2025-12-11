@@ -109,7 +109,7 @@ impl McpToolHandler for ShowShebeConfigHandler {
         ToolSchema {
             name: "show_shebe_config".to_string(),
             description: "Show the current configuration of the running shebe-mcp server. \
-                         Shows all settings: indexing, search, storage, and limits. \
+                         Shows all settings: indexing, search, storage and limits. \
                          Use this to understand how the server is configured. \
                          Fast operation (<1ms)."
                 .to_string(),

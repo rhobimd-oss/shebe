@@ -5,6 +5,7 @@
 
 pub mod delete_session;
 pub mod find_file;
+pub mod find_references;
 pub mod get_server_info;
 pub mod get_session_info;
 pub mod handler;
@@ -22,6 +23,7 @@ pub mod upgrade_session;
 
 pub use delete_session::DeleteSessionHandler;
 pub use find_file::FindFileHandler;
+pub use find_references::FindReferencesHandler;
 pub use get_server_info::GetServerInfoHandler;
 pub use get_session_info::GetSessionInfoHandler;
 pub use handler::{text_content, McpToolHandler};

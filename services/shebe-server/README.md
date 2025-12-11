@@ -67,7 +67,7 @@ max_k = 100
 ## Development
 
 **Working Directory:** Always from this directory:
-`/home/orodha/gitlab/rhobimd-oss/shebe/services/shebe-server/`
+`~/gitlab/rhobimd-oss/shebe/services/shebe-server/`
 
 See [CLAUDE.md](/CLAUDE.md) for development workflows and
 conventions.

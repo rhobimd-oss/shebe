@@ -70,7 +70,7 @@ impl FileWalker {
     /// Collect all matching files from a directory
     ///
     /// Traverses the directory tree, applies include/exclude
-    /// patterns, and filters by file size.
+    /// patterns and filters by file size.
     ///
     /// # Arguments
     ///

@@ -98,7 +98,7 @@ impl McpToolHandler for UpgradeSessionHandler {
         let args: UpgradeArgs =
             serde_json::from_value(args).map_err(|e| McpError::InvalidParams(e.to_string()))?;
 
-        // 1. Get session metadata (includes repository_path, config, and schema_version)
+        // 1. Get session metadata (includes repository_path, config and schema_version)
         let metadata = self
             .services
             .storage

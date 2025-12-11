@@ -80,7 +80,7 @@ EOF
 Start Shebe server (in separate terminal):
 ```bash
 cd /path/to/shebe/services/shebe-server
-SHEBE_INDEX_DIR=/home/orodha/.local/state/shebe cargo run --release
+SHEBE_INDEX_DIR=~/.local/state/shebe cargo run --release
 ```
 
 Index the code:
@@ -88,7 +88,7 @@ Index the code:
 curl -X POST http://localhost:3000/api/v1/index \
   -H "Content-Type: application/json" \
   -d '{
-    "path": "/home/orodha/github/openemr/openemr",
+    "path": "~/github/openemr/openemr",
     "session": "openemr"
   }'
 ```

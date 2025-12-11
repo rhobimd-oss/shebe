@@ -1,7 +1,7 @@
 //! Integration tests for the Shebe REST API
 //!
 //! Tests the complete end-to-end workflow including indexing,
-//! searching, and session management.
+//! searching and session management.
 
 use std::sync::Arc;
 

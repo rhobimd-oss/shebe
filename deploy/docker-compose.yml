@@ -1,3 +1,23 @@
+volumes:
+  shebe-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/data
+  # Cargo cache volumes for faster test runs
+  cargo-registry:
+    driver: local
+  cargo-git:
+    driver: local
+  cargo-target:
+    driver: local
+
+networks:
+  shebe-network:
+    driver: bridge
+
+
 services:
 
   shebe-dev:
@@ -23,39 +43,3 @@ services:
     tty: true
     command: bash
 
-  shebe-test:
-    image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-b1.88-slim
-    container_name: shebe-test
-    working_dir: /workspace/services/shebe-server
-    volumes:
-      # Mount project root (read-write for cargo cache)
-      - ../:/workspace:rw
-      # Cache cargo registry and git checkouts (speeds up subsequent runs)
-      - cargo-registry:/usr/local/cargo/registry
-      - cargo-git:/usr/local/cargo/git
-      # Cache build artifacts (speeds up incremental builds)
-      - cargo-target:/workspace/services/shebe-server/target
-    environment:
-      RUST_BACKTRACE: 1
-      CARGO_HOME: /usr/local/cargo
-    # Default command: run all tests
-    command: cargo nextest run --color=always
-
-volumes:
-  shebe-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${PWD}/data
-  # Cargo cache volumes for faster test runs
-  cargo-registry:
-    driver: local
-  cargo-git:
-    driver: local
-  cargo-target:
-    driver: local
-
-networks:
-  shebe-network:
-    driver: bridge

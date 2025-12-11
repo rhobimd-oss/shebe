@@ -4,10 +4,10 @@ use crate::core::services::Services;
 use crate::mcp::error::McpError;
 use crate::mcp::protocol::*;
 use crate::mcp::tools::{
-    DeleteSessionHandler, FindFileHandler, GetServerInfoHandler, GetSessionInfoHandler,
-    IndexRepositoryHandler, ListDirHandler, ListSessionsHandler, PreviewChunkHandler,
-    ReadFileHandler, ReindexSessionHandler, SearchCodeHandler, ShowShebeConfigHandler,
-    ToolRegistry, UpgradeSessionHandler,
+    DeleteSessionHandler, FindFileHandler, FindReferencesHandler, GetServerInfoHandler,
+    GetSessionInfoHandler, IndexRepositoryHandler, ListDirHandler, ListSessionsHandler,
+    PreviewChunkHandler, ReadFileHandler, ReindexSessionHandler, SearchCodeHandler,
+    ShowShebeConfigHandler, ToolRegistry, UpgradeSessionHandler,
 };
 use serde_json::{json, Value};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -36,6 +36,7 @@ impl ProtocolHandlers {
         registry.register(Arc::new(DeleteSessionHandler::new(Arc::clone(&services))));
         registry.register(Arc::new(ListDirHandler::new(Arc::clone(&services))));
         registry.register(Arc::new(FindFileHandler::new(Arc::clone(&services))));
+        registry.register(Arc::new(FindReferencesHandler::new(Arc::clone(&services))));
         registry.register(Arc::new(PreviewChunkHandler::new(Arc::clone(&services))));
         registry.register(Arc::new(ReindexSessionHandler::new(Arc::clone(&services))));
         registry.register(Arc::new(UpgradeSessionHandler::new(Arc::clone(&services))));

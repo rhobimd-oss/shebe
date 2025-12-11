@@ -1,7 +1,7 @@
 //! Tantivy integration for BM25 full-text search.
 //!
 //! This module wraps Tantivy operations for creating,
-//! managing, and searching indexes.
+//! managing and searching indexes.
 
 use crate::core::error::{Result, ShebeError};
 use crate::core::types::Chunk;
@@ -13,7 +13,7 @@ use tantivy::{doc, Index, IndexReader, IndexWriter};
 /// Current schema version
 /// Version 1: Initial schema (chunk_index STORED only)
 /// Version 2: Added INDEXED flag to chunk_index for preview_chunk queries
-/// Version 3: Added repository_path, last_indexed_at, and patterns to SessionMetadata
+/// Version 3: Added repository_path, last_indexed_at and patterns to SessionMetadata
 pub const SCHEMA_VERSION: u32 = 3;
 
 /// Create the Tantivy schema for chunk indexing

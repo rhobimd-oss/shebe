@@ -1,7 +1,7 @@
 # Shebe Installation Guide
 
-**Version:** 0.3.0
-**Last Updated:** 2025-10-26
+**Version:** 0.5.0
+**Last Updated:** 2025-12-11
 **Focus:** MCP Server (shebe-mcp) for Claude Code Integration
 
 ---
@@ -9,7 +9,7 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Prerequisites](#prerequisites)
+2. [Quick Install (Pre-built Binary)](#quick-install-pre-built-binary)
 3. [Building from Source](#building-from-source)
 4. [Installation](#installation)
 5. [Claude Code Configuration](#claude-code-configuration)
@@ -24,26 +24,68 @@ Shebe provides **shebe-mcp**, a Model Context Protocol server that integrates wi
 real-time code search during development sessions.
 
 **What you get:**
-- 11 MCP tools for code search, file discovery, and session management
+- 14 MCP tools for code search, file discovery and session management
 - Direct repository indexing from Claude Code conversations
 - 2ms search latency (validated on 5-6k file repositories)
 - Support for 11+ file types in polyglot codebases
-- 384 tests passing (100% success rate)
+- 392 tests passing (100% success rate)
 
 **No HTTP server required** - shebe-mcp operates independently with filesystem storage.
 
 ---
 
-## Prerequisites
+## Quick Install (Pre-built Binary)
+
+The fastest way to get started. Pre-built binaries are available for Linux x86_64.
+
+### Download and Install
+
+```bash
+# Download the latest release
+curl -L -o shebe-v0.5.0-linux-x86_64.tar.gz \
+  "https://gitlab.com/rhobimd-oss/shebe/-/jobs/artifacts/v0.5.0/raw/releases/shebe-v0.5.0-linux-x86_64.tar.gz?job=build:shebe"
+
+# Verify checksum (optional but recommended)
+curl -L -o shebe.sha256 \
+  "https://gitlab.com/rhobimd-oss/shebe/-/jobs/artifacts/v0.5.0/raw/releases/shebe-v0.5.0-linux-x86_64.tar.gz.sha256?job=build:shebe"
+sha256sum -c shebe.sha256
+
+# Extract
+tar -xzf shebe-v0.5.0-linux-x86_64.tar.gz
+
+# Install to PATH (choose one)
+sudo mv shebe shebe-mcp /usr/local/bin/          # System-wide
+# OR
+mkdir -p ~/.local/bin && mv shebe shebe-mcp ~/.local/bin/  # User-only
+
+# Verify installation
+shebe-mcp --version
+```
+
+### Available Binaries
+
+| Platform  | Architecture            | Status            |
+|-----------|-------------------------|-------------------|
+| Linux     | x86_64 (amd64)          | Available         |
+| Linux     | aarch64 (ARM64)         | Planned           |
+| macOS     | x86_64                  | Build from source |
+| macOS     | aarch64 (Apple Silicon) | Build from source |
+| Windows   | x86_64                  | Build from source |
+
+See [All Releases](https://gitlab.com/rhobimd-oss/shebe/-/releases) for the latest binaries.
+
+---
+
+## Building from Source
+
+Required for macOS, Windows, or if you want the latest development version.
+
+### Prerequisites
 
 - **Rust:** 1.88 or later ([install from rustup.rs](https://rustup.rs/))
 - **Git:** For cloning the repository
 - **Claude Code:** Desktop app with MCP support
 - **Platform:** Linux, macOS, or Windows
-
----
-
-## Building from Source
 
 ### 1. Clone Repository
 
@@ -58,14 +100,18 @@ cd shebe
 # Build release binary (optimized)
 make mcp-build
 
-# Binary created at: services/shebe-server/target/release/shebe-mcp
+# Binary created at: services/shebe-server/build/release/shebe-mcp
 ```
 
-**Alternative (manual build):**
+**Alternative (manual build without Docker):**
 ```bash
 cd services/shebe-server
 cargo build --release --bin shebe-mcp
+# Binary at: services/shebe-server/target/release/shebe-mcp
 ```
+
+**Note:** `make mcp-build` outputs to `build/` directory (not `target/`) because
+`target/` is a cached Docker volume for faster incremental builds.
 
 ### 3. Verify Build
 
@@ -73,15 +119,29 @@ cargo build --release --bin shebe-mcp
 # Run tests to ensure everything works
 make mcp-test
 
-# Check binary exists
-ls -lh services/shebe-server/target/release/shebe-mcp
+# Check binary exists (make mcp-build output)
+ls -lh services/shebe-server/build/release/shebe-mcp
 ```
 
 ---
 
 ## Installation
 
-### Recommended: User Installation
+### From Pre-built Binary
+
+If you downloaded the pre-built binary, it's already extracted. Just move to PATH:
+
+```bash
+# System-wide (requires sudo)
+sudo mv shebe shebe-mcp /usr/local/bin/
+
+# Or user-only (no sudo)
+mkdir -p ~/.local/bin
+mv shebe shebe-mcp ~/.local/bin/
+export PATH="$HOME/.local/bin:$PATH"  # Add to ~/.bashrc or ~/.zshrc
+```
+
+### From Source Build
 
 Install to your local bin directory (no sudo required):
 
@@ -123,30 +183,6 @@ The `mcp-install-config` target will:
 - Use a custom data directory
 
 See [CONFIGURATION.md](./CONFIGURATION.md) for all available options.
-
-### Manual Installation
-
-If you prefer manual installation:
-
-```bash
-# Build binary
-cd services/shebe-server
-cargo build --release --bin shebe-mcp
-
-# Copy to a directory in your PATH
-sudo cp target/release/shebe-mcp /usr/local/bin/
-
-# Or for user-only installation
-mkdir -p ~/.local/bin
-cp target/release/shebe-mcp ~/.local/bin/
-
-# Ensure ~/.local/bin is in your PATH (add to ~/.bashrc or ~/.zshrc)
-export PATH="$HOME/.local/bin:$PATH"
-
-# Optional: Install config file template
-mkdir -p ~/.config/shebe
-cp shebe.toml ~/.config/shebe/config.toml
-```
 
 ---
 
@@ -202,6 +238,11 @@ Once configured, you can use Shebe directly in conversations:
 "List all YAML files in the myapp-main session"
 ```
 
+**Find references before renaming:**
+```
+"Find all references to handleLogin in myapp-main"
+```
+
 **Get context around results:**
 ```
 "Show me 20 lines of context around that search result"
@@ -220,7 +261,7 @@ Claude Code will automatically use the appropriate MCP tools.
 echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | \
   shebe-mcp | jq '.'
 
-# Expected: JSON response with server info and 11 MCP tools
+# Expected: JSON response with server info and 14 MCP tools
 ```
 
 ### Test in Claude Code
@@ -318,6 +359,17 @@ tail -f ~/.config/claude/logs/mcp.log
 - **Search:** Should be <10ms; check debug logs
 - **Large files:** Auto-truncates at 20KB (expected behavior)
 
+### Issue: Schema Version Mismatch
+
+**Solution:**
+```bash
+# Use the upgrade_session tool in Claude Code:
+"Upgrade the old-project session to the current schema"
+
+# Or re-index the repository:
+"Re-index ~/projects/myapp as myapp-main with force"
+```
+
 ### Common Error Messages
 
 | Error                 | Meaning                 | Solution                          |
@@ -325,7 +377,7 @@ tail -f ~/.config/claude/logs/mcp.log
 | "Session not found"   | Session doesn't exist   | Index repository first            |
 | "Path does not exist" | Invalid repo path       | Check path is absolute and exists |
 | "Permission denied"   | Can't write to data dir | Check directory permissions       |
-| "Schema error"        | Old index format        | Delete session and re-index       |
+| "Schema error"        | Old index format        | Use `upgrade_session` or re-index |
 
 ---
 
@@ -385,14 +437,25 @@ You can run shebe alongside other MCP servers:
 
 ### Installation Summary
 
+**Option A: Pre-built Binary (Linux x86_64)**
 ```bash
-# 1. Clone and build
+# Download, extract, install
+curl -L -o shebe.tar.gz \
+  "https://gitlab.com/rhobimd-oss/shebe/-/jobs/artifacts/v0.5.0/raw/releases/shebe-v0.5.0-linux-x86_64.tar.gz?job=build:shebe"
+tar -xzf shebe.tar.gz
+sudo mv shebe shebe-mcp /usr/local/bin/
+```
+
+**Option B: Build from Source**
+```bash
 git clone https://gitlab.com/rhobimd-oss/shebe.git
 cd shebe
 make mcp-build
 make mcp-install
+```
 
-# 2. Configure Claude Code
+**Configure Claude Code**
+```bash
 cat > ~/.claude/mcp.json <<'EOF'
 {
   "mcpServers": {
@@ -403,19 +466,21 @@ cat > ~/.claude/mcp.json <<'EOF'
   }
 }
 EOF
-
-# 3. Restart Claude Code and start searching!
 ```
+
+Restart Claude Code and start searching!
 
 ### Common Claude Code Commands
 
 ```
 "Index ~/projects/myapp as session 'myapp'"
 "Search for 'authentication' in myapp"
+"Find references to handleLogin in myapp"
 "List all Python files in myapp"
 "Find files matching *.yaml in myapp"
 "Show me 20 lines around that result"
 "Delete the old-session session"
+"Upgrade myapp session to current schema"
 ```
 
 ---
@@ -442,7 +507,7 @@ See [docs/Performance.md](./docs/Performance.md) for detailed benchmarks.
 1. **Index your first repository** - Try with a small project
 2. **Explore MCP tools** - See [docs/guides/mcp-tools-reference.md](./docs/guides/mcp-tools-reference.md)
 3. **Read architecture docs** - Understand how it works: [ARCHITECTURE.md](./ARCHITECTURE.md)
-4. **Join development** - See [CLAUDE.md](./CLAUDE.md) for contribution guide
+4. **Join development** - See [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution guide
 
 ---
 
@@ -451,11 +516,12 @@ See [docs/Performance.md](./docs/Performance.md) for detailed benchmarks.
 - **[README.md](./README.md)** - Project overview
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Developer's guide to the codebase
 - **[docs/Performance.md](./docs/Performance.md)** - Performance benchmarks
-- **[docs/CONTEXT.md](./docs/CONTEXT.md)** - Project status and roadmap
+- **[CHANGELOG.md](./CHANGELOG.md)** - Version history and release notes
+- **[All Releases](https://gitlab.com/rhobimd-oss/shebe/-/releases)** - Download pre-built binaries
 
 ---
 
-**Last Updated:** 2025-10-28
-**Version:** 0.3.0
-**Status:** Production Ready (11 MCP tools, 384 tests passing)
+**Last Updated:** 2025-12-11
+**Version:** 0.5.0
+**Status:** Production Ready (14 MCP tools, 392 tests passing)
 **Focus:** MCP Server for Claude Code Integration

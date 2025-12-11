@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `find_references` MCP tool for token-efficient symbol discovery
+  - Identifies all references to a symbol across indexed codebase (~50-70 tokens per reference)
+  - Confidence scoring (high/medium/low) based on pattern matching
+  - Language-aware patterns for Rust, Go, Python, TypeScript, JavaScript
+  - Reference type classification (definition, call, import, type_annotation)
+  - Session freshness warnings for stale indexes
+- Helper functions for byte-to-line conversion and context extraction
+
+### Changed
+- Tool count: 13 -> 14 MCP tools
+- Test count: 350 -> 392 tests
+
+## [0.5.0] - 2025-12-11
+
+### Added
 - CI/CD pipeline for automated releases (`scripts/ci-build.sh`, `scripts/ci-release.sh`)
 - GitLab release automation using CI_JOB_TOKEN
 - `upgrade_session` MCP tool for one-command schema migration
@@ -124,7 +139,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 130 total tests (79 unit, 7 integration, 37 UTF-8, 3 doc)
 - OpenEMR validation: 4,210 files indexed successfully
 
-[Unreleased]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.4.1...HEAD
+[Unreleased]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.0...HEAD
+[0.5.0]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.4.1...v0.5.0
 [0.4.1]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.4.0...v0.4.1
 [0.4.0]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.3.0...v0.4.0
 [0.3.0]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.2.0...v0.3.0

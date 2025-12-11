@@ -1,7 +1,7 @@
 //! Session-based storage management.
 //!
 //! This module manages session-based indexes, including
-//! creation, deletion, and metadata tracking.
+//! creation, deletion and metadata tracking.
 
 use crate::core::error::{Result, ShebeError};
 use crate::core::storage::tantivy::{TantivyIndex, SCHEMA_VERSION};
@@ -217,7 +217,7 @@ impl StorageManager {
 
     /// Index a repository synchronously (v0.3.0 - simplified)
     ///
-    /// Indexes the specified directory, creates a session, and returns statistics.
+    /// Indexes the specified directory, creates a session and returns statistics.
     /// This method blocks until indexing is complete.
     ///
     /// # Arguments
@@ -233,7 +233,7 @@ impl StorageManager {
     ///
     /// # Returns
     ///
-    /// IndexStats with files_indexed, chunks_created, and duration_secs
+    /// IndexStats with files_indexed, chunks_created and duration_secs
     ///
     /// # Errors
     ///

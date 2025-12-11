@@ -47,8 +47,10 @@ impl GetServerInfoHandler {
         output.push_str("- delete_session: Delete session and all data\n");
         output.push_str("- list_dir: List all files in session\n");
         output.push_str("- find_file: Find files by pattern (glob/regex)\n");
+        output.push_str("- find_references: Find all references to a symbol\n");
         output.push_str("- preview_chunk: Show N lines before/after search result chunk\n");
         output.push_str("- reindex_session: Re-index session using stored repository path\n");
+        output.push_str("- upgrade_session: Upgrade session metadata to latest format\n");
 
         output
     }
@@ -64,7 +66,7 @@ impl McpToolHandler for GetServerInfoHandler {
         ToolSchema {
             name: "get_server_info".to_string(),
             description: "Get version and build information about the running shebe-mcp server. \
-                         Returns server version, protocol version, and available tools. \
+                         Returns server version, protocol version and available tools. \
                          Use this to check which version of shebe-mcp is running. \
                          Fast operation (<1ms)."
                 .to_string(),
@@ -140,9 +142,10 @@ mod tests {
         assert!(output.contains("list_sessions"));
         assert!(output.contains("get_session_info"));
         assert!(output.contains("index_repository"));
-        // Note: index_status was removed in v0.3.0 (synchronous indexing)
         assert!(output.contains("get_server_info"));
         assert!(output.contains("show_shebe_config"));
         assert!(output.contains("preview_chunk"));
+        assert!(output.contains("find_references"));
+        assert!(output.contains("upgrade_session"));
     }
 }

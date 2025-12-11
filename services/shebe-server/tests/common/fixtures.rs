@@ -5,7 +5,7 @@ use tempfile::TempDir;
 
 /// OpenEMR repository path (for real-world integration testing)
 #[allow(dead_code)] // Used in integration tests
-pub const OPENEMR_PATH: &str = "/home/orodha/github/openemr/openemr";
+pub const OPENEMR_PATH: &str = "~/github/openemr/openemr";
 
 /// Test repository fixture for creating synthetic test data
 pub struct TestRepo {

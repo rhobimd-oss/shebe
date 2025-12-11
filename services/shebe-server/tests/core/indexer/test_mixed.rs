@@ -1,6 +1,6 @@
 // UTF-8 safety tests: Mixed content
 //
-// Validates handling of files with mixed ASCII, emoji, and multibyte
+// Validates handling of files with mixed ASCII, emoji and multibyte
 // characters, as commonly found in real-world code.
 
 use crate::common::{create_test_services, index_test_repository, TestRepo};

@@ -1,7 +1,7 @@
 //! HTTP request handlers for the Shebe API
 //!
 //! Implements handlers for all 5 REST endpoints: health, index,
-//! search, list sessions, and delete session.
+//! search, list sessions and delete session.
 
 use std::sync::Arc;
 

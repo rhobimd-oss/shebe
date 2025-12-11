@@ -13,13 +13,19 @@ Complete API reference for all Shebe MCP tools.
 1. [search_code](#tool-search_code)
 2. [list_sessions](#tool-list_sessions)
 3. [get_session_info](#tool-get_session_info)
-4. [index_repository](#tool-index_repository) **(v0.2.0, simplified in v0.3.0)**
-5. [get_server_info](#tool-get_server_info) **(NEW in v0.3.0)**
-6. [get_config](#tool-get_config) **(NEW in v0.3.0)**
-7. [list_dir](#tool-list_dir) **(NEW in v0.7.0)**
-8. [read_file](#tool-read_file) **(NEW in v0.7.0)**
-9. [Error Codes](#error-codes)
-10. [Performance Characteristics](#performance-characteristics)
+4. [index_repository](#tool-index_repository)
+5. [get_server_info](#tool-get_server_info)
+6. [get_config](#tool-get_config)
+7. [read_file](#tool-read_file)
+8. [list_dir](#tool-list_dir)
+9. [delete_session](#tool-delete_session)
+10. [find_file](#tool-find_file)
+11. [find_references](#tool-find_references) **(NEW in v0.5.0)**
+12. [preview_chunk](#tool-preview_chunk)
+13. [reindex_session](#tool-reindex_session)
+14. [upgrade_session](#tool-upgrade_session)
+15. [Error Codes](#error-codes)
+16. [Performance Characteristics](#performance-characteristics)
 
 ---
 
@@ -32,7 +38,7 @@ phrase and boolean query support.
 
 Executes BM25 ranked search across all chunks in a specified session.
 Results include code snippets with syntax highlighting, file paths,
-chunk metadata, and relevance scores.
+chunk metadata and relevance scores.
 
 ### Input Schema
 
@@ -41,6 +47,7 @@ chunk metadata, and relevance scores.
 | query     | string  | Yes      | -       | 1-500 chars       | Search query            |
 | session   | string  | Yes      | -       | ^[a-zA-Z0-9_-]+$  | Session ID              |
 | k         | integer | No       | 10      | 1-100             | Max results to return   |
+| literal   | boolean | No       | false   | -                 | Exact string search (no query parsing) |
 
 ### Query Syntax
 
@@ -66,6 +73,44 @@ patient AND (login OR authentication)
 
 Supported operators: `AND`, `OR`, `NOT`
 Use parentheses for grouping.
+
+**Field Prefixes:**
+```
+content:authenticate     # Search in code content only
+file_path:auth          # Search in file paths only
+```
+Valid prefixes: `content`, `file_path`. Invalid prefixes (e.g., `file:`, `code:`) return
+helpful error messages with suggestions.
+
+### Auto-Preprocessing
+
+Queries are automatically preprocessed for Tantivy compatibility:
+
+| Pattern | Example | Preprocessing |
+|---------|---------|---------------|
+| Curly braces | `{id}` | `\{id\}` |
+| URL paths | `/users/{id}` | `"/users/\{id\}"` |
+| Multi-colon | `pkg:scope:name` | `"pkg:scope:name"` |
+
+This allows natural queries like `GET /api/users/{id}` without manual escaping.
+
+### Literal Mode
+
+When `literal=true`, all special characters are escaped for exact string matching:
+
+```json
+{
+  "query": "fmt.Printf(\"%s\")",
+  "session": "my-project",
+  "literal": true
+}
+```
+
+Use literal mode for:
+- Code with special syntax: `array[0]`, `map[key]`
+- Printf-style patterns: `fmt.Printf("%s")`
+- Regex patterns in code: `.*\.rs$`
+- Any query where you need exact character matching
 
 ### Request Example
 
@@ -157,7 +202,7 @@ Each result includes:
 - **4,758x faster** than Serena Pattern Search (1.7ms vs 8,088ms)
 - **8,027x faster** than Serena Symbol Search (1.7ms vs 13,646ms)
 
-**Key Insight:** Query complexity has minimal impact on latency. Boolean operators, phrases, and keywords all perform similarly (1-3ms range).
+**Key Insight:** Query complexity has minimal impact on latency. Boolean operators, phrases and keywords all perform similarly (1-3ms range).
 
 ### Error Codes
 
@@ -166,6 +211,7 @@ Each result includes:
 | -32602 | Invalid params        | Empty query                  | Provide non-empty query    |
 | -32602 | Invalid params        | k out of range (1-100)       | Use k between 1 and 100    |
 | -32602 | Invalid params        | Query too long (>500 chars)  | Shorten query              |
+| -32602 | Invalid params        | Invalid field prefix         | Use content: or file_path: |
 | -32001 | Session not found     | Invalid session ID           | Use list_sessions to find  |
 | -32004 | Search failed         | Query parsing error          | Check query syntax         |
 | -32603 | Internal error        | Tantivy error                | Report bug with query      |
@@ -198,6 +244,20 @@ Claude: [Executes search_code with query="patient AND (login OR authentication)"
 You: Show me just the top 3 results for "error handling" in openemr-main
 
 Claude: [Executes search_code with query="error handling", k=3]
+```
+
+**Literal search (exact string):**
+```
+You: Find code containing "fmt.Printf("%s")" in istio-main
+
+Claude: [Executes search_code with query="fmt.Printf(\"%s\")", literal=true]
+```
+
+**Field-specific search:**
+```
+You: Find files with "controller" in the path
+
+Claude: [Executes search_code with query="file_path:controller"]
 ```
 
 ---
@@ -302,7 +362,7 @@ Get detailed metadata and statistics for a specific indexed session.
 ### Description
 
 Returns comprehensive information about a session including overview,
-configuration parameters, and computed statistics like average chunks
+configuration parameters and computed statistics like average chunks
 per file and average chunk size.
 
 ### Input Schema
@@ -409,7 +469,7 @@ Runs synchronously and returns complete statistics when finished.
 
 ### Description
 
-Indexes a repository using FileWalker, Chunker, and Tantivy storage.
+Indexes a repository using FileWalker, Chunker and Tantivy storage.
 The tool runs synchronously, blocking until indexing completes, then
 returns actual statistics (files indexed, chunks created, duration).
 
@@ -569,7 +629,7 @@ Get version and build information about the running shebe-mcp server.
 
 ### Description
 
-Returns server version, protocol version, Rust version, and a list of available tools.
+Returns server version, protocol version, Rust version and a list of available tools.
 Use this to verify which version of shebe-mcp is running and check compatibility.
 
 ### Input Schema
@@ -1175,6 +1235,692 @@ Error: File contains non-UTF-8 data (binary file). Cannot display in MCP respons
 
 ---
 
+## Tool: delete_session
+
+Delete a session and all associated data (index, metadata).
+
+### Description
+
+Permanently deletes a session including all Tantivy index data and metadata. This is a
+DESTRUCTIVE operation that cannot be undone. Requires explicit confirmation via the
+`confirm=true` parameter to prevent accidental deletion.
+
+### Input Schema
+
+| Parameter | Type    | Required | Description |
+|-----------|---------|----------|-------------|
+| session   | string  | Yes      | Session ID to delete |
+| confirm   | boolean | Yes      | Must be true to confirm deletion (safety check) |
+
+### Request Example
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "method": "tools/call",
+  "params": {
+    "name": "delete_session",
+    "arguments": {
+      "session": "old-project",
+      "confirm": true
+    }
+  }
+}
+```
+
+### Response Format
+
+```markdown
+**Session Deleted:** `old-project`
+
+**Freed Resources:**
+- Files indexed: 1,234
+- Chunks removed: 5,678
+- Disk space freed: 45.2 MB
+
+Session data and index permanently deleted.
+```
+
+### Performance
+
+| Metric  | Value   |
+|---------|---------|
+| Latency | <100ms  |
+| I/O     | Moderate (deletes files) |
+
+### Error Codes
+
+| Code   | Message | Cause | Solution |
+|--------|---------|-------|----------|
+| -32602 | Invalid params | Missing session or confirm | Provide both parameters |
+| -32001 | Invalid request | confirm=false | Set confirm=true to delete |
+| -32001 | Invalid request | Session not found | Use list_sessions first |
+
+### Usage Examples
+
+**Delete unused session:**
+```
+You: Delete the old-project session, I don't need it anymore
+
+Claude: [Executes delete_session with session="old-project", confirm=true]
+Session deleted, freed 45.2 MB
+```
+
+**Accidental deletion prevention:**
+```
+You: Delete my-project session
+
+Claude: [Executes delete_session with session="my-project", confirm=false]
+Error: Deletion requires confirm=true parameter
+```
+
+---
+
+## Tool: find_file
+
+Find files by name/path pattern using glob or regex matching.
+
+### Description
+
+Searches for files in an indexed session by matching file paths against glob or regex
+patterns. Similar to the `find` command. Use when you want to filter files by pattern.
+For listing all files without filtering, use list_dir.
+
+### Input Schema
+
+| Parameter    | Type    | Required | Default | Constraints | Description |
+|--------------|---------|----------|---------|-------------|-------------|
+| session      | string  | Yes      | -       | ^[a-zA-Z0-9_-]+$ | Session ID |
+| pattern      | string  | Yes      | -       | minLength: 1 | Glob or regex pattern |
+| pattern_type | string  | No       | "glob"  | glob/regex | Pattern type |
+| limit        | integer | No       | 100     | 1-10000 | Max results |
+
+### Pattern Examples
+
+**Glob patterns:**
+- `*.rs` - All Rust files
+- `**/*.py` - All Python files in any directory
+- `**/test_*.py` - Test files in any directory
+- `src/**/*.ts` - TypeScript files under src/
+
+**Regex patterns:**
+- `.*Controller\.php$` - PHP controller files
+- `.*test.*\.rs$` - Rust test files
+- `src/.*/index\.(js|ts)$` - Index files in src subdirectories
+
+### Request Example
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 11,
+  "method": "tools/call",
+  "params": {
+    "name": "find_file",
+    "arguments": {
+      "session": "my-project",
+      "pattern": "**/test_*.py",
+      "pattern_type": "glob",
+      "limit": 50
+    }
+  }
+}
+```
+
+### Response Format
+
+```markdown
+**Session:** `my-project`
+**Pattern:** `**/test_*.py`
+**Matches:** 12 of 450 total files
+
+**Matched Files:**
+- `/src/tests/test_auth.py`
+- `/src/tests/test_database.py`
+- `/src/utils/test_helpers.py`
+...
+```
+
+### Performance
+
+| Metric  | Value   |
+|---------|---------|
+| Latency | <20ms   |
+| Memory  | <5MB    |
+
+### Error Codes
+
+| Code   | Message | Cause | Solution |
+|--------|---------|-------|----------|
+| -32602 | Invalid params | Empty pattern | Provide non-empty pattern |
+| -32602 | Invalid params | Invalid glob pattern | Check glob syntax |
+| -32602 | Invalid params | Invalid regex pattern | Check regex syntax |
+| -32001 | Session not found | Invalid session | Use list_sessions first |
+
+### Usage Examples
+
+**Find all Rust files:**
+```
+You: Find all Rust files in shebe-dev
+
+Claude: [Executes find_file with pattern="*.rs"]
+Found 84 Rust files
+```
+
+**Find controller classes:**
+```
+You: Find PHP controller files in openemr-main
+
+Claude: [Executes find_file with pattern=".*Controller\.php$", pattern_type="regex"]
+Found 23 controller files
+```
+
+---
+
+## Tool: find_references
+
+**Available since:** v0.5.0
+
+Find all references to a symbol across the indexed codebase with confidence scoring.
+
+### Core Objective
+
+**Answer the question: "What are all the references I'm going to have to update?"**
+
+This tool is designed for the **discovery phase** of refactoring - quickly enumerating
+all locations that need attention before making changes. It is **complementary** to
+AST-aware tools like Serena, not a replacement.
+
+| Phase | Tool | Purpose |
+|-------|------|---------|
+| **Discovery** | find_references | "What needs to change?" - enumerate locations |
+| **Modification** | Serena/AST tools | "Make the change" - semantic precision |
+
+**Why this matters:**
+- Before renaming `handleLogin`, you need to know every file that uses it
+- Reading each file to find usages is expensive (tokens + time)
+- Grep returns too much noise without confidence scoring
+- Serena returns full code bodies (~500+ tokens per match)
+
+**find_references solves this by:**
+- Returning only locations (file:line), not full code bodies
+- Providing confidence scoring (high/medium/low) to prioritize work
+- Listing "Files to update" for systematic refactoring
+- Using ~50-70 tokens per reference (vs Serena's ~500+)
+
+### Description
+
+Searches for all usages of a symbol (function, type, variable, constant) across the
+indexed codebase. Uses pattern-based heuristics to classify references and assigns
+confidence scores. Essential for safe refactoring - use BEFORE renaming symbols.
+
+### Input Schema
+
+| Parameter          | Type    | Required | Default | Constraints | Description |
+|--------------------|---------|----------|---------|-------------|-------------|
+| symbol             | string  | Yes      | -       | 2-200 chars | Symbol name to find |
+| session            | string  | Yes      | -       | ^[a-zA-Z0-9_-]+$ | Session ID |
+| symbol_type        | string  | No       | "any"   | function/type/variable/constant/any | Filter by symbol type |
+| defined_in         | string  | No       | -       | File path | Exclude definition file |
+| include_definition | boolean | No       | false   | - | Include definition site |
+| context_lines      | integer | No       | 2       | 0-10 | Lines of context |
+| max_results        | integer | No       | 50      | 1-200 | Maximum results |
+
+### Symbol Types
+
+- **function:** Matches function/method calls (`symbol(`, `.symbol(`)
+- **type:** Matches type annotations (`: symbol`, `-> symbol`, `<symbol>`)
+- **variable:** Matches assignments and property access
+- **constant:** Same patterns as variable
+- **any:** Matches all patterns (default)
+
+### Confidence Levels
+
+| Level  | Score     | Meaning |
+|--------|-----------|---------|
+| High   | >= 0.80   | Very likely a real reference, should be updated |
+| Medium | 0.50-0.79 | Probable reference, review before updating |
+| Low    | < 0.50    | Possible false positive (comments, strings, docs) |
+
+### Confidence Scoring Logic
+
+| Pattern | Base Score | Description |
+|---------|------------|-------------|
+| `symbol(` | 0.95 | Function call |
+| `.symbol(` | 0.92 | Method call |
+| `: symbol` | 0.85 | Type annotation |
+| `-> symbol` | 0.85 | Return type |
+| `<symbol>` | 0.85 | Generic type |
+| `symbol =` | 0.80 | Assignment |
+| `import.*symbol` | 0.90 | Import statement |
+| Word boundary | 0.60 | Basic word match |
+
+**Adjustments:**
+- Test files: +0.05 (likely need updates)
+- Comments: -0.30 (may not need code update)
+- String literals: -0.20 (often false positive)
+- Documentation files: -0.25 (may not need update)
+
+### Request Example
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 12,
+  "method": "tools/call",
+  "params": {
+    "name": "find_references",
+    "arguments": {
+      "symbol": "handleLogin",
+      "session": "myapp",
+      "symbol_type": "function",
+      "defined_in": "src/auth/handlers.go",
+      "context_lines": 2,
+      "max_results": 50
+    }
+  }
+}
+```
+
+### Response Format
+
+```markdown
+## References to `handleLogin` (23 found)
+
+### High Confidence (15)
+
+#### src/routes/api.go:45
+```go
+  43 | func setupRoutes(r *mux.Router) {
+  44 |     r.HandleFunc("/login", handleLogin).Methods("POST")
+  45 |     r.HandleFunc("/logout", handleLogout).Methods("POST")
+```
+- **Pattern:** function_call
+- **Confidence:** 0.95
+
+#### src/auth/handlers_test.go:12
+```go
+  10 | func TestHandleLogin(t *testing.T) {
+  11 |     result := handleLogin(mockCtx)
+  12 |     assert.NotNil(t, result)
+```
+- **Pattern:** function_call
+- **Confidence:** 0.90
+
+### Medium Confidence (5)
+
+#### docs/api.md:23
+```markdown
+  21 | ## Authentication
+  22 |
+  23 | The `handleLogin` function accepts...
+```
+- **Pattern:** word_match
+- **Confidence:** 0.60
+
+### Low Confidence (3)
+
+#### config/routes.yaml:15
+```yaml
+  13 | routes:
+  14 |   - path: /login
+  15 |     handler: handleLogin
+```
+- **Pattern:** word_match
+- **Confidence:** 0.40
+
+---
+
+**Summary:**
+- High confidence: 15 references
+- Medium confidence: 5 references
+- Low confidence: 3 references
+- Total files: 13
+- Session indexed: 2025-12-10 14:32:00 UTC (2 hours ago)
+
+**Files to update:**
+- `src/routes/api.go`
+- `src/auth/handlers_test.go`
+- `src/middleware/auth.go`
+...
+```
+
+### Performance
+
+| Metric  | Value   | Notes |
+|---------|---------|-------|
+| Latency | <500ms  | Typical for <100 refs |
+| Memory  | <10MB   | Depends on result count |
+
+### Error Codes
+
+| Code   | Message | Cause | Solution |
+|--------|---------|-------|----------|
+| -32602 | Invalid params | Symbol empty | Provide non-empty symbol |
+| -32602 | Invalid params | Symbol too short (<2 chars) | Use longer symbol name |
+| -32001 | Session not found | Invalid session | Use list_sessions first |
+
+### Usage Examples
+
+**Before renaming a function:**
+```
+You: Find all references to handleLogin before I rename it
+
+Claude: [Executes find_references with symbol="handleLogin", symbol_type="function"]
+Found 23 references: 15 high confidence, 5 medium, 3 low
+Files to update: src/routes/api.go, src/auth/handlers_test.go, ...
+```
+
+**Find type usages:**
+```
+You: Where is the UserService type used?
+
+Claude: [Executes find_references with symbol="UserService", symbol_type="type"]
+Found 12 references across 8 files
+```
+
+**Exclude definition file:**
+```
+You: Find references to validateInput, excluding the file where it's defined
+
+Claude: [Executes find_references with symbol="validateInput", defined_in="src/validation.rs"]
+Found 8 references (definition file excluded)
+```
+
+### Best Practices
+
+1. **Use before renaming:** Always run find_references before renaming symbols
+2. **Review confidence levels:** High confidence = definitely update, Low = verify first
+3. **Set symbol_type:** Reduces false positives for common names
+4. **Exclude definition:** Use defined_in to focus on usages only
+5. **Check session freshness:** Results show when session was last indexed
+
+---
+
+## Tool: preview_chunk
+
+Show expanded context around a search result chunk.
+
+### Description
+
+Retrieves the chunk from the Tantivy index and reads the source file to show N lines
+of context before and after the chunk. Useful for understanding search results without
+reading the entire file.
+
+### Input Schema
+
+| Parameter     | Type    | Required | Default | Constraints | Description |
+|---------------|---------|----------|---------|-------------|-------------|
+| session       | string  | Yes      | -       | ^[a-zA-Z0-9_-]+$ | Session ID |
+| file_path     | string  | Yes      | -       | Absolute path | File path from search results |
+| chunk_index   | integer | Yes      | -       | >= 0 | Chunk index from search results |
+| context_lines | integer | No       | 10      | 0-100 | Lines of context before/after |
+
+### Request Example
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 13,
+  "method": "tools/call",
+  "params": {
+    "name": "preview_chunk",
+    "arguments": {
+      "session": "my-project",
+      "file_path": "/home/user/project/src/auth.rs",
+      "chunk_index": 3,
+      "context_lines": 15
+    }
+  }
+}
+```
+
+### Response Format
+
+```markdown
+**File:** `/home/user/project/src/auth.rs`
+**Chunk:** 3 of 12 (bytes 1024-1536)
+**Context:** 15 lines before/after
+
+```rust
+  45 | // Previous context
+  46 | fn previous_function() {
+  47 |     // ...
+  48 | }
+  49 |
+  50 | /// Authenticate user credentials  <-- chunk starts here
+  51 | pub fn authenticate(username: &str, password: &str) -> Result<Token, AuthError> {
+  52 |     validate_credentials(username, password)?;
+  53 |     generate_token(username)
+  54 | }  <-- chunk ends here
+  55 |
+  56 | fn next_function() {
+  57 |     // Following context
+  58 | }
+```
+```
+
+### Performance
+
+| Metric  | Value  |
+|---------|--------|
+| Latency | <15ms  |
+| I/O     | 1 file read |
+
+### Error Codes
+
+| Code   | Message | Cause | Solution |
+|--------|---------|-------|----------|
+| -32602 | Invalid params | Missing required param | Provide all required params |
+| -32001 | Session not found | Invalid session | Use list_sessions first |
+| -32001 | Invalid request | Chunk not found | Verify file_path and chunk_index |
+| -32001 | Invalid request | File not found | File deleted since indexing |
+
+### Usage Examples
+
+**Expand search result context:**
+```
+You: Show me more context around chunk 3 in src/auth.rs
+
+Claude: [Executes preview_chunk with file_path="src/auth.rs", chunk_index=3]
+Shows 10 lines before and after the chunk
+```
+
+**Large context for understanding:**
+```
+You: I need to see more of this file around the match
+
+Claude: [Executes preview_chunk with context_lines=30]
+Shows 30 lines before and after for better understanding
+```
+
+---
+
+## Tool: reindex_session
+
+Re-index a session using the stored repository path and configuration.
+
+### Description
+
+Convenient tool for re-indexing when the source code has changed or when you want to
+modify indexing configuration (chunk_size, overlap). Automatically retrieves the
+original repository path and configuration from session metadata.
+
+### Input Schema
+
+| Parameter  | Type    | Required | Default | Constraints | Description |
+|------------|---------|----------|---------|-------------|-------------|
+| session    | string  | Yes      | -       | ^[a-zA-Z0-9_-]{1,64}$ | Session ID |
+| chunk_size | integer | No       | stored  | 100-2000 | Override chunk size |
+| overlap    | integer | No       | stored  | 0-500 | Override overlap |
+| force      | boolean | No       | false   | - | Force re-index if config unchanged |
+
+### Request Example
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 14,
+  "method": "tools/call",
+  "params": {
+    "name": "reindex_session",
+    "arguments": {
+      "session": "my-project",
+      "chunk_size": 1024,
+      "overlap": 128
+    }
+  }
+}
+```
+
+### Response Format
+
+```markdown
+# Session Re-Indexed: `my-project`
+
+**Indexing Statistics:**
+- Files indexed: 1,234
+- Chunks created: 5,678
+- Index size: 45.2 MB
+- Duration: 2.3s
+- Throughput: 536 files/sec
+
+**Configuration Changes:**
+- Chunk size: 512 -> 1024
+- Overlap: 64 -> 128
+
+**Note:** Session metadata (repository_path, last_indexed_at) updated automatically.
+```
+
+### Performance
+
+| Metric  | Value   | Notes |
+|---------|---------|-------|
+| Latency | 1-30s   | Depends on repository size |
+| Throughput | ~1,500-2,000 files/sec | Similar to index_repository |
+
+### Error Codes
+
+| Code   | Message | Cause | Solution |
+|--------|---------|-------|----------|
+| -32602 | Invalid params | Invalid chunk_size | Use 100-2000 |
+| -32602 | Invalid params | Invalid overlap | Use 0-500, less than chunk_size |
+| -32001 | Invalid request | Session not found | Use list_sessions first |
+| -32001 | Invalid request | Repository path missing | Repository moved/deleted |
+| -32001 | Invalid request | Config unchanged | Use force=true |
+
+### Usage Examples
+
+**Re-index after code changes:**
+```
+You: Re-index my-project, the code has changed
+
+Claude: [Executes reindex_session with session="my-project", force=true]
+Re-indexed 1,234 files in 2.3s
+```
+
+**Change chunk configuration:**
+```
+You: Re-index with larger chunks for better context
+
+Claude: [Executes reindex_session with chunk_size=1024, overlap=128]
+Re-indexed with new configuration
+```
+
+---
+
+## Tool: upgrade_session
+
+Upgrade a session to the current schema version.
+
+### Description
+
+Convenience tool for upgrading sessions created with older Shebe versions. Deletes the
+existing session and re-indexes using the stored repository path and configuration.
+Use when a session fails with "old schema version" error.
+
+### Input Schema
+
+| Parameter | Type   | Required | Description |
+|-----------|--------|----------|-------------|
+| session   | string | Yes      | Session ID to upgrade |
+
+### Request Example
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 15,
+  "method": "tools/call",
+  "params": {
+    "name": "upgrade_session",
+    "arguments": {
+      "session": "old-project"
+    }
+  }
+}
+```
+
+### Response Format (Upgrade Performed)
+
+```markdown
+# Session Upgraded: `old-project`
+
+**Schema Migration:**
+- Previous version: v2
+- Current version: v3
+
+**Indexing Statistics:**
+- Files indexed: 1,234
+- Chunks created: 5,678
+- Index size: 45.2 MB
+- Duration: 2.1s
+- Throughput: 587 files/sec
+
+Session is now compatible with the current schema.
+```
+
+### Response Format (Already Current)
+
+```markdown
+Session 'my-project' is already at schema v3 (current version). No upgrade needed.
+```
+
+### Performance
+
+| Metric  | Value   |
+|---------|---------|
+| Latency | 1-3s    |
+| Notes   | Fast due to re-indexing same repository |
+
+### Error Codes
+
+| Code   | Message | Cause | Solution |
+|--------|---------|-------|----------|
+| -32001 | Invalid request | Session not found | Use list_sessions first |
+| -32001 | Invalid request | Repository path missing | Repository moved/deleted |
+
+### Usage Examples
+
+**Fix schema version error:**
+```
+You: I'm getting "old schema version" error for my-project
+
+Claude: [Executes upgrade_session with session="my-project"]
+Upgraded from v2 to v3, session now works
+```
+
+**Check if upgrade needed:**
+```
+You: Upgrade my-project session
+
+Claude: [Executes upgrade_session]
+Session already at current version, no upgrade needed
+```
+
+---
+
 ## Error Codes
 
 Complete error code reference for all tools.
@@ -1391,7 +2137,8 @@ And more. If language not detected, defaults to plaintext.
 
 ---
 
-**Document Version:** 1.3
-**Last Updated:** 2025-10-25
+**Document Version:** 2.0
+**Last Updated:** 2025-12-11
 **Protocol Version:** 2024-11-05
-**New in v0.7.1:** Auto-truncation for list_dir and read_file tools
+**Tools:** 14 MCP tools (6 core + 8 ergonomic)
+**New in v0.5.0:** find_references tool for symbol reference discovery

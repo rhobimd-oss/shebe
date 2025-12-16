@@ -58,9 +58,12 @@ sudo mv shebe shebe-mcp /usr/local/bin/          # System-wide
 # OR
 mkdir -p ~/.local/bin && mv shebe shebe-mcp ~/.local/bin/  # User-only
 
-# Verify installation
-shebe-mcp --version
+# Test initialize method
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{'\
+'"protocolVersion":"2024-11-05","capabilities":{"tools":{}},'\
+'"clientInfo":{"name":"test","version":"1.0"}}}' | shebe-mcp
 ```
+
 
 ### Available Binaries
 
@@ -100,48 +103,12 @@ cd shebe
 # Build release binary (optimized)
 make mcp-build
 
-# Binary created at: services/shebe-server/build/release/shebe-mcp
+# Binary created at: services/shebe-server/build/release/shebe-mcp 
+# `make mcp-build` outputs to `build/` directory and not the standard `target/` 
+# because `target/` is a cached Docker volume for faster incremental builds.
 ```
 
-**Alternative (manual build without Docker):**
-```bash
-cd services/shebe-server
-cargo build --release --bin shebe-mcp
-# Binary at: services/shebe-server/target/release/shebe-mcp
-```
-
-**Note:** `make mcp-build` outputs to `build/` directory (not `target/`) because
-`target/` is a cached Docker volume for faster incremental builds.
-
-### 3. Verify Build
-
-```bash
-# Run tests to ensure everything works
-make mcp-test
-
-# Check binary exists (make mcp-build output)
-ls -lh services/shebe-server/build/release/shebe-mcp
-```
-
----
-
-## Installation
-
-### From Pre-built Binary
-
-If you downloaded the pre-built binary, it's already extracted. Just move to PATH:
-
-```bash
-# System-wide (requires sudo)
-sudo mv shebe shebe-mcp /usr/local/bin/
-
-# Or user-only (no sudo)
-mkdir -p ~/.local/bin
-mv shebe shebe-mcp ~/.local/bin/
-export PATH="$HOME/.local/bin:$PATH"  # Add to ~/.bashrc or ~/.zshrc
-```
-
-### From Source Build
+### 3. Install
 
 Install to your local bin directory (no sudo required):
 
@@ -152,9 +119,12 @@ make mcp-install
 # Verify installation
 which shebe-mcp
 # Expected output: /usr/local/bin/shebe-mcp (or ~/.local/bin/shebe-mcp)
+
+# run test
+make mcp-test
 ```
 
-### Optional: Install Configuration File
+### 4: Install Configuration File
 
 Shebe works with built-in defaults, but you can customize settings:
 

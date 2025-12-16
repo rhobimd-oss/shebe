@@ -1,35 +1,37 @@
+
 # Shebe MCP Tools Reference
 
 Complete API reference for all Shebe MCP tools.
 
-**Version:** 0.7.1
-**Protocol:** JSON-RPC 2.0 over stdio
-**Format:** Markdown responses
+**Version:** 0.7.1 <br>
+**Protocol:** JSON-RPC 2.0 over stdio <br>
+**Format:** Markdown responses <br>
 
 ---
 
 ## Table of Contents
 
-1. [search_code](#tool-search_code)
-2. [list_sessions](#tool-list_sessions)
-3. [get_session_info](#tool-get_session_info)
-4. [index_repository](#tool-index_repository)
-5. [get_server_info](#tool-get_server_info)
-6. [get_config](#tool-get_config)
-7. [read_file](#tool-read_file)
-8. [list_dir](#tool-list_dir)
-9. [delete_session](#tool-delete_session)
-10. [find_file](#tool-find_file)
-11. [find_references](#tool-find_references) **(NEW in v0.5.0)**
-12. [preview_chunk](#tool-preview_chunk)
-13. [reindex_session](#tool-reindex_session)
-14. [upgrade_session](#tool-upgrade_session)
+1. [search_code](#1-tool-search_code)
+2. [list_sessions](#2-tool-list_sessions)
+3. [get_session_info](#3-tool-get_session_info)
+4. [index_repository](#4-tool-index_repository)
+5. [get_server_info](#5-tool-get_server_info)
+6. [get_config](#6-tool-get_config)
+7. [read_file](#7-tool-read_file)
+8. [list_dir](#8-tool-list_dir)
+9. [delete_session](#9-tool-delete_session)
+10. [find_file](#10-tool-find_file)
+11. [find_references](#11-tool-find_references) **(NEW in v0.5.0)**
+12. [preview_chunk](#12-tool-preview_chunk)
+13. [reindex_session](#13-tool-reindex_session)
+14. [upgrade_session](#14-tool-upgrade_session)
 15. [Error Codes](#error-codes)
 16. [Performance Characteristics](#performance-characteristics)
 
 ---
 
-## Tool: search_code
+
+## 1. Tool: search_code
 
 Search indexed code repositories using BM25 full-text search with
 phrase and boolean query support.
@@ -42,12 +44,12 @@ chunk metadata and relevance scores.
 
 ### Input Schema
 
-| Parameter | Type    | Required | Default | Constraints       | Description             |
-|-----------|---------|----------|---------|-------------------|-------------------------|
-| query     | string  | Yes      | -       | 1-500 chars       | Search query            |
-| session   | string  | Yes      | -       | ^[a-zA-Z0-9_-]+$  | Session ID              |
-| k         | integer | No       | 10      | 1-100             | Max results to return   |
-| literal   | boolean | No       | false   | -                 | Exact string search (no query parsing) |
+| Parameter  | Type     | Required | Default | Constraints       | Description                            |
+|------------|----------|----------|---------|-------------------|----------------------------------------|
+| query      | string   | Yes      | -       | 1-500 chars       | Search query                           |
+| session    | string   | Yes      | -       | ^[a-zA-Z0-9_-]+$  | Session ID                             |
+| k          | integer  | No       | 10      | 1-100             | Max results to return                  |
+| literal    | boolean  | No       | false   | -                 | Exact string search (no query parsing) |
 
 ### Query Syntax
 
@@ -86,11 +88,11 @@ helpful error messages with suggestions.
 
 Queries are automatically preprocessed for Tantivy compatibility:
 
-| Pattern | Example | Preprocessing |
-|---------|---------|---------------|
-| Curly braces | `{id}` | `\{id\}` |
-| URL paths | `/users/{id}` | `"/users/\{id\}"` |
-| Multi-colon | `pkg:scope:name` | `"pkg:scope:name"` |
+| Pattern      | Example          | Preprocessing      |
+|--------------|------------------|--------------------|
+| Curly braces | `{id}`           | `\{id\}`           |
+| URL paths    | `/users/{id}`    | `"/users/\{id\}"`  |
+| Multi-colon  | `pkg:scope:name` | `"pkg:scope:name"` |
 
 This allows natural queries like `GET /api/users/{id}` without manual escaping.
 
@@ -158,9 +160,6 @@ function validateCredentials($user, $pwd) {
 }
 ```
 
-...
-```
-
 ### Response Structure
 
 Each result includes:
@@ -175,21 +174,23 @@ Each result includes:
 **Validated Performance (Production-Scale Codebases):**
 
 **Istio v1.26.0 (5,605 files, 69,904 chunks):**
-| Metric | Value | Notes |
-|--------|-------|-------|
-| Average | **1.7ms** | 7 diverse queries |
-| Median | **2ms** | Consistent latency |
-| Range | 1-3ms | Minimal variance |
-| p95 | **2ms** | 25x better than 50ms target |
-| Success Rate | 100% | All queries returned results |
+
+| Metric       | Value     | Notes                        |
+|--------------|-----------|------------------------------|
+| Average      | **1.7ms** | 7 diverse queries            |
+| Median       | **2ms**   | Consistent latency           |
+| Range        | 1-3ms     | Minimal variance             |
+| p95          | **2ms**   | 25x better than 50ms target  |
+| Success Rate | 100%      | All queries returned results |
 
 **OpenEMR (6,364 files, 456,992 chunks):**
-| Metric | Value | Notes |
-|--------|-------|-------|
-| Average | 10-80ms | Larger index (191MB vs 49MB) |
+
+| Metric      | Value       | Notes                           |
+|-------------|-------------|---------------------------------|
+| Average     | 10-80ms     | Larger index (191MB vs 49MB)    |
 | Token Usage | 1,500-3,200 | 40-60% better than alternatives |
-| Cold cache | 10ms | No warmup needed |
-| Warm cache | 10ms | Minimal difference |
+| Cold cache  | 10ms        | No warmup needed                |
+| Warm cache  | 10ms        | Minimal difference              |
 
 **Performance by Repository Size:**
 - Small (<100 files): 1-3ms
@@ -219,6 +220,7 @@ Each result includes:
 ### Usage Examples
 
 **Basic keyword search:**
+
 ```
 You: Search for "database" in openemr-main
 
@@ -226,6 +228,7 @@ Claude: [Executes search_code with query="database", session="openemr-main"]
 ```
 
 **Phrase search:**
+
 ```
 You: Find the exact phrase "patient authentication function" in openemr-main
 
@@ -262,7 +265,7 @@ Claude: [Executes search_code with query="file_path:controller"]
 
 ---
 
-## Tool: list_sessions
+## 2. Tool: list_sessions
 
 List all indexed code sessions with metadata summary.
 
@@ -355,7 +358,7 @@ Claude: [Executes list_sessions to show available sessions]
 
 ---
 
-## Tool: get_session_info
+## 3. Tool: get_session_info
 
 Get detailed metadata and statistics for a specific indexed session.
 
@@ -460,7 +463,7 @@ Claude: [Executes get_session_info to show file count]
 
 ---
 
-## Tool: index_repository
+## 4. Tool: index_repository
 
 **Available since:** v0.2.0 (simplified to synchronous in v0.3.0)
 
@@ -553,19 +556,21 @@ You can now search your code with search_code.
 ### Performance
 
 **Tested Performance (OpenEMR 6,364 files):**
-| Test Run | Duration | Throughput | Files | Notes |
-|----------|----------|------------|-------|-------|
-| Test 006 (v0.2.0) | 70s | 90.9 files/sec | 6,364 | Original async implementation |
-| Test 008 (v0.3.0) | 5.2s | 1,224 files/sec | 6,364 | Synchronous, cold system |
-| Test 009 (v0.3.0) | 3.4s | 1,872 files/sec | 6,364 | Synchronous, warm system |
+
+| Test Run          | Duration  | Throughput      | Files  | Notes                         |
+|-------------------|-----------|-----------------|--------|-------------------------------|
+| Test 006 (v0.2.0) | 70s       | 90.9 files/sec  | 6,364  | Original async implementation |
+| Test 008 (v0.3.0) | 5.2s      | 1,224 files/sec | 6,364  | Synchronous, cold system      |
+| Test 009 (v0.3.0) | 3.4s      | 1,872 files/sec | 6,364  | Synchronous, warm system      |
 
 **Performance by Repository Size:**
-| Repository Size | Files | Expected Duration | Throughput Range |
-|-----------------|-------|-------------------|------------------|
-| Small           | <100  | 1-4s              | 1,500-2,000 files/sec |
-| Medium          | ~1,000 | 2-4s             | 1,500-2,000 files/sec |
-| Large           | ~6,000 | 10-15s           | 1,500-2,000 files/sec |
-| Very Large      | ~10,000 | 20-30s          | 1,500-2,000 files/sec |
+
+| Repository Size | Files   | Expected Duration  | Throughput Range |
+|-----------------|---------|--------------------|------------------|
+| Small           | <100    | 1-4s               | 1,500-2,000 files/sec |
+| Medium          | ~1,000  | 2-4s               | 1,500-2,000 files/sec |
+| Large           | ~6,000  | 10-15s             | 1,500-2,000 files/sec |
+| Very Large      | ~10,000 | 20-30s             | 1,500-2,000 files/sec |
 
 **Throughput:** 1,500-2,000 files/sec (varies with system load, cache state, I/O performance)
 
@@ -577,14 +582,14 @@ You can now search your code with search_code.
 
 ### Error Codes
 
-| Code   | Message | Cause | Solution |
-|--------|---------|-------|----------|
-| -32602 | Invalid params | Path doesn't exist | Check path is correct |
-| -32602 | Invalid params | Path not absolute | Use absolute path |
-| -32602 | Invalid params | Path not directory | Provide directory path |
-| -32602 | Invalid params | Session exists | Use force=true to re-index |
-| -32602 | Invalid params | Invalid session name | Use alphanumeric+dash only |
-| -32602 | Invalid params | chunk_size out of range | Use 100-2000 |
+| Code   | Message        | Cause                   | Solution                   |
+|--------|----------------|-------------------------|----------------------------|
+| -32602 | Invalid params | Path doesn't exist      | Check path is correct      |
+| -32602 | Invalid params | Path not absolute       | Use absolute path          |
+| -32602 | Invalid params | Path not directory      | Provide directory path     |
+| -32602 | Invalid params | Session exists          | Use force=true to re-index |
+| -32602 | Invalid params | Invalid session name    | Use alphanumeric+dash only |
+| -32602 | Invalid params | chunk_size out of range | Use 100-2000               |
 
 ### Usage Examples
 
@@ -621,7 +626,7 @@ Claude: [Calls with force=true to overwrite]
 
 ---
 
-## Tool: get_server_info
+## 5. Tool: get_server_info
 
 **Available since:** v0.3.0
 
@@ -727,7 +732,7 @@ Claude: [Executes get_server_info to check version]
 
 ---
 
-## Tool: get_config
+## 6. Tool: get_config
 
 **Available since:** v0.3.0
 
@@ -741,9 +746,9 @@ and limits parameters. Shows both the values currently in use and their sources
 
 ### Input Schema
 
-| Parameter | Type    | Required | Default | Description |
-|-----------|---------|----------|---------|-------------|
-| detailed  | boolean | No       | false   | Show all patterns |
+| Parameter  | Type    | Required | Default | Description       |
+|------------|---------|----------|---------|-------------------|
+| detailed   | boolean | No       | false   | Show all patterns |
 
 ### Request Example
 
@@ -904,7 +909,7 @@ Checks include/exclude patterns to diagnose issue
 
 ---
 
-## Tool: list_dir
+## 7. Tool: list_dir
 
 **Available since:** v0.7.0
 
@@ -918,11 +923,11 @@ truncation occurs with suggestions for alternative approaches.
 
 ### Input Schema
 
-| Parameter | Type    | Required | Default | Constraints | Description |
-|-----------|---------|----------|---------|-------------|-------------|
-| session   | string  | Yes      | -       | ^[a-zA-Z0-9_-]+$ | Session ID |
-| limit     | integer | No       | 100     | 1-500       | Max files to return |
-| sort      | string  | No       | "alpha" | alpha/size/indexed | Sort order |
+| Parameter | Type    | Required | Default | Constraints        | Description         |
+|-----------|---------|----------|---------|--------------------|---------------------|
+| session   | string  | Yes      | -       | ^[a-zA-Z0-9_-]+$   | Session ID          |
+| limit     | integer | No       | 100     | 1-500              | Max files to return |
+| sort      | string  | No       | "alpha" | alpha/size/indexed | Sort order          |
 
 ### Auto-Truncation Behavior
 
@@ -955,15 +960,14 @@ When a repository has more files than the limit, the tool:
 ### Response Format (Without Truncation)
 
 ```markdown
-**Session:** `small-repo`
+**Session:** small-repo
 **Files:** 50 (showing 50)
 
-| File Path | Chunks |
-|-----------|--------|
+| File Path      | Chunks |
+|----------------|--------|
 | `/src/main.rs` | 3 |
-| `/src/lib.rs` | 5 |
-| `/Cargo.toml` | 1 |
-...
+| `/src/lib.rs`  | 5 |
+| `/Cargo.toml`  | 1 |
 ```
 
 ### Response Format (With Truncation)
@@ -975,7 +979,7 @@ Showing: 500 of 5,605 files (first 500, alphabetically sorted)
 Reason: Maximum display limit is 500 files (MCP 25k token limit)
 Not shown: 5,105 files
 
-💡 SUGGESTIONS:
+SUGGESTIONS:
 - Use `find_file` with patterns to filter: find_file(session="large-repo", pattern="*.yaml")
 - For pagination support, see: docs/work-plans/011-phase02-mcp-pagination-implementation.md
 - For full file list, use bash: find /path/to/repo -type f | sort
@@ -985,7 +989,7 @@ Not shown: 5,105 files
 **Files 1-500 (of 5,605 total):**
 
 | File Path | Chunks |
-|-----------|--------|
+|------------|--------|
 | `/src/api/auth.rs` | 4 |
 | `/src/api/handlers.rs` | 12 |
 ...
@@ -1057,7 +1061,7 @@ Lists files sorted by size (largest first)
 
 ---
 
-## Tool: read_file
+## 8. Tool: read_file
 
 **Available since:** v0.7.0
 
@@ -1071,10 +1075,10 @@ when truncation occurs with the percentage shown and suggestions for alternative
 
 ### Input Schema
 
-| Parameter | Type   | Required | Constraints | Description |
-|-----------|--------|----------|-------------|-------------|
-| session   | string | Yes      | ^[a-zA-Z0-9_-]+$ | Session ID |
-| file_path | string | Yes      | Absolute path | Path to file (from search results) |
+| Parameter  | Type   | Required | Constraints      | Description                        |
+|------------|--------|----------|------------------|------------------------------------|
+| session    | string | Yes      | ^[a-zA-Z0-9_-]+$ | Session ID                         |
+| file_path  | string | Yes      | Absolute path    | Path to file (from search results) |
 
 ### Auto-Truncation Behavior
 
@@ -1111,7 +1115,6 @@ When a file exceeds 20,000 characters, the tool:
 **Size:** 5.2 KB (120 lines)
 **Language:** rust
 
-```rust
 use crate::error::AuthError;
 
 pub fn authenticate(username: &str, password: &str) -> Result<Token, AuthError> {
@@ -1119,7 +1122,6 @@ pub fn authenticate(username: &str, password: &str) -> Result<Token, AuthError> 
     validate_credentials(username, password)?;
     generate_token(username)
 }
-```
 ```
 
 ### Response Format (With Truncation)
@@ -1149,7 +1151,6 @@ CREATE TABLE users (
     ...
 [Content continues until 20,000 character limit]
 ```
-```
 
 ### UTF-8 Safety
 
@@ -1161,21 +1162,21 @@ The tool ensures UTF-8 character boundary safety when truncating:
 
 ### Performance
 
-| Metric  | Value | Notes |
-|---------|-------|-------|
-| Latency | <50ms | Small files (<20KB) |
-| Latency | <200ms | Large files (>500KB, truncated) |
-| Memory  | <5MB  | Maximum for truncated files |
+| Metric   | Value  | Notes                           |
+|----------|--------|---------------------------------|
+| Latency  | <50ms  | Small files (<20KB)             |
+| Latency  | <200ms | Large files (>500KB, truncated) |
+| Memory   | <5MB   | Maximum for truncated files     |
 
 ### Error Codes
 
-| Code   | Message | Cause | Solution |
-|--------|---------|-------|----------|
-| -32602 | Invalid params | Empty file_path | Provide file path |
-| -32001 | Session not found | Invalid session | Use list_sessions first |
-| -32001 | Invalid request | File not indexed | Check file_path or re-index |
-| -32001 | Invalid request | File not found | File deleted since indexing |
-| -32001 | Invalid request | Binary file | File contains non-UTF-8 data |
+| Code     | Message           | Cause            | Solution                     |
+|----------|-------------------|------------------|------------------------------|
+| -32602   | Invalid params    | Empty file_path  | Provide file path            |
+| -32001   | Session not found | Invalid session  | Use list_sessions first      |
+| -32001   | Invalid request   | File not indexed | Check file_path or re-index  |
+| -32001   | Invalid request   | File not found   | File deleted since indexing  |
+| -32001   | Invalid request   | Binary file      | File contains non-UTF-8 data |
 
 ### Usage Examples
 
@@ -1235,7 +1236,7 @@ Error: File contains non-UTF-8 data (binary file). Cannot display in MCP respons
 
 ---
 
-## Tool: delete_session
+## 9. Tool: delete_session
 
 Delete a session and all associated data (index, metadata).
 
@@ -1317,7 +1318,7 @@ Error: Deletion requires confirm=true parameter
 
 ---
 
-## Tool: find_file
+## 10. Tool: find_file
 
 Find files by name/path pattern using glob or regex matching.
 
@@ -1418,7 +1419,7 @@ Found 23 controller files
 
 ---
 
-## Tool: find_references
+## 11. Tool: find_references
 
 **Available since:** v0.5.0
 
@@ -1531,46 +1532,44 @@ confidence scores. Essential for safe refactoring - use BEFORE renaming symbols.
 ### High Confidence (15)
 
 #### src/routes/api.go:45
-```go
+`go
   43 | func setupRoutes(r *mux.Router) {
   44 |     r.HandleFunc("/login", handleLogin).Methods("POST")
   45 |     r.HandleFunc("/logout", handleLogout).Methods("POST")
-```
+`
 - **Pattern:** function_call
 - **Confidence:** 0.95
 
 #### src/auth/handlers_test.go:12
-```go
+`go
   10 | func TestHandleLogin(t *testing.T) {
   11 |     result := handleLogin(mockCtx)
   12 |     assert.NotNil(t, result)
-```
+`
 - **Pattern:** function_call
 - **Confidence:** 0.90
 
 ### Medium Confidence (5)
 
 #### docs/api.md:23
-```markdown
+`markdown
   21 | ## Authentication
   22 |
   23 | The `handleLogin` function accepts...
-```
+`
 - **Pattern:** word_match
 - **Confidence:** 0.60
 
 ### Low Confidence (3)
 
 #### config/routes.yaml:15
-```yaml
+`yaml
   13 | routes:
   14 |   - path: /login
   15 |     handler: handleLogin
-```
+`
 - **Pattern:** word_match
 - **Confidence:** 0.40
-
----
 
 **Summary:**
 - High confidence: 15 references
@@ -1588,18 +1587,18 @@ confidence scores. Essential for safe refactoring - use BEFORE renaming symbols.
 
 ### Performance
 
-| Metric  | Value   | Notes |
-|---------|---------|-------|
-| Latency | <500ms  | Typical for <100 refs |
-| Memory  | <10MB   | Depends on result count |
+| Metric   | Value   | Notes                   |
+|----------|---------|-------------------------|
+| Latency  | <500ms  | Typical for <100 refs   |
+| Memory   | <10MB   | Depends on result count |
 
 ### Error Codes
 
-| Code   | Message | Cause | Solution |
-|--------|---------|-------|----------|
-| -32602 | Invalid params | Symbol empty | Provide non-empty symbol |
-| -32602 | Invalid params | Symbol too short (<2 chars) | Use longer symbol name |
-| -32001 | Session not found | Invalid session | Use list_sessions first |
+| Code   | Message           | Cause                       | Solution                 |
+|--------|-------------------|-----------------------------|--------------------------|
+| -32602 | Invalid params    | Symbol empty                | Provide non-empty symbol |
+| -32602 | Invalid params    | Symbol too short (<2 chars) | Use longer symbol name   |
+| -32001 | Session not found | Invalid session             | Use list_sessions first  |
 
 ### Usage Examples
 
@@ -1638,7 +1637,7 @@ Found 8 references (definition file excluded)
 
 ---
 
-## Tool: preview_chunk
+## 12. Tool: preview_chunk
 
 Show expanded context around a search result chunk.
 
@@ -1650,12 +1649,12 @@ reading the entire file.
 
 ### Input Schema
 
-| Parameter     | Type    | Required | Default | Constraints | Description |
-|---------------|---------|----------|---------|-------------|-------------|
-| session       | string  | Yes      | -       | ^[a-zA-Z0-9_-]+$ | Session ID |
-| file_path     | string  | Yes      | -       | Absolute path | File path from search results |
-| chunk_index   | integer | Yes      | -       | >= 0 | Chunk index from search results |
-| context_lines | integer | No       | 10      | 0-100 | Lines of context before/after |
+| Parameter     | Type    | Required | Default | Constraints      | Description                     |
+|---------------|---------|----------|---------|------------------|---------------------------------|
+| session       | string  | Yes      | -       | ^[a-zA-Z0-9_-]+$ | Session ID                      |
+| file_path     | string  | Yes      | -       | Absolute path    | File path from search results   |
+| chunk_index   | integer | Yes      | -       | >= 0             | Chunk index from search results |
+| context_lines | integer | No       | 10      | 0-100            | Lines of context before/after   |
 
 ### Request Example
 
@@ -1683,7 +1682,7 @@ reading the entire file.
 **Chunk:** 3 of 12 (bytes 1024-1536)
 **Context:** 15 lines before/after
 
-```rust
+`rust
   45 | // Previous context
   46 | fn previous_function() {
   47 |     // ...
@@ -1698,24 +1697,24 @@ reading the entire file.
   56 | fn next_function() {
   57 |     // Following context
   58 | }
-```
+`
 ```
 
 ### Performance
 
-| Metric  | Value  |
-|---------|--------|
-| Latency | <15ms  |
-| I/O     | 1 file read |
+| Metric   | Value       |
+|----------|-------------|
+| Latency  | <15ms       |
+| I/O      | 1 file read |
 
 ### Error Codes
 
-| Code   | Message | Cause | Solution |
-|--------|---------|-------|----------|
-| -32602 | Invalid params | Missing required param | Provide all required params |
-| -32001 | Session not found | Invalid session | Use list_sessions first |
-| -32001 | Invalid request | Chunk not found | Verify file_path and chunk_index |
-| -32001 | Invalid request | File not found | File deleted since indexing |
+| Code    | Message           | Cause                  | Solution                         |
+|---------|-------------------|------------------------|----------------------------------|
+| -32602  | Invalid params    | Missing required param | Provide all required params      |
+| -32001  | Session not found | Invalid session        | Use list_sessions first          |
+| -32001  | Invalid request   | Chunk not found        | Verify file_path and chunk_index |
+| -32001  | Invalid request   | File not found         | File deleted since indexing      |
 
 ### Usage Examples
 
@@ -1737,7 +1736,7 @@ Shows 30 lines before and after for better understanding
 
 ---
 
-## Tool: reindex_session
+## 13. Tool: reindex_session
 
 Re-index a session using the stored repository path and configuration.
 
@@ -1749,12 +1748,12 @@ original repository path and configuration from session metadata.
 
 ### Input Schema
 
-| Parameter  | Type    | Required | Default | Constraints | Description |
-|------------|---------|----------|---------|-------------|-------------|
-| session    | string  | Yes      | -       | ^[a-zA-Z0-9_-]{1,64}$ | Session ID |
-| chunk_size | integer | No       | stored  | 100-2000 | Override chunk size |
-| overlap    | integer | No       | stored  | 0-500 | Override overlap |
-| force      | boolean | No       | false   | - | Force re-index if config unchanged |
+| Parameter  | Type    | Required | Default | Constraints           | Description                        |
+|------------|---------|----------|---------|-----------------------|------------------------------------|
+| session    | string  | Yes      | -       | ^[a-zA-Z0-9_-]{1,64}$ | Session ID                         |
+| chunk_size | integer | No       | stored  | 100-2000              | Override chunk size                |
+| overlap    | integer | No       | stored  | 0-500                 | Override overlap                   |
+| force      | boolean | No       | false   | -                     | Force re-index if config unchanged |
 
 ### Request Example
 
@@ -1795,20 +1794,20 @@ original repository path and configuration from session metadata.
 
 ### Performance
 
-| Metric  | Value   | Notes |
-|---------|---------|-------|
-| Latency | 1-30s   | Depends on repository size |
+| Metric     | Value                  | Notes                       |
+|------------|------------------------|-----------------------------|
+| Latency    | 1-30s                  | Depends on repository size  |
 | Throughput | ~1,500-2,000 files/sec | Similar to index_repository |
 
 ### Error Codes
 
-| Code   | Message | Cause | Solution |
-|--------|---------|-------|----------|
-| -32602 | Invalid params | Invalid chunk_size | Use 100-2000 |
-| -32602 | Invalid params | Invalid overlap | Use 0-500, less than chunk_size |
-| -32001 | Invalid request | Session not found | Use list_sessions first |
-| -32001 | Invalid request | Repository path missing | Repository moved/deleted |
-| -32001 | Invalid request | Config unchanged | Use force=true |
+| Code   | Message         | Cause                   | Solution                        |
+|--------|-----------------|-------------------------|---------------------------------|
+| -32602 | Invalid params  | Invalid chunk_size      | Use 100-2000                    |
+| -32602 | Invalid params  | Invalid overlap         | Use 0-500, less than chunk_size |
+| -32001 | Invalid request | Session not found       | Use list_sessions first         |
+| -32001 | Invalid request | Repository path missing | Repository moved/deleted        |
+| -32001 | Invalid request | Config unchanged        | Use force=true                  |
 
 ### Usage Examples
 
@@ -1830,7 +1829,7 @@ Re-indexed with new configuration
 
 ---
 
-## Tool: upgrade_session
+## 14. Tool: upgrade_session
 
 Upgrade a session to the current schema version.
 

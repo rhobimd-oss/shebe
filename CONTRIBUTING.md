@@ -270,11 +270,11 @@ cargo bench
 
 ## Release Process
 
-1. Update version in `services/shebe-server/Cargo.toml`
-2. Update `CHANGELOG.md`
+1. Update `CHANGELOG.md` with changes under `[Unreleased]` section
+2. Update version in `services/shebe-server/Cargo.toml`
 3. Tag release: `git tag v0.X.Y`
 4. Push tag: `git push origin v0.X.Y`
-5. GitLab CI will build and publish artifacts
+5. GitLab CI extracts `[Unreleased]` from CHANGELOG.md and publishes release
 
 ---
 

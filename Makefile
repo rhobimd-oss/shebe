@@ -75,6 +75,9 @@ clean:
 	docker volume rm deploy_cargo-registry deploy_cargo-git deploy_cargo-target 2>/dev/null || true
 	@echo "Docker volumes cleaned"
 
+.PHONY: commit
+commit:
+	scripts/generate-commit-message.sh --all
 
 # MCP TARGETS ------------------------------------------------------------------
 VERSION ?= $(shell cat services/shebe-server/VERSION)

@@ -9,8 +9,6 @@ Fast BM25 full-text search for code repositories with MCP integration for Claude
 
 - [Quick Start](#quick-start)
 - [What is Shebe?](#what-is-shebe)
-- [Origins](#origins)
-- [What's New](#whats-new)
 - [Why Shebe?](#why-shebe)
 - [Common Tasks](#common-tasks)
 - [Tool Selection Guide](#tool-selection-guide)
@@ -27,20 +25,7 @@ Fast BM25 full-text search for code repositories with MCP integration for Claude
 
 ## Quick Start
 
-```bash
-# Build from source
-git clone https://gitlab.com/rhobimd-oss/shebe.git
-cd shebe
-make build-release
-
-# Index a codebase (one-time, ~3s for 6k files)
-./services/shebe-server/build/release/shebe-mcp index_repository /path/to/your/code my-session
-
-# Search instantly (2ms)
-./services/shebe-server/build/release/shebe-mcp search "authentication handler" my-session
-```
-
-For Claude Code integration, see [INSTALLATION.md](./INSTALLATION.md).
+See [INSTALLATION.md](./INSTALLATION.md).
 
 ---
 
@@ -50,60 +35,84 @@ Shebe provides **content search** for code - find functions, APIs and patterns a
 large codebases using keyword search.
 
 **Key Features:**
-- **Fast:** 2ms query latency (10x better than 20ms target)
-- **Scalable:** 1,928-11,210 files/sec indexing (3.9x-22.4x faster than target)
-- **Token-efficient:** 210-650 tokens/query (8-24x better than 5,000 target)
-- **Simple:** BM25 only, no embeddings/GPU needed
+- **Fast:** 2ms query latency (10X faster than ripgrep - faster than a
+  single frame of 60fps video)
+- **Scalable:** 2k-12k files/sec indexing (5500 files in 0.5s - the time it takes to blink)
+- **Token-efficient:** 200-700 tokens/query (3-12x fewer tokens than Claude + ripgrep workflows
+  at 2,000-8,000 tokens - ripgrep returns paths only, requiring file reads for content)
+- **Simple:** BM25 only, no embeddings/GPU needed, no resource-hogging
 - **UTF-8 Safe:** Handles emoji, CJK, all Unicode
 - **14 MCP Tools:** Direct Claude Code integration ([full reference](./docs/guides/mcp-tools-reference.md))
 
 **Positioning:** Complements structural tools (Serena MCP) with content search.
-**Validated:** 30/30 performance test scenarios + 392 unit tests passed
-
----
-
-## Origins
-
-Shebe is inspired by [Lethe](https://github.com/sibyllinesoft/lethe), a full-featured
-RAG platform developed by SibyllineSoft. While Lethe provides a comprehensive solution
-with PostgreSQL-backed persistence, API servers and CLI tooling for enterprise RAG
-workflows, Shebe takes a deliberately minimalist approach: a single-purpose BM25 search
-engine optimized for code exploration with Claude Code. Where Lethe offers breadth and
-flexibility, Shebe offers speed and simplicity - trading features for sub-5ms query
-latency and zero external dependencies. The name "Shebe" continues the mythological
-naming tradition, representing a focused distillation of RAG concepts into a tool that
-does one thing exceptionally well.
-
----
-
-## What's New
-
-**v0.5.0 (Current)**
-- **find_references tool** - Discover all symbol usages before renaming
-  (confidence scoring, file grouping, ~50 tokens per reference)
-- **Session metadata improvements** - Repository path tracking, schema versioning
-- **14 MCP tools total** - Complete toolset for code exploration
-
-See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 ---
 
 ## Why Shebe?
 
-When working with large reference codebases (Istio, OpenEMR, Django, etc.), you need
-fast keyword search without burning tokens or waiting for slow searches.
+Shebe draws inspiration from [Lethe](https://github.com/sibyllinesoft/lethe), a full-featured enterprise
+RAG platform (which is overkill for local development) and addresses two gaps in existing tools:
+
+1. **Serena MCP** provides structural code navigation via LSP but cannot search non-code files
+   (markdown, YAML, configs, documentation)
+2. **grep/ripgrep** return only file paths, requiring Claude to read entire files (2,000-8,000 tokens)
+
+Shebe fills both gaps as a lightweight, single-binary tool that returns ranked content snippets
+directly (200-700 tokens).
+
 
 ### The Shebe Workflow
 
 ```bash
-# One-time setup
-git clone https://github.com/istio/istio
-shebe-mcp index_repository /path/to/istio session_name
-
-# Fast searches (2ms each, 210-650 tokens)
-shebe-mcp search "authentication middleware" session_name
-shebe-mcp search "rate limiting config" session_name
+# One-time setup (indexes 5,600 files in 0.5s)
+shebe-mcp index_repository /path/to/istio istio
 ```
+
+**search_code** - Discover code by keywords (2ms, 200-700 tokens):
+
+```bash
+shebe-mcp search_code "authentication middleware" istio
+```
+```
+# Results ranked by BM25 relevance:
+1. security/pkg/server/ca/authenticate.go:45 (score: 12.3)
+   func (s *Server) authenticateRequest(ctx context.Context) ...
+
+2. pilot/pkg/security/authz/policy.go:89 (score: 11.8)
+   // Authentication middleware for incoming requests...
+```
+
+**find_references** - Locate symbol usages with confidence scoring (5-32ms):
+
+```bash
+shebe-mcp find_references "AuthorizationPolicy" istio
+```
+```
+## References to `AuthorizationPolicy` (50 found)
+
+### High Confidence (35)
+#### pilot/pkg/security/authz/builder.go:123
+  func buildPolicy(p *AuthorizationPolicy) *model.Config {
+- **Pattern:** type_annotation
+- **Confidence:** 0.85
+
+### Medium Confidence (15)
+#### tests/integration/security/authz_test.go:45
+  // Test AuthorizationPolicy enforcement
+- **Pattern:** word_match (+0.05 test boost)
+- **Confidence:** 0.65
+```
+
+**How shebe stands out:**
+
+| Capability                | Shebe       | grep/ripgrep           | Serena MCP  |
+|---------------------------|-------------|------------------------|-------------|
+| Ranked results (BM25)     | Yes         | No (all matches equal) | No          |
+| Confidence scoring        | Yes (H/M/L) | No                     | No          |
+| Non-code files (YAML, md) | Yes         | Yes                    | No          |
+| Token efficiency          | 200-700     | 2,000-8,000            | 1,000-3,000 |
+| Speed (5k+ files)         | 2-32ms      | 100-1000ms             | 500-5000ms  |
+| Deduplication             | Yes         | No                     | Yes         |
 
 ### Speed Comparison
 
@@ -207,14 +216,14 @@ For complete codebase exploration without token waste:
 
 ### Quick Reference
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SHEBE_INDEX_DIR` | `~/.local/state/shebe` | Session storage location |
-| `SHEBE_LOG_LEVEL` | `info` | Logging verbosity (debug, info, warn, error) |
-| `SHEBE_HOST` | `127.0.0.1` | HTTP server bind address |
-| `SHEBE_PORT` | `3000` | HTTP server port |
-| `SHEBE_CHUNK_SIZE` | `512` | Characters per chunk (100-2000) |
-| `SHEBE_OVERLAP` | `64` | Overlap between chunks |
+| Variable           | Default                | Description                                  |
+|--------------------|------------------------|----------------------------------------------|
+| `SHEBE_INDEX_DIR`  | `~/.local/state/shebe` | Session storage location                     |
+| `SHEBE_LOG_LEVEL`  | `info`                 | Logging verbosity (debug, info, warn, error) |
+| `SHEBE_HOST`       | `127.0.0.1`            | HTTP server bind address                     |
+| `SHEBE_PORT`       | `3000`                 | HTTP server port                             |
+| `SHEBE_CHUNK_SIZE` | `512`                  | Characters per chunk (100-2000)              |
+| `SHEBE_OVERLAP`    | `64`                   | Overlap between chunks                       |
 
 ### Configuration File
 
@@ -274,10 +283,10 @@ See [docs/Performance.md](./docs/Performance.md) for detailed benchmarks.
 
 ### Two Ways to Use Shebe
 
-| Binary | Purpose | When to Use |
-|--------|---------|-------------|
-| `shebe` | HTTP REST API | Programmatic access, CI/CD integration, web dashboards |
-| `shebe-mcp` | Claude Code MCP | Interactive coding sessions, AI-assisted development |
+| Binary      | Purpose         | When to Use |
+|-------------|-----------------|--------------------------------------------------------|
+| `shebe`     | HTTP REST API   | Programmatic access, CI/CD integration, web dashboards |
+| `shebe-mcp` | Claude Code MCP | Interactive coding sessions, AI-assisted development   |
 
 Both binaries share the same index storage (`~/.local/state/shebe/sessions/`).
 Index once, query from anywhere.
@@ -304,12 +313,8 @@ Index once, query from anywhere.
     └────────────────────────┼────────────────────────┘
                              │
                     ┌────────┴────────┐
-                    │     shebe       │
-                    └────────▲────────┘
-                             │ HTTP REST
-                    ┌────────┴────────┐
-                    │  CI/CD, Scripts │
-                    └─────────────────┘
+                    │ shebe (HTTP)    │
+                    └────────-────────┘
 ```
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for developer guide.

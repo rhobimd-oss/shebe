@@ -1,7 +1,7 @@
 # Shebe Installation Guide
 
-**Version:** 0.5.0
-**Last Updated:** 2025-12-11
+**Version:** 0.5.1
+**Last Updated:** 2025-12-28
 **Focus:** MCP Server (shebe-mcp) for Claude Code Integration
 
 ---
@@ -42,16 +42,16 @@ The fastest way to get started. Pre-built binaries are available for Linux x86_6
 
 ```bash
 # Download the latest release
-curl -L -o shebe-v0.5.0-linux-x86_64.tar.gz \
-  "https://gitlab.com/rhobimd-oss/shebe/-/jobs/artifacts/v0.5.0/raw/releases/shebe-v0.5.0-linux-x86_64.tar.gz?job=build:shebe"
+curl -L -o shebe-v0.5.1-linux-x86_64.tar.gz \
+  "https://gitlab.com/rhobimd-oss/shebe/-/jobs/artifacts/v0.5.1/raw/releases/shebe-v0.5.1-linux-x86_64.tar.gz?job=build:shebe"
 
 # Verify checksum (optional but recommended)
 curl -L -o shebe.sha256 \
-  "https://gitlab.com/rhobimd-oss/shebe/-/jobs/artifacts/v0.5.0/raw/releases/shebe-v0.5.0-linux-x86_64.tar.gz.sha256?job=build:shebe"
+  "https://gitlab.com/rhobimd-oss/shebe/-/jobs/artifacts/v0.5.1/raw/releases/shebe-v0.5.1-linux-x86_64.tar.gz.sha256?job=build:shebe"
 sha256sum -c shebe.sha256
 
 # Extract
-tar -xzf shebe-v0.5.0-linux-x86_64.tar.gz
+tar -xzf shebe-v0.5.1-linux-x86_64.tar.gz
 
 # Install to PATH (choose one)
 sudo mv shebe shebe-mcp /usr/local/bin/          # System-wide
@@ -411,7 +411,7 @@ You can run shebe alongside other MCP servers:
 ```bash
 # Download, extract, install
 curl -L -o shebe.tar.gz \
-  "https://gitlab.com/rhobimd-oss/shebe/-/jobs/artifacts/v0.5.0/raw/releases/shebe-v0.5.0-linux-x86_64.tar.gz?job=build:shebe"
+  "https://gitlab.com/rhobimd-oss/shebe/-/jobs/artifacts/v0.5.1/raw/releases/shebe-v0.5.1-linux-x86_64.tar.gz?job=build:shebe"
 tar -xzf shebe.tar.gz
 sudo mv shebe shebe-mcp /usr/local/bin/
 ```
@@ -491,7 +491,7 @@ See [docs/Performance.md](./docs/Performance.md) for detailed benchmarks.
 
 ---
 
-**Last Updated:** 2025-12-11
-**Version:** 0.5.0
+**Last Updated:** 2025-12-28
+**Version:** 0.5.1
 **Status:** Production Ready (14 MCP tools, 392 tests passing)
 **Focus:** MCP Server for Claude Code Integration

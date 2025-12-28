@@ -35,14 +35,12 @@ Shebe provides **content search** for code - find functions, APIs and patterns a
 large codebases using keyword search.
 
 **Key Features:**
-- **Fast:** 2ms query latency (10X faster than ripgrep - faster than a
-  single frame of 60fps video)
-- **Scalable:** 2k-12k files/sec indexing (5500 files in 0.5s - the time it takes to blink)
-- **Token-efficient:** 200-700 tokens/query (3-12x fewer tokens than Claude + ripgrep workflows
-  at 2,000-8,000 tokens - ripgrep returns paths only, requiring file reads for content)
-- **Simple:** BM25 only, no embeddings/GPU needed, no resource-hogging
-- **UTF-8 Safe:** Handles emoji, CJK, all Unicode
-- **14 MCP Tools:** Direct Claude Code integration ([full reference](./docs/guides/mcp-tools-reference.md))
+- 2ms query latency
+- 2k-12k files/sec indexing (6k files in 0.5s)
+- 200-700 tokens/query
+- BM25 only - no embeddings or GPU
+- Full UTF-8 support (emoji, CJK, special characters)
+- 14 MCP tools for Claude Code ([reference](./docs/guides/mcp-tools-reference.md))
 
 **Positioning:** Complements structural tools (Serena MCP) with content search.
 
@@ -50,106 +48,32 @@ large codebases using keyword search.
 
 ## Why Shebe?
 
-Shebe draws inspiration from [Lethe](https://github.com/sibyllinesoft/lethe), a full-featured enterprise
-RAG platform (which is overkill for local development) and addresses two gaps in existing tools:
+When using AI coding assistants to refactor symbols across large codebases (6k+ files),
+developers face a binary choice: precision (LSP-based tools) or efficiency (grep/ripgrep).
+Shebe attempts to eliminate this trade-off.
 
-1. **Serena MCP** provides structural code navigation via LSP but cannot search non-code files
-   (markdown, YAML, configs, documentation)
-2. **grep/ripgrep** return only file paths, requiring Claude to read entire files (2,000-8,000 tokens)
+**Benchmark: Refactoring `AuthorizationPolicy` across Istio (~6k files)**
 
-Shebe fills both gaps as a lightweight, single-binary tool that returns ranked content snippets
-directly (200-700 tokens).
+| Approach | Searches | Time | Tokens |
+|----------|----------|------|--------|
+| Shebe `find_references` | 1 | 2-3s | ~4,500 |
+| Claude + Grep | 13 | 15-20s | ~12,000 |
+| Claude + Serena MCP | 8 | 25-30s | ~18,000 |
 
+Shebe provides 6-10x faster end-to-end time and 3-4x fewer tokens by returning
+confidence-scored, pattern-classified results in a single call.
 
-### The Shebe Workflow
+See [WHY_SHEBE.md](./WHY_SHEBE.md) for detailed benchmarks and tool comparisons.
 
-```bash
-# One-time setup (indexes 5,600 files in 0.5s)
-shebe-mcp index_repository /path/to/istio istio
-```
+### Quick Comparison
 
-**search_code** - Discover code by keywords (2ms, 200-700 tokens):
-
-```bash
-shebe-mcp search_code "authentication middleware" istio
-```
-```
-# Results ranked by BM25 relevance:
-1. security/pkg/server/ca/authenticate.go:45 (score: 12.3)
-   func (s *Server) authenticateRequest(ctx context.Context) ...
-
-2. pilot/pkg/security/authz/policy.go:89 (score: 11.8)
-   // Authentication middleware for incoming requests...
-```
-
-**find_references** - Locate symbol usages with confidence scoring (5-32ms):
-
-```bash
-shebe-mcp find_references "AuthorizationPolicy" istio
-```
-```
-## References to `AuthorizationPolicy` (50 found)
-
-### High Confidence (35)
-#### pilot/pkg/security/authz/builder.go:123
-  func buildPolicy(p *AuthorizationPolicy) *model.Config {
-- **Pattern:** type_annotation
-- **Confidence:** 0.85
-
-### Medium Confidence (15)
-#### tests/integration/security/authz_test.go:45
-  // Test AuthorizationPolicy enforcement
-- **Pattern:** word_match (+0.05 test boost)
-- **Confidence:** 0.65
-```
-
-**How shebe stands out:**
-
-| Capability                | Shebe       | grep/ripgrep           | Serena MCP  |
-|---------------------------|-------------|------------------------|-------------|
-| Ranked results (BM25)     | Yes         | No (all matches equal) | No          |
-| Confidence scoring        | Yes (H/M/L) | No                     | No          |
-| Non-code files (YAML, md) | Yes         | Yes                    | No          |
-| Token efficiency          | 200-700     | 2,000-8,000            | 1,000-3,000 |
-| Speed (5k+ files)         | 2-32ms      | 100-1000ms             | 500-5000ms  |
-| Deduplication             | Yes         | No                     | Yes         |
-
-### Speed Comparison
-
-```
-                          Query Latency (lower is better)
-Shebe BM25                |## 2ms
-Claude + ripgrep          |################ 50-200ms
-Claude + Web Search       |#################################### 1-3s
-Serena Pattern Search     |################################################# 8s+
-```
-
-### Detailed Comparison
-
-| Approach                   | Speed     | Tokens/Query  | Limitations                                       |
-|----------------------------|-----------|---------------|---------------------------------------------------|
-| **Shebe BM25 Index**       | **2ms**   | **210-650**   | Keyword search only (no structural queries)       |
-| Claude Code + grep/ripgrep | 50-200ms  | 2,000-8,000   | Must read entire files, slow on large repos       |
-| Claude Code + Web Search   | 1-3s      | 5,000-15,000  | Rate limits, network latency, incomplete results  |
-| Raw GitHub URLs            | 500ms-2s  | 10,000-50,000 | Network overhead, must know exact file paths      |
-| Serena MCP (LSP)           | 100-500ms | 1,000-3,000   | Optimized for structural queries, slow for search |
-
-### Why Shebe is Faster
-
-**1. Pre-computed BM25 Index**
-- Indexing happens once (0.5-3.3s for 5k-6k files)
-- Search queries hit in-memory Tantivy index (2ms)
-- No file I/O or regex processing during search
-
-**2. Token Efficiency**
-- Returns only relevant snippets (5 lines context)
-- No need to read entire files into Claude's context
-- 8-24x fewer tokens than web search or raw file reads
-
-**3. Purpose-built for Keyword Search**
-- BM25 ranking returns most relevant results first
-- Language-agnostic (works across 11+ file types in one query)
-- UTF-8 safe (handles emoji, CJK, special characters)
+| Capability | Shebe | grep/ripgrep | Serena MCP |
+|------------|-------|--------------|------------|
+| Ranked results (BM25) | Yes | No | No |
+| Confidence scoring | Yes | No | No |
+| Non-code files (YAML, md) | Yes | Yes | No |
+| Token efficiency | 200-700 | 2,000-8,000 | 1,000-3,000 |
+| Speed (5k+ files) | 2-32ms | 100-1000ms | 500-5000ms |
 
 ---
 

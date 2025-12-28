@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2025-12-11
+
 ### Added
 - `find_references` MCP tool for token-efficient symbol discovery
   - Identifies all references to a symbol across indexed codebase (~50-70 tokens per reference)
@@ -139,7 +141,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 130 total tests (79 unit, 7 integration, 37 UTF-8, 3 doc)
 - OpenEMR validation: 4,210 files indexed successfully
 
-[Unreleased]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.0...HEAD
+[Unreleased]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.1...HEAD
+[0.5.1]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.0...v0.5.1
 [0.5.0]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.4.1...v0.5.0
 [0.4.1]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.4.0...v0.4.1
 [0.4.0]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.3.0...v0.4.0

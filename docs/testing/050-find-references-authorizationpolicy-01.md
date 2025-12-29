@@ -66,33 +66,33 @@ The response includes:
 
 ## Files to Update (for refactoring)
 
-1. `/home/orodha/github/istio/istio/tests/integration/pilot/testdata/authz-a.yaml`
-2. `/home/orodha/github/istio/istio/pilot/pkg/config/kube/crdclient/types.gen.go`
-3. `/home/orodha/github/istio/istio/pilot/pkg/networking/grpcgen/grpcgen_test.go`
-4. `/home/orodha/github/istio/istio/pilot/pkg/model/authorization.go`
-5. `/home/orodha/github/istio/istio/pilot/pkg/serviceregistry/kube/controller/ambient/ambientindex_test.go`
-6. `/home/orodha/github/istio/istio/pilot/pkg/serviceregistry/kube/controller/ambient/authorization_test.go`
-7. `/home/orodha/github/istio/istio/pilot/pkg/security/authz/builder/testdata/http/multiple-policies-in.yaml`
-8. `/home/orodha/github/istio/istio/pilot/pkg/security/authz/builder/testdata/http/deny-and-allow-in.yaml`
-9. `/home/orodha/github/istio/istio/pilot/pkg/xds/workload_test.go`
-10. `/home/orodha/github/istio/istio/pkg/config/validation/validation_test.go`
-11. `/home/orodha/github/istio/istio/pkg/config/validation/validation.go`
-12. `/home/orodha/github/istio/istio/pkg/config/schema/gvk/resources.gen.go`
-13. `/home/orodha/github/istio/istio/pkg/config/schema/kind/resources.gen.go`
-14. `/home/orodha/github/istio/istio/pkg/config/schema/collections/collections.gen.go`
-15. `/home/orodha/github/istio/istio/pkg/config/schema/collections/collections.agent.gen.go`
-16. `/home/orodha/github/istio/istio/pkg/config/schema/kubetypes/resources.gen.go`
-17. `/home/orodha/github/istio/istio/pilot/pkg/model/authorization_test.go`
-18. `/home/orodha/github/istio/istio/pilot/pkg/model/sidecar_test.go`
-19. `/home/orodha/github/istio/istio/pilot/pkg/networking/core/gateway_test.go`
-20. `/home/orodha/github/istio/istio/pilot/pkg/networking/core/listener_test.go`
-21. `/home/orodha/github/istio/istio/pilot/pkg/networking/core/networkfilter_test.go`
-22. `/home/orodha/github/istio/istio/pilot/pkg/security/authz/builder/builder.go`
-23. `/home/orodha/github/istio/istio/pilot/pkg/serviceregistry/kube/controller/ambient/ambientindex.go`
-24. `/home/orodha/github/istio/istio/pilot/pkg/serviceregistry/kube/controller/ambient/ambientindex_workloadentry_test.go`
-25. `/home/orodha/github/istio/istio/pkg/config/analysis/analyzers/analyzers_test.go`
-26. `/home/orodha/github/istio/istio/istioctl/pkg/authz/authz.go`
-27. `/home/orodha/github/istio/istio/releasenotes/notes/remote-ip.yaml`
+1. `~/github/istio/istio/tests/integration/pilot/testdata/authz-a.yaml`
+2. `~/github/istio/istio/pilot/pkg/config/kube/crdclient/types.gen.go`
+3. `~/github/istio/istio/pilot/pkg/networking/grpcgen/grpcgen_test.go`
+4. `~/github/istio/istio/pilot/pkg/model/authorization.go`
+5. `~/github/istio/istio/pilot/pkg/serviceregistry/kube/controller/ambient/ambientindex_test.go`
+6. `~/github/istio/istio/pilot/pkg/serviceregistry/kube/controller/ambient/authorization_test.go`
+7. `~/github/istio/istio/pilot/pkg/security/authz/builder/testdata/http/multiple-policies-in.yaml`
+8. `~/github/istio/istio/pilot/pkg/security/authz/builder/testdata/http/deny-and-allow-in.yaml`
+9. `~/github/istio/istio/pilot/pkg/xds/workload_test.go`
+10. `~/github/istio/istio/pkg/config/validation/validation_test.go`
+11. `~/github/istio/istio/pkg/config/validation/validation.go`
+12. `~/github/istio/istio/pkg/config/schema/gvk/resources.gen.go`
+13. `~/github/istio/istio/pkg/config/schema/kind/resources.gen.go`
+14. `~/github/istio/istio/pkg/config/schema/collections/collections.gen.go`
+15. `~/github/istio/istio/pkg/config/schema/collections/collections.agent.gen.go`
+16. `~/github/istio/istio/pkg/config/schema/kubetypes/resources.gen.go`
+17. `~/github/istio/istio/pilot/pkg/model/authorization_test.go`
+18. `~/github/istio/istio/pilot/pkg/model/sidecar_test.go`
+19. `~/github/istio/istio/pilot/pkg/networking/core/gateway_test.go`
+20. `~/github/istio/istio/pilot/pkg/networking/core/listener_test.go`
+21. `~/github/istio/istio/pilot/pkg/networking/core/networkfilter_test.go`
+22. `~/github/istio/istio/pilot/pkg/security/authz/builder/builder.go`
+23. `~/github/istio/istio/pilot/pkg/serviceregistry/kube/controller/ambient/ambientindex.go`
+24. `~/github/istio/istio/pilot/pkg/serviceregistry/kube/controller/ambient/ambientindex_workloadentry_test.go`
+25. `~/github/istio/istio/pkg/config/analysis/analyzers/analyzers_test.go`
+26. `~/github/istio/istio/istioctl/pkg/authz/authz.go`
+27. `~/github/istio/istio/releasenotes/notes/remote-ip.yaml`
 
 ## Pattern Distribution
 

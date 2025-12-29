@@ -478,10 +478,10 @@ Use this list to systematically update each file."#
                     },
                     "max_results": {
                         "type": "integer",
-                        "description": "Maximum references to return",
+                        "description": "Maximum references to return. Limit configurable via max_k setting (default: 100).",
                         "default": 50,
                         "minimum": 1,
-                        "maximum": 200
+                        "maximum": 500
                     }
                 },
                 "required": ["symbol", "session"]

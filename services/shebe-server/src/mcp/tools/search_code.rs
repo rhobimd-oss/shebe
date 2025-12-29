@@ -115,10 +115,11 @@ impl McpToolHandler for SearchCodeHandler {
                     },
                     "k": {
                         "type": "integer",
-                        "description": "Max results. Quick: k=5, Balanced: k=10 (default), Thorough: k=20, Max: k=100",
+                        "description": "Max results. Quick: k=5, Balanced: k=10 (default), Thorough: k=20. \
+                                       Limit configurable via max_k setting (default: 100).",
                         "default": 10,
                         "minimum": 1,
-                        "maximum": 100
+                        "maximum": 500
                     },
                     "literal": {
                         "type": "boolean",

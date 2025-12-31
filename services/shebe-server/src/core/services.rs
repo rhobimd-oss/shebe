@@ -1,7 +1,6 @@
 //! Unified service container for Shebe
 //!
-//! Provides shared access to all core services. Used by both
-//! HTTP and MCP adapters.
+//! Provides shared access to all core services.
 
 use crate::core::config::Config;
 use crate::core::error::Result;
@@ -12,7 +11,6 @@ use std::sync::Arc;
 
 /// Unified services container
 ///
-/// Replaces both `ShebeServices` (MCP) and `AppState` (HTTP).
 /// All adapters use this same struct for service access.
 #[derive(Clone)]
 pub struct Services {

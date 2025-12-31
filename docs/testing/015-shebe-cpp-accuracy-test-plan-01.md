@@ -74,7 +74,7 @@ The tool returns:
 
 ## Test Codebase: Eigen
 
-- **Repository:** /home/orodha/gitlab/libeigen/eigen
+- **Repository:** ~/gitlab/libeigen/eigen
 - **Session:** `eigen`
 - **Files:** 1,919
 - **Chunks:** 40,458
@@ -139,7 +139,7 @@ Expected: eigen session with ~1,919 files, ~40,458 chunks
 For each symbol, establish grep baseline:
 
 ```bash
-grep -rn "SYMBOL" /home/orodha/gitlab/libeigen/eigen \
+grep -rn "SYMBOL" ~/gitlab/libeigen/eigen \
     --include="*.h" --include="*.cpp" --include="*.hpp"
 ```
 

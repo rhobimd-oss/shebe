@@ -143,11 +143,10 @@ For complete codebase exploration without token waste:
 | Variable           | Default                | Description                                  |
 |--------------------|------------------------|----------------------------------------------|
 | `SHEBE_INDEX_DIR`  | `~/.local/state/shebe` | Session storage location                     |
-| `SHEBE_LOG_LEVEL`  | `info`                 | Logging verbosity (debug, info, warn, error) |
-| `SHEBE_HOST`       | `127.0.0.1`            | HTTP server bind address                     |
-| `SHEBE_PORT`       | `3000`                 | HTTP server port                             |
 | `SHEBE_CHUNK_SIZE` | `512`                  | Characters per chunk (100-2000)              |
 | `SHEBE_OVERLAP`    | `64`                   | Overlap between chunks                       |
+| `SHEBE_DEFAULT_K`  | `10`                   | Default search results count                 |
+| `SHEBE_MAX_K`      | `100`                  | Maximum search results allowed               |
 
 ### Configuration File
 
@@ -205,40 +204,28 @@ See [docs/Performance.md](./docs/Performance.md) for detailed benchmarks.
 
 ## Architecture
 
-### Two Ways to Use Shebe
+### MCP-Only Design
 
-| Binary      | Purpose         | When to Use |
-|-------------|-----------------|--------------------------------------------------------|
-| `shebe`     | HTTP REST API   | Programmatic access, CI/CD integration, web dashboards |
-| `shebe-mcp` | Claude Code MCP | Interactive coding sessions, AI-assisted development   |
-
-Both binaries share the same index storage (`~/.local/state/shebe/sessions/`).
-Index once, query from anywhere.
+Shebe is accessed exclusively via the MCP protocol, designed for Claude Code integration.
+No HTTP server required.
 
 ### System Design
 
 ```
-                    ┌─────────────────┐
-                    │   Claude Code   │
-                    └────────┬────────┘
-                             │ MCP (stdio)
-                    ┌────────▼────────┐
-                    │   shebe-mcp     │
-                    └────────┬────────┘
-                             │
-    ┌────────────────────────┼────────────────────────┐
-    │                        │                        │
-    │              ┌─────────▼─────────┐              │
-    │              │   Shared Storage  │              │
-    │              │ ~/.local/state/   │              │
-    │              │   shebe/sessions/ │              │
-    │              └─────────▲─────────┘              │
-    │                        │                        │
-    └────────────────────────┼────────────────────────┘
-                             │
-                    ┌────────┴────────┐
-                    │ shebe (HTTP)    │
-                    └────────-────────┘
+                    +------------------+
+                    |   Claude Code    |
+                    +--------+---------+
+                             | MCP (stdio)
+                    +--------v---------+
+                    |   shebe-mcp      |
+                    |   (14 tools)     |
+                    +--------+---------+
+                             |
+                    +--------v---------+
+                    |  Shared Storage  |
+                    | ~/.local/state/  |
+                    |  shebe/sessions/ |
+                    +------------------+
 ```
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for developer guide.
@@ -262,9 +249,9 @@ For detailed troubleshooting, see [docs/guides/mcp-setup-guide.md](./docs/guides
 
 ## Project Status
 
-**Version:** 0.5.0
-**Status:** Production Ready - All 14 MCP Tools Validated
-**Testing:** 392 unit tests (86.76% coverage) + 30 performance scenarios (100% pass rate)
+**Version:** 0.6.0
+**Status:** Production Ready - MCP-Only Architecture (14 Tools)
+**Testing:** 397 tests (86.76% coverage) + 30 performance scenarios (100% pass rate)
 **Next:** Stage 3 (CI/CD Pipeline)
 
 See [CHANGELOG.md](./CHANGELOG.md) for version history.
@@ -283,7 +270,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for de
 
 **Quick checklist:**
 1. Read [ARCHITECTURE.md](./ARCHITECTURE.md) for codebase guide
-2. All 392 tests must pass (`make test`)
+2. All 397 tests must pass (`make test`)
 3. Zero clippy warnings (`make clippy`)
 4. Max 120 char line length
 5. Maintain >85% test coverage (currently 86.76%)

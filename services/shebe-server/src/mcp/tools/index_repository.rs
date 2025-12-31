@@ -1,7 +1,7 @@
 //! Repository indexing tool handler
 //!
 //! Implements the index_repository MCP tool for indexing code repositories
-//! directly from Claude Code without requiring the HTTP server.
+//! directly from Claude Code.
 
 use super::handler::{text_content, McpToolHandler};
 use super::helpers::format_time_ago;

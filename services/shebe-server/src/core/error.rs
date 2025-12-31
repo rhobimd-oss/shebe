@@ -1,15 +1,9 @@
 //! Error types and error handling for the Shebe RAG service.
 //!
 //! This module defines the error types used throughout the
-//! application and provides conversion to HTTP status codes for
-//! API responses.
+//! application. Protocol-specific error handling (MCP error codes)
+//! is handled in the respective adapter modules.
 
-use axum::{
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    Json,
-};
-use serde_json::json;
 use thiserror::Error;
 
 /// Result type alias for Shebe operations
@@ -64,42 +58,33 @@ pub enum ShebeError {
 }
 
 impl ShebeError {
-    /// Convert error to appropriate HTTP status code
-    pub fn status_code(&self) -> StatusCode {
-        match self {
-            ShebeError::SessionNotFound(_) | ShebeError::InvalidPath(_) => StatusCode::NOT_FOUND,
-            ShebeError::SessionAlreadyExists(_) => StatusCode::CONFLICT,
-            ShebeError::InvalidSession(_)
-            | ShebeError::InvalidQuery(_)
-            | ShebeError::InvalidQueryField { .. }
-            | ShebeError::ConfigError(_) => StatusCode::BAD_REQUEST,
-            ShebeError::IndexingFailed(_)
-            | ShebeError::SearchFailed(_)
-            | ShebeError::StorageError(_)
-            | ShebeError::IoError(_)
-            | ShebeError::SerdeError(_)
-            | ShebeError::TomlError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
     /// Get user-friendly error message
     pub fn message(&self) -> String {
         self.to_string()
     }
-}
 
-/// Implement IntoResponse for automatic error conversion in Axum
-impl IntoResponse for ShebeError {
-    fn into_response(self) -> Response {
-        let status = self.status_code();
-        let message = self.message();
+    /// Check if this is a "not found" type error
+    pub fn is_not_found(&self) -> bool {
+        matches!(
+            self,
+            ShebeError::SessionNotFound(_) | ShebeError::InvalidPath(_)
+        )
+    }
 
-        let body = Json(json!({
-            "error": message,
-            "status": status.as_u16(),
-        }));
+    /// Check if this is a conflict error (already exists)
+    pub fn is_conflict(&self) -> bool {
+        matches!(self, ShebeError::SessionAlreadyExists(_))
+    }
 
-        (status, body).into_response()
+    /// Check if this is a bad request error (invalid input)
+    pub fn is_bad_request(&self) -> bool {
+        matches!(
+            self,
+            ShebeError::InvalidSession(_)
+                | ShebeError::InvalidQuery(_)
+                | ShebeError::InvalidQueryField { .. }
+                | ShebeError::ConfigError(_)
+        )
     }
 }
 
@@ -108,34 +93,42 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_session_not_found_status() {
+    fn test_session_not_found_is_not_found() {
         let err = ShebeError::SessionNotFound("test".to_string());
-        assert_eq!(err.status_code(), StatusCode::NOT_FOUND);
+        assert!(err.is_not_found());
+        assert!(!err.is_conflict());
+        assert!(!err.is_bad_request());
     }
 
     #[test]
-    fn test_session_exists_status() {
+    fn test_session_exists_is_conflict() {
         let err = ShebeError::SessionAlreadyExists("test".to_string());
-        assert_eq!(err.status_code(), StatusCode::CONFLICT);
+        assert!(err.is_conflict());
+        assert!(!err.is_not_found());
+        assert!(!err.is_bad_request());
     }
 
     #[test]
-    fn test_invalid_query_status() {
+    fn test_invalid_query_is_bad_request() {
         let err = ShebeError::InvalidQuery("empty".to_string());
-        assert_eq!(err.status_code(), StatusCode::BAD_REQUEST);
+        assert!(err.is_bad_request());
+        assert!(!err.is_not_found());
+        assert!(!err.is_conflict());
     }
 
     #[test]
-    fn test_indexing_failed_status() {
+    fn test_indexing_failed_is_internal() {
         let err = ShebeError::IndexingFailed("disk full".to_string());
-        assert_eq!(err.status_code(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(!err.is_not_found());
+        assert!(!err.is_conflict());
+        assert!(!err.is_bad_request());
     }
 
     #[test]
     fn test_io_error_conversion() {
         let io_err = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
         let err = ShebeError::from(io_err);
-        assert_eq!(err.status_code(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(!err.is_not_found()); // IoError is internal, not "not found"
     }
 
     #[test]

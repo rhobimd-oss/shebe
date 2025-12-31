@@ -61,43 +61,7 @@ mkdir -p ~/.local/state/shebe/sessions
 
 ---
 
-## Step 3: Index Test Repository (1.5 minutes)
-
-Create test code:
-```bash
-mkdir -p /tmp/quick-test
-cat > /tmp/quick-test/main.rs << 'EOF'
-fn authenticate(user: &str, pwd: &str) -> bool {
-    !user.is_empty() && pwd.len() >= 8
-}
-
-fn main() {
-    println!("Authentication system");
-}
-EOF
-```
-
-Start Shebe server (in separate terminal):
-```bash
-cd /path/to/shebe/services/shebe-server
-SHEBE_INDEX_DIR=~/.local/state/shebe cargo run --release
-```
-
-Index the code:
-```bash
-curl -X POST http://localhost:3000/api/v1/index \
-  -H "Content-Type: application/json" \
-  -d '{
-    "path": "~/github/openemr/openemr",
-    "session": "openemr"
-  }'
-```
-
-Expected: `{"files_indexed":1,"chunks_created":1,...}`
-
----
-
-## Step 4: Restart Claude Code (30 seconds)
+## Step 3: Restart Claude Code (30 seconds)
 
 1. Close Claude Code completely
 2. Reopen Claude Code
@@ -105,7 +69,7 @@ Expected: `{"files_indexed":1,"chunks_created":1,...}`
 
 ---
 
-## Step 5: Search! (1 minute)
+## Step 4: Index and Search! (1 minute)
 
 In Claude Code conversation:
 
@@ -154,9 +118,9 @@ You're now using Shebe MCP for code search in Claude Code.
 
 ## What's Next?
 
-### Direct Indexing (No HTTP Server Required!)
+### Index Your Own Code
 
-**NEW:** You can now index repositories directly from Claude Code without starting the HTTP server:
+Index repositories directly from Claude Code:
 
 ```
 You: Index my project at /home/user/my-project for searching
@@ -171,19 +135,7 @@ Indexing complete! Indexed 450 files with 2,450 chunks.
 You can now search this session.
 ```
 
-See **Direct Indexing Guide** section below for details.
-
-### Index via HTTP API (Traditional Method)
-
-```bash
-# Example: Index your actual codebase via HTTP
-curl -X POST http://localhost:3000/api/v1/index -d '{
-  "path": "/home/user/my-project",
-  "session": "my-project",
-  "include_patterns": ["*.rs", "*.py", "*.js"],
-  "exclude_patterns": ["**/target/**", "**/node_modules/**"]
-}'
-```
+See **Indexing Guide** section below for details.
 
 ### Try Advanced Queries
 
@@ -207,14 +159,14 @@ You: What's in the my-project session?
 
 ---
 
-## Direct Indexing Guide
+## Indexing Guide
 
 **Available since:** Shebe v0.2.0
 **Tools:** `index_repository`, `index_status`
 
 ### Overview
 
-Direct indexing allows you to index repositories directly from Claude Code conversations without running the HTTP server. Claude Code uses MCP tools to index your code in the background and report progress.
+Index repositories directly from Claude Code conversations. Claude Code uses MCP tools to index your code in the background and report progress.
 
 ### Basic Usage
 
@@ -309,7 +261,7 @@ Claude will use `force: true` to overwrite the existing index.
 Indexing complete! You can now search this session with `search_code`.
 ```
 
-### Troubleshooting Direct Indexing
+### Troubleshooting Indexing
 
 **Indexing appears stuck:**
 ```
@@ -346,6 +298,6 @@ This is normal - binary files can't be indexed as text. The indexing will contin
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** 2025-10-21
-**Tested With:** Shebe v0.1.0
+**Document Version:** 1.1
+**Last Updated:** 2025-12-31
+**Tested With:** Shebe v0.5.3

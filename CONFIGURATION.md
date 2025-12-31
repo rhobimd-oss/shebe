@@ -111,15 +111,6 @@ Controls diagnostic output (written to stderr, not stdout, to preserve MCP proto
 |---------------------------------------------|--------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | toml: `log_level`<br>env: `SHEBE_LOG_LEVEL` | string | `"info"` | Logging verbosity level. Options: `trace` (very verbose, development), `debug` (detailed<br>diagnostics), `info` (normal operations), `warn` (problems only), `error` (critical issues only).<br>Logs go to stderr. |
 
-### Server Options (HTTP mode only)
-
-These settings apply only when running `shebe` HTTP server, not `shebe-mcp`:
-
-| Option                            | Type    | Default       | Description                                                                                                                                                   |
-|-----------------------------------|---------|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| toml: `host`<br>env: `SHEBE_HOST` | string  | `"127.0.0.1"` | HTTP server bind address. Use `"127.0.0.1"` for localhost only, or `"0.0.0.0"` to accept<br>external connections. **Not used by shebe-mcp** (MCP uses stdio). |
-| toml: `port`<br>env: `SHEBE_PORT` | integer | `3000`        | HTTP server port. **Not used by shebe-mcp** (MCP uses stdio). Only relevant for `shebe` HTTP<br>mode.                                                         |
-
 ## Example Configurations
 
 ### Minimal Configuration (Recommended)

@@ -1,7 +1,7 @@
 # Shebe Installation Guide
 
-**Version:** 0.5.1
-**Last Updated:** 2025-12-28
+**Version:** 0.5.3
+**Last Updated:** 2025-12-31
 **Focus:** MCP Server (shebe-mcp) for Claude Code Integration
 
 ---
@@ -28,7 +28,7 @@ real-time code search during development sessions.
 - Direct repository indexing from Claude Code conversations
 - 2ms search latency (validated on 5-6k file repositories)
 - Support for 11+ file types in polyglot codebases
-- 392 tests passing (100% success rate)
+- 397 tests passing (100% success rate)
 
 **No HTTP server required** - shebe-mcp operates independently with filesystem storage.
 
@@ -491,7 +491,7 @@ See [docs/Performance.md](./docs/Performance.md) for detailed benchmarks.
 
 ---
 
-**Last Updated:** 2025-12-28
-**Version:** 0.5.1
-**Status:** Production Ready (14 MCP tools, 392 tests passing)
+**Last Updated:** 2025-12-31
+**Version:** 0.5.3
+**Status:** Production Ready (14 MCP tools, 397 tests passing)
 **Focus:** MCP Server for Claude Code Integration

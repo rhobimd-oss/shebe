@@ -1,6 +1,6 @@
 [package]
 name = "shebe"
-version = "0.5.2"
+version = "0.5.3"
 edition = "2021"
 rust-version = "1.88"
 authors = ["RHOBIMD HEALTH"]
@@ -8,7 +8,7 @@ description = "BM25-based code search engine with MCP integration for Claude Cod
 license = "Apache-2.0"
 repository = "https://gitlab.com/rhobimd-oss/shebe"
 homepage = "https://gitlab.com/rhobimd-oss/shebe"
-documentation = "https://docs.rs/shebe"
+documentation = "https://gitlab.com/rhobimd-oss/shebe"
 keywords = ["search", "bm25", "rag", "code-search", "mcp"]
 categories = ["command-line-utilities", "development-tools"]
 
@@ -18,11 +18,6 @@ name = "shebe-mcp"
 path = "src/bin/shebe_mcp.rs"
 
 [dependencies]
-# Web Framework (Axum + Tower)
-axum = "0.7"
-tower = { version = "0.4", features = ["util"] }
-tower-http = { version = "0.5", features = ["trace", "cors"] }
-
 # Search Engine
 tantivy = "0.22"
 

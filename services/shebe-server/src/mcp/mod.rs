@@ -1,6 +1,6 @@
 //! MCP (Model Context Protocol) adapter
 //!
-//! Depends only on core/. Never imports from http/.
+//! Depends only on core/.
 //!
 //! This module implements a JSON-RPC 2.0 compliant MCP server that
 //! exposes Shebe's search capabilities as MCP tools for Claude Code.

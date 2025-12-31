@@ -1,7 +1,7 @@
 //! Core domain logic (protocol-agnostic)
 //!
 //! This module contains all business logic that is independent
-//! of transport protocols (HTTP, MCP, etc).
+//! of transport protocol.
 //!
 //! # Architecture
 //!

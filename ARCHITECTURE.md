@@ -2,9 +2,9 @@
 
 **Content Search for Code - Developer's Guide to the Codebase**
 
-**Version:** 0.5.0 <br>
-**Updated:** 2025-12-11 <br>
-**Status:** 14 MCP Tools, 392 Tests (Production Ready)
+**Version:** 0.6.0 <br>
+**Updated:** 2025-12-31 <br>
+**Status:** 14 MCP Tools, 397 Tests (Production Ready)
 
 
 > **Purpose:** This document helps you understand where to find code and how to make changes.
@@ -14,34 +14,28 @@
 
 ## Bird's Eye View
 
-Shebe is a **dual-binary RAG service** that provides BM25 full-text search for code repositories:
+Shebe is an **MCP-only RAG service** that provides BM25 full-text search for code repositories:
 
 ```
      Claude Code (MCP Client)
-               │
-               │ MCP Protocol (stdio)
-               ▼
-    ┌────────────────────────────────┐      ┌────────────────────────────────┐
-    │   shebe-mcp (MCP Binary)       │      │   shebe (HTTP Server)          │
-    │   - 14 MCP tools               │      │   - REST API (5 endpoints)     │
-    │   - stdio transport            │      │   - Initial indexing           │
-    │   - Independent operation      │      │   - Optional (not required)    │
-    └───────────┬────────────────────┘      └────────────┬───────────────────┘
-                │                                        │
-                │  Direct filesystem access              │ Direct filesystem access
-                │                                        │
-                └────────────────────┬───────────────────┘
-                                     │
-                                     ▼
-               ┌─────────────────────────────────────────────┐
-               │  ~/.local/state/shebe/sessions/             │
-               │  (Tantivy indexes + session metadata)       │
-               │  - Shared Storage (filesystem)              │
-               └─────────────────────────────────────────────┘
+               |
+               | MCP Protocol (stdio)
+               v
+    +--------------------------------+
+    |   shebe-mcp (MCP Server)       |
+    |   - 14 MCP tools               |
+    |   - stdio transport            |
+    |   - Direct filesystem access   |
+    +---------------+----------------+
+                    |
+                    v
+    +---------------------------------------+
+    |  ~/.local/state/shebe/sessions/       |
+    |  (Tantivy indexes + session metadata) |
+    +---------------------------------------+
 ```
 
-**Key Insight:** Both binaries are **independent peers** accessing shared storage. 
-MCP server can index AND search without the HTTP server running.
+**Key Insight:** Single binary, MCP-only access. No HTTP server required.
 
 ---
 
@@ -59,101 +53,75 @@ cargo test     # Run from here
 
 ### Repository Structure
 
-The codebase is organized into three top-level modules: `core/`, `http/` and `mcp/`.
+The codebase is organized into two top-level modules: `core/` and `mcp/`.
 This separation provides clear boundaries between protocol-agnostic domain logic
-and protocol-specific adapters.
+and the MCP adapter.
 
 ```
 shebe/                         # Repository root
-├── services/shebe-server/     # Main Rust service
-│   ├── src/
-│   │   ├── main.rs            # Entry: HTTP server
-│   │   ├── lib.rs             # Library root (exports core, http, mcp)
-│   │   ├── bin/
-│   │   │   └── shebe_mcp.rs   # Entry: MCP server
-│   │   │
-│   │   ├── core/              # Domain logic (protocol-agnostic)
-│   │   │   ├── mod.rs         # Core module root
-│   │   │   ├── config.rs      # Config (TOML + env)
-│   │   │   ├── error.rs       # Error types
-│   │   │   ├── types.rs       # Data structures
-│   │   │   ├── services.rs    # Unified Services struct
-│   │   │   ├── xdg.rs         # XDG directory handling
-│   │   │   ├── storage/       # Persistence
-│   │   │   │   ├── session.rs # Session management
-│   │   │   │   ├── tantivy.rs # Index wrapper
-│   │   │   │   └── validator.rs # Metadata validation
-│   │   │   ├── search/        # Search
-│   │   │   │   └── bm25.rs    # BM25 service
-│   │   │   └── indexer/       # Indexing pipeline
-│   │   │       ├── chunker.rs # UTF-8 safe chunking
-│   │   │       ├── walker.rs  # File traversal
-│   │   │       └── pipeline.rs # Orchestration
-│   │   │
-│   │   ├── http/              # HTTP adapter (depends on core)
-│   │   │   ├── mod.rs         # HTTP module root
-│   │   │   ├── handlers.rs    # 5 REST endpoints
-│   │   │   └── middleware.rs  # Request logging
-│   │   │
-│   │   └── mcp/               # MCP adapter (depends on core)
-│   │       ├── mod.rs         # MCP module root
-│   │       ├── server.rs      # Stdio event loop
-│   │       ├── handlers.rs    # Protocol routing
-│   │       ├── protocol.rs    # JSON-RPC types
-│   │       ├── transport.rs   # Stdio transport
-│   │       ├── error.rs       # MCP error types
-│   │       └── tools/         # 14 tool handlers
-│   │
-│   ├── tests/                 # 285 tests
-│   └── Cargo.toml             # 17 prod deps
-├── docs/
-│   ├── Performance.md         # Benchmarks
-│   └── guides/                # User guides
-├── dev-docs/
-│   └── CONTEXT.md             # Status tracker (dev only)
-├── ARCHITECTURE.md            # This doc
-└── README.md                  # Overview
++-- services/shebe-server/     # Main Rust service
+|   +-- src/
+|   |   +-- lib.rs             # Library root (exports core, mcp)
+|   |   +-- bin/
+|   |   |   +-- shebe_mcp.rs   # Entry: MCP server
+|   |   |
+|   |   +-- core/              # Domain logic (protocol-agnostic)
+|   |   |   +-- mod.rs         # Core module root
+|   |   |   +-- config.rs      # Config (TOML + env)
+|   |   |   +-- error.rs       # Error types
+|   |   |   +-- types.rs       # Data structures
+|   |   |   +-- services.rs    # Unified Services struct
+|   |   |   +-- xdg.rs         # XDG directory handling
+|   |   |   +-- storage/       # Persistence
+|   |   |   |   +-- session.rs # Session management
+|   |   |   |   +-- tantivy.rs # Index wrapper
+|   |   |   |   +-- validator.rs # Metadata validation
+|   |   |   +-- search/        # Search
+|   |   |   |   +-- bm25.rs    # BM25 service
+|   |   |   +-- indexer/       # Indexing pipeline
+|   |   |       +-- chunker.rs # UTF-8 safe chunking
+|   |   |       +-- walker.rs  # File traversal
+|   |   |       +-- pipeline.rs # Orchestration
+|   |   |
+|   |   +-- mcp/               # MCP adapter (depends on core)
+|   |       +-- mod.rs         # MCP module root
+|   |       +-- server.rs      # Stdio event loop
+|   |       +-- handlers.rs    # Protocol routing
+|   |       +-- protocol.rs    # JSON-RPC types
+|   |       +-- transport.rs   # Stdio transport
+|   |       +-- error.rs       # MCP error types
+|   |       +-- tools/         # 14 tool handlers
+|   |
+|   +-- tests/                 # Integration tests
+|   +-- Cargo.toml             # 14 prod deps
++-- docs/
+|   +-- Performance.md         # Benchmarks
+|   +-- guides/                # User guides
++-- dev-docs/
+|   +-- CONTEXT.md             # Status tracker (dev only)
++-- ARCHITECTURE.md            # This doc
++-- README.md                  # Overview
 ```
 
 **Module Dependencies (one-way):**
 ```
-                    ┌─────────────────┐
-                    │     core/       │
-                    │  (domain logic) │
-                    └────────┬────────┘
-                             │
-              ┌──────────────┴──────────────┐
-              │                             │
-              ▼                             ▼
-    ┌─────────────────┐           ┌─────────────────┐
-    │     http/       │           │      mcp/       │
-    │  (REST adapter) │           │ (stdio adapter) │
-    └─────────────────┘           └─────────────────┘
+              +------------------+
+              |     core/        |
+              |  (domain logic)  |
+              +--------+---------+
+                       |
+                       v
+              +------------------+
+              |      mcp/        |
+              | (stdio adapter)  |
+              +------------------+
 ```
 
-**Rule:** `http/` and `mcp/` can import from `core/`, but never from each other,
-and `core/` never imports from adapters.
+**Rule:** `mcp/` can import from `core/`, but `core/` never imports from `mcp/`.
 
 ---
 
-## Entry Points
-
-### HTTP Server: `src/main.rs`
-
-```rust
-use shebe::core::{Config, Services};
-use shebe::http;
-
-#[tokio::main]
-async fn main() -> Result<()> {
-    // 1. Load config (core/config.rs)
-    // 2. Create Services (core/services.rs)
-    // 3. Build Axum router (http/handlers.rs)
-    // 4. Start server
-}
-```
-
-**Add REST endpoints:** `src/http/handlers.rs`
+## Entry Point
 
 ### MCP Server: `src/bin/shebe_mcp.rs`
 
@@ -222,16 +190,17 @@ async fn main() -> Result<()> {
 
 **Trade-off:** Misses semantic similarity
 
-### Why Dual-Binary?
+### Why MCP-Only?
 
-**Decision:** Separate `shebe` + `shebe-mcp`
+**Decision:** Single binary with MCP interface only (v0.6.0)
 
 **Rationale:**
-- MCP works without HTTP server
-- Clean separation
-- Lower memory
+- MCP provides all required functionality (14 tools)
+- Single binary deployment, fewer dependencies
+- Primary use case is Claude Code integration
+- Less code to maintain and test
 
-**Trade-off:** Two binaries, shared lib
+**Trade-off:** No HTTP/REST API access
 
 ### Why Synchronous Indexing?
 
@@ -277,16 +246,16 @@ async fn main() -> Result<()> {
 2. **UTF-8:** Never split multi-byte chars
 3. **Sessions:** All ops scoped to session
 4. **Line length:** Max 120 chars
-5. **Tests:** All 392 must pass (100% success rate)
+5. **Tests:** All 397 must pass (100% success rate)
 6. **Schema:** v3 with repository_path and last_indexed_at fields
 
 ### Storage Layout
 
 ```
 ~/.local/state/shebe/sessions/
-├── {session-id}/
-│   ├── meta.json      # Metadata
-│   └── tantivy/       # Index
++-- {session-id}/
+    +-- meta.json      # Metadata
+    +-- tantivy/       # Index
 ```
 
 **INVARIANT:** `meta.json` and Tantivy must sync
@@ -314,13 +283,11 @@ Schema {
 
 ## Dependencies
 
-17 production crates:
+14 production crates:
 
 | Crate               | Purpose       | Why              |
 |---------------------|---------------|------------------|
 | tantivy 0.22        | BM25          | Pure Rust        |
-| axum 0.7            | HTTP          | Tokio-native     |
-| tower/tower-http    | HTTP          | Middleware       |
 | tokio 1.x           | Async         | Standard         |
 | serde/serde_json    | JSON          | API              |
 | walkdir             | Files         | Simple           |
@@ -332,20 +299,20 @@ Schema {
 | chrono              | Timestamps    | Metadata         |
 | async-trait         | Traits        | MCP              |
 | dirs                | XDG paths     | Cross-platform   |
+| once_cell           | Lazy statics  | Patterns         |
 
 ---
 
 ## Testing
 
-392 tests in 7 categories:
+397 tests in 6 categories:
 
-1. Unit (220): Module logic
-2. Integration (109): E2E
-3. API (7): REST
-4. Session (24): Mgmt
-5. MCP (13): Protocol
-6. UTF-8 (19): Safety
-7. Doc (3 ignored): Examples
+1. Unit (~215): Module logic
+2. Integration (~102): E2E
+3. Session (24): Mgmt
+4. MCP (13): Protocol
+5. UTF-8 (19): Safety
+6. Doc (3 ignored): Examples
 
 **Focus:** UTF-8, errors, protocol, isolation
 
@@ -368,9 +335,8 @@ cargo fmt
 cargo clippy  # Zero warnings
 cargo check
 
-# Run
-cargo run              # HTTP
-cargo run --bin shebe-mcp  # MCP
+# Run MCP server
+cargo run --bin shebe-mcp
 ```
 
 ---
@@ -412,15 +378,15 @@ ShebeError -> McpError -> JSON-RPC error
 ## Related Docs
 
 - [README.md](./README.md) - Overview
-- [docs/CONTEXT.md](./docs/CONTEXT.md) - Status
+- [dev-docs/CONTEXT.md](./dev-docs/CONTEXT.md) - Status
 - [docs/Performance.md](./docs/Performance.md) - Benchmarks
 - [docs/guides/](./docs/guides/) - User guides
 
 ---
 
 **Document Status:** Living document
-**Version:** 0.5.0 (14 tools, 392 tests, schema v3)
-**Updated:** 2025-12-11
+**Version:** 0.6.0 (14 tools, 397 tests, MCP-only)
+**Updated:** 2025-12-31
 **Performance:** Validated with 30/30 test scenarios (100% success rate)
 - **Indexing:** 1,928-11,210 files/sec (Istio: 5,605 files in 0.5s, OpenEMR: 6,364 files in 3.3s)
 - **Search:** 2ms latency, 210-650 tokens/query, 11 file types in single query

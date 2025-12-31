@@ -2,7 +2,7 @@
 
 **Estimated Time:** 10 minutes
 **Difficulty:** Beginner
-**Version:** 0.1.0
+**Version:** 0.5.3
 
 ---
 
@@ -288,45 +288,24 @@ impl Database {
 EOF
 ```
 
-### Step 2: Start Shebe HTTP Server (if not running)
+### Step 2: Index Test Repository in Claude Code
 
-```bash
-# Navigate to Shebe server directory
-cd /path/to/shebe/services/shebe-server
+In your Claude Code conversation:
 
-# Start server
-SHEBE_INDEX_DIR=~/.local/state/shebe cargo run --release
+```
+You: Index /tmp/test-code as session test-session
 
-# Or if you have shebe binary installed:
-# SHEBE_INDEX_DIR=~/.local/state/shebe shebe
+Claude: [Calls index_repository tool]
+Indexing /tmp/test-code...
 
-# Server should start on http://localhost:3000
-# Verify with: curl http://localhost:3000/health
+Indexing complete!
+- Session: test-session
+- Files indexed: 3
+- Chunks created: 4
+- Duration: 50ms
 ```
 
-### Step 3: Index Test Repository
-
-```bash
-# Index the test code
-curl -X POST http://localhost:3000/api/v1/index \
-  -H "Content-Type: application/json" \
-  -d '{
-    "path": "/tmp/test-code",
-    "session": "test-session",
-    "include_patterns": ["*.rs"],
-    "exclude_patterns": []
-  }'
-
-# Expected response:
-# {
-#   "files_indexed": 3,
-#   "chunks_created": 3-4,
-#   "duration_ms": 10-50,
-#   "session": "test-session"
-# }
-```
-
-### Step 4: Search in Claude Code
+### Step 3: Search in Claude Code
 
 In your Claude Code conversation:
 
@@ -478,16 +457,19 @@ Now that Shebe MCP is set up, explore these features:
 
 ### 1. Index Real Codebases
 
-```bash
-# Example: Index a real project
-curl -X POST http://localhost:3000/api/v1/index \
-  -H "Content-Type: application/json" \
-  -d '{
-    "path": "/home/user/projects/my-app",
-    "session": "my-app-main",
-    "include_patterns": ["*.rs", "*.py", "*.js"],
-    "exclude_patterns": ["**/target/**", "**/.git/**", "**/node_modules/**"]
-  }'
+In Claude Code:
+
+```
+You: Index /home/user/projects/my-app as session my-app-main,
+     include only Rust, Python and JavaScript files,
+     exclude target, .git and node_modules directories
+
+Claude: [Calls index_repository tool]
+Indexing complete!
+- Session: my-app-main
+- Files indexed: 450
+- Chunks created: 2,450
+- Duration: 3.2s
 ```
 
 ### 2. Try Advanced Queries

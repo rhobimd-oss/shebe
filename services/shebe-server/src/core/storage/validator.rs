@@ -10,7 +10,6 @@ use std::path::Path;
 use walkdir::WalkDir;
 
 /// Metadata validation report
-#[allow(dead_code)] // Used in MCP binary, not in HTTP server
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationReport {
     /// Session ID validated
@@ -33,12 +32,10 @@ pub struct ValidationReport {
 }
 
 /// Metadata validator for session consistency checks
-#[allow(dead_code)] // Used in MCP binary, not in HTTP server
 pub struct MetadataValidator<'a> {
     storage_manager: &'a StorageManager,
 }
 
-#[allow(dead_code)] // Methods used in MCP binary, not in HTTP server
 impl<'a> MetadataValidator<'a> {
     /// Create a new metadata validator
     pub fn new(storage_manager: &'a StorageManager) -> Self {
@@ -151,7 +148,6 @@ impl<'a> MetadataValidator<'a> {
 }
 
 /// Calculate total size of a directory recursively
-#[allow(dead_code)] // Used in validator tests, not in HTTP server
 fn calculate_directory_size(dir_path: &Path) -> u64 {
     let mut total_size = 0u64;
 

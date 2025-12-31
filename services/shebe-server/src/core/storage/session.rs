@@ -238,7 +238,6 @@ impl StorageManager {
     /// # Errors
     ///
     /// Returns error if session already exists (unless force=true) or indexing fails
-    #[allow(dead_code)] // Used in MCP binary and tests, not in HTTP server
     #[allow(clippy::too_many_arguments)] // All parameters are necessary
     pub fn index_repository(
         &self,

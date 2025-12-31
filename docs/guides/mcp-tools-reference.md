@@ -622,7 +622,7 @@ Claude: [Calls with force=true to overwrite]
 2. **Index only needed files:** Use include/exclude patterns
 3. **Be patient with large repos:** Indexing 10k+ files may take 30s+
 4. **Check completion message:** Review files indexed and any errors
-5. **Clean up old sessions:** Use HTTP API to delete unused sessions
+5. **Clean up old sessions:** Use `delete_session` tool to remove unused sessions
 
 ---
 
@@ -773,9 +773,7 @@ and limits parameters. Shows both the values currently in use and their sources
 ```markdown
 # Shebe MCP Configuration
 
-## Server
-- **Host:** 127.0.0.1
-- **Port:** 3000
+## Logging
 - **Log Level:** info
 
 ## Indexing
@@ -831,10 +829,8 @@ Includes all the above plus:
 
 ### Response Fields
 
-**Server:**
-- Host address (bind address for HTTP server)
-- Port number
-- Logging level
+**Logging:**
+- Log level (trace, debug, info, warn, error)
 
 **Indexing:**
 - Chunk size (characters per chunk)
@@ -2104,7 +2100,7 @@ And more. If language not detected, defaults to plaintext.
    ```
 
 3. **Clean up old sessions:**
-   - Use HTTP API to delete unused sessions
+   - Use `delete_session` tool to remove unused sessions
    - Keep session count manageable (<10-20)
 
 ### Performance Optimization

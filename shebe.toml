@@ -1,16 +1,10 @@
 # Shebe Configuration File
 #
-# This is a template configuration file for Shebe.
+# This is a template configuration file for the Shebe MCP server.
 # Copy to ~/.config/shebe/config.toml and customize as needed.
 #
 # Most users don't need a config file - defaults work well.
-# See CONFIGURATION.md for detailed documentation.
-
-# Server configuration (HTTP mode only, not used by shebe-mcp)
-[server]
-# host = "127.0.0.1"
-# port = 3000
-# log_level = "info"
+# See documentation for detailed configuration options.
 
 # Indexing configuration
 [indexing]

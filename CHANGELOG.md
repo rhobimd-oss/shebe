@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] - 2025-12-31
+
+### Removed
+- HTTP API and REST server (`src/http/` module, `src/main.rs`)
+- HTTP dependencies (axum, tower, tower-http)
+- ServerConfig (host, port settings no longer needed)
+- 12 HTTP-related tests
+
+### Changed
+- Architecture: MCP-only (shebe-mcp is now the sole binary)
+- Documentation updated to reflect MCP-only design
+- Test count: 409 -> 397 tests (HTTP tests removed)
+- Binary count: 2 -> 1 (shebe HTTP binary removed)
+
+### Fixed
+- Cleaned up stale HTTP references in source code comments
+
+## [0.5.2] - 2025-12-30
+
+### Added
+- C++ benchmark documentation for Eigen codebase comparison
+- Increased max_k limit from 100 to 500 for thorough searches
+
+### Changed
+- Test count: 392 -> 397 tests
+
 ## [0.5.1] - 2025-12-11
 
 ### Added
@@ -141,7 +167,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 130 total tests (79 unit, 7 integration, 37 UTF-8, 3 doc)
 - OpenEMR validation: 4,210 files indexed successfully
 
-[Unreleased]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.1...HEAD
+[Unreleased]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.3...HEAD
+[0.5.3]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.2...v0.5.3
+[0.5.2]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.1...v0.5.2
 [0.5.1]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.0...v0.5.1
 [0.5.0]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.4.1...v0.5.0
 [0.4.1]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.4.0...v0.4.1

@@ -22,14 +22,6 @@ impl ShowShebeConfigHandler {
     fn format_config(&self) -> String {
         let mut output = String::from("# Shebe MCP Configuration\n\n");
 
-        output.push_str("## Server\n");
-        output.push_str(&format!("- **Host:** {}\n", self.config.server.host));
-        output.push_str(&format!("- **Port:** {}\n", self.config.server.port));
-        output.push_str(&format!(
-            "- **Log Level:** {}\n\n",
-            self.config.server.log_level
-        ));
-
         output.push_str("## Indexing\n");
         output.push_str(&format!(
             "- **Chunk Size:** {} chars\n",
@@ -181,7 +173,6 @@ mod tests {
         match &tool_result.content[0] {
             crate::mcp::protocol::ContentBlock::Text { text } => {
                 assert!(text.contains("# Shebe MCP Configuration"));
-                assert!(text.contains("## Server"));
                 assert!(text.contains("## Indexing"));
                 assert!(text.contains("## Storage"));
                 assert!(text.contains("## Search"));
@@ -214,8 +205,6 @@ mod tests {
         let handler = setup_test_handler();
         let output = handler.format_config();
 
-        assert!(output.contains("127.0.0.1"));
-        assert!(output.contains("3000"));
         assert!(output.contains("512 chars")); // chunk size
         assert!(output.contains("64 chars")); // overlap
         assert!(output.contains("10 MB")); // max file size

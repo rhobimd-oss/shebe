@@ -6,7 +6,7 @@
 //!
 //! # Architecture
 //!
-//! The codebase is organized into three main modules:
+//! The codebase is organized into two main modules:
 //!
 //! - **core**: Domain logic (protocol-agnostic)
 //!   - config, error, types, xdg
@@ -14,9 +14,6 @@
 //!   - search (BM25 queries)
 //!   - indexer (file walking, chunking)
 //!   - services (unified service container)
-//!
-//! - **http**: REST API adapter (depends on core)
-//!   - handlers, middleware
 //!
 //! - **mcp**: MCP adapter (depends on core)
 //!   - server, tools, protocol
@@ -26,15 +23,11 @@
 //! - UTF-8 safe chunking (character-based, never panics)
 //! - BM25 search via Tantivy (no vector embeddings)
 //! - Session-based indexing (isolated indexes)
-//! - REST API (5 endpoints)
-//! - MCP server (12 tools)
-//! - Production ready (Docker, logging, metrics)
+//! - MCP server (14 tools)
+//! - Production ready (Docker, logging)
 
 // Core domain logic (protocol-agnostic)
 pub mod core;
-
-// HTTP REST adapter
-pub mod http;
 
 // MCP (Model Context Protocol) adapter
 pub mod mcp;

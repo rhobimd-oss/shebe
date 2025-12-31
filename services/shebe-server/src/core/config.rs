@@ -13,27 +13,14 @@ use std::path::{Path, PathBuf};
 /// Main configuration structure
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct Config {
-    pub server: ServerConfig,
+    #[serde(default)]
     pub indexing: IndexingConfig,
+    #[serde(default)]
     pub storage: StorageConfig,
+    #[serde(default)]
     pub search: SearchConfig,
+    #[serde(default)]
     pub limits: LimitsConfig,
-}
-
-/// Server configuration
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct ServerConfig {
-    /// Server bind address
-    #[serde(default = "default_host")]
-    pub host: String,
-
-    /// Server port
-    #[serde(default = "default_port")]
-    pub port: u16,
-
-    /// Logging level (trace, debug, info, warn, error)
-    #[serde(default = "default_log_level")]
-    pub log_level: String,
 }
 
 /// Indexing configuration
@@ -85,18 +72,6 @@ pub struct SearchConfig {
 }
 
 // Default value functions
-fn default_host() -> String {
-    "127.0.0.1".to_string()
-}
-
-fn default_port() -> u16 {
-    3000
-}
-
-fn default_log_level() -> String {
-    "info".to_string()
-}
-
 fn default_chunk_size() -> usize {
     512
 }
@@ -225,16 +200,6 @@ fn default_request_timeout() -> u64 {
     300
 }
 
-impl Default for ServerConfig {
-    fn default() -> Self {
-        Self {
-            host: default_host(),
-            port: default_port(),
-            log_level: default_log_level(),
-        }
-    }
-}
-
 impl Default for IndexingConfig {
     fn default() -> Self {
         Self {
@@ -352,19 +317,6 @@ impl Config {
 
     /// Merge configuration with environment variables
     pub fn merge_env(&mut self) {
-        // Server configuration
-        if let Ok(host) = env::var("SHEBE_HOST") {
-            self.server.host = host;
-        }
-        if let Ok(port) = env::var("SHEBE_PORT") {
-            if let Ok(p) = port.parse() {
-                self.server.port = p;
-            }
-        }
-        if let Ok(log_level) = env::var("SHEBE_LOG_LEVEL") {
-            self.server.log_level = log_level;
-        }
-
         // Indexing configuration
         if let Ok(chunk_size) = env::var("SHEBE_CHUNK_SIZE") {
             if let Ok(size) = chunk_size.parse() {
@@ -419,11 +371,6 @@ impl Config {
 
     /// Validate configuration values
     pub fn validate(&self) -> Result<()> {
-        // Validate server config
-        if self.server.port == 0 {
-            return Err(ShebeError::ConfigError("Port must be non-zero".to_string()));
-        }
-
         // Validate indexing config
         if self.indexing.chunk_size == 0 {
             return Err(ShebeError::ConfigError(
@@ -475,8 +422,6 @@ impl Config {
     /// Log configuration (redacting sensitive values)
     pub fn log_config(&self) {
         tracing::info!("Configuration loaded:");
-        tracing::info!("  Server: {}:{}", self.server.host, self.server.port);
-        tracing::info!("  Log level: {}", self.server.log_level);
         tracing::info!("  Chunk size: {} chars", self.indexing.chunk_size);
         tracing::info!("  Overlap: {} chars", self.indexing.overlap);
         tracing::info!("  Max file size: {} MB", self.indexing.max_file_size_mb);
@@ -507,8 +452,6 @@ mod tests {
     #[test]
     fn test_default_config() {
         let config = Config::default();
-        assert_eq!(config.server.host, "127.0.0.1");
-        assert_eq!(config.server.port, 3000);
         assert_eq!(config.indexing.chunk_size, 512);
         assert_eq!(config.indexing.overlap, 64);
         assert_eq!(config.search.default_k, 10);
@@ -536,28 +479,20 @@ mod tests {
 
     #[test]
     fn test_env_var_override() {
-        env::set_var("SHEBE_PORT", "8080");
         env::set_var("SHEBE_CHUNK_SIZE", "1024");
 
         let mut config = Config::default();
         config.merge_env();
 
-        assert_eq!(config.server.port, 8080);
         assert_eq!(config.indexing.chunk_size, 1024);
 
         // Cleanup
-        env::remove_var("SHEBE_PORT");
         env::remove_var("SHEBE_CHUNK_SIZE");
     }
 
     #[test]
     fn test_toml_deserialization() {
         let toml = r#"
-            [server]
-            host = "0.0.0.0"
-            port = 8000
-            log_level = "debug"
-
             [indexing]
             chunk_size = 256
             overlap = 32
@@ -577,8 +512,6 @@ mod tests {
         "#;
 
         let config: Config = toml::from_str(toml).unwrap();
-        assert_eq!(config.server.host, "0.0.0.0");
-        assert_eq!(config.server.port, 8000);
         assert_eq!(config.indexing.chunk_size, 256);
         assert_eq!(config.search.default_k, 20);
         assert_eq!(config.search.max_query_length, 1000);

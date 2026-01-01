@@ -79,25 +79,39 @@ clean:
 commit:
 	scripts/generate-commit-message.sh --all
 
-# MCP TARGETS ------------------------------------------------------------------
+# SHEBE BINARIES ---------------------------------------------------------------
 VERSION ?= $(shell cat services/shebe-server/VERSION)
 ARCH := linux-x86_64
-VERSIONED_NAME := shebe-mcp-v$(VERSION)-$(ARCH)
-MCP_BINARY := services/shebe-server/build/release/shebe-mcp
+BUILD_DIR := services/shebe-server/build/release
 
-mcp-build:
-	@echo "Building shebe-mcp in shebe-dev container..."
-	$(DOCKER_RUN) cargo build --release --bin shebe-mcp --target-dir /workspace/build
+# CLI binary (shebe)
+CLI_VERSIONED_NAME := shebe-v$(VERSION)-$(ARCH)
+CLI_BINARY := $(BUILD_DIR)/shebe
 
-mcp-install: mcp-build
-	@echo "Installing $(VERSIONED_NAME) to /usr/local/lib/..."
-	sudo cp $(MCP_BINARY) /usr/local/lib/$(VERSIONED_NAME)
+# MCP binary (shebe-mcp)
+MCP_VERSIONED_NAME := shebe-mcp-v$(VERSION)-$(ARCH)
+MCP_BINARY := $(BUILD_DIR)/shebe-mcp
+
+shebe-build:
+	@echo "Building shebe and shebe-mcp in shebe-dev container..."
+	$(DOCKER_RUN) cargo build --release --target-dir /workspace/build
+
+shebe-install: shebe-build
+	@echo "Installing $(CLI_VERSIONED_NAME) to /usr/local/lib/..."
+	sudo cp $(CLI_BINARY) /usr/local/lib/$(CLI_VERSIONED_NAME)
+	@echo "Creating symlink /usr/local/bin/shebe..."
+	sudo ln -sfv /usr/local/lib/$(CLI_VERSIONED_NAME) /usr/local/bin/shebe
+	@echo ""
+	@echo "Installing $(MCP_VERSIONED_NAME) to /usr/local/lib/..."
+	sudo cp $(MCP_BINARY) /usr/local/lib/$(MCP_VERSIONED_NAME)
 	@echo "Creating symlink /usr/local/bin/shebe-mcp..."
-	sudo ln -sfv /usr/local/lib/$(VERSIONED_NAME) /usr/local/bin/shebe-mcp
-	@ls -lh /usr/local/bin/shebe-mcp
-	@which shebe-mcp
+	sudo ln -sfv /usr/local/lib/$(MCP_VERSIONED_NAME) /usr/local/bin/shebe-mcp
+	@echo ""
+	@echo "Installed binaries:"
+	@ls -lh /usr/local/bin/shebe /usr/local/bin/shebe-mcp
+	@which shebe shebe-mcp
 
-mcp-install-config:
+shebe-install-config:
 	@echo "Installing config file template to ~/.config/shebe/..."
 	@mkdir -p ~/.config/shebe
 	@if [ -f ~/.config/shebe/config.toml ]; then \
@@ -109,13 +123,18 @@ mcp-install-config:
 		echo "Edit with: nano ~/.config/shebe/config.toml"; \
 	fi
 
-mcp-uninstall:
-	@echo "Removing shebe-mcp symlink and versioned binary..."
+shebe-uninstall:
+	@echo "Removing shebe and shebe-mcp symlinks and versioned binaries..."
+	sudo rm -f /usr/local/bin/shebe
+	sudo rm -f /usr/local/lib/$(CLI_VERSIONED_NAME)
 	sudo rm -f /usr/local/bin/shebe-mcp
-	sudo rm -f /usr/local/lib/$(VERSIONED_NAME)
+	sudo rm -f /usr/local/lib/$(MCP_VERSIONED_NAME)
 	@echo "Uninstallation complete"
 
-mcp-test:
+shebe-test:
+	@echo "Testing shebe CLI..."
+	@shebe --version
+	@echo ""
 	@echo "Testing shebe-mcp binary with initialize message..."
 	@echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{'\
 '"protocolVersion":"2024-11-05","capabilities":{"tools":{}},'\
@@ -140,12 +159,12 @@ help:
 	@echo "  shell                Open interactive shell in shebe-dev"
 	@echo "  clean                Clean Docker volumes"
 	@echo ""
-	@echo "MCP Targets (shebe-dev container):"
-	@echo "  mcp-build            Build shebe-mcp binary"
-	@echo "  mcp-install          Install versioned binary to /usr/local/lib"
-	@echo "  mcp-install-config   Install config template to ~/.config/shebe/"
-	@echo "  mcp-uninstall        Remove installed binary and symlink"
-	@echo "  mcp-test             Test MCP binary with initialize message"
+	@echo "Shebe Binaries (shebe-dev container):"
+	@echo "  shebe-build          Build shebe (CLI) and shebe-mcp binaries"
+	@echo "  shebe-install        Install both binaries to /usr/local/lib"
+	@echo "  shebe-install-config Install config template to ~/.config/shebe/"
+	@echo "  shebe-uninstall      Remove installed binaries and symlinks"
+	@echo "  shebe-test           Test shebe-mcp with initialize message"
 	@echo ""
 	@echo "Variables:"
 	@echo "  IMAGE_TAG=$(IMAGE_TAG)"

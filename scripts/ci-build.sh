@@ -9,6 +9,7 @@
 #   ./scripts/ci-build.sh
 #
 # Environment variables:
+#   CI_PROJECT_DIR    - Repository root (GitLab CI predefined, auto-detected locally)
 #   SHEBE_SERVICE_DIR - Path to shebe-server (default: services/shebe-server)
 #   RELEASE_DIR       - Output directory (default: releases)
 #
@@ -18,8 +19,13 @@
 #----------------------------------------------------------
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+# Use CI_PROJECT_DIR in GitLab CI, otherwise calculate from script location
+if [[ -n "${CI_PROJECT_DIR:-}" ]]; then
+    REPO_ROOT="${CI_PROJECT_DIR}"
+else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+fi
 
 # Configuration
 SHEBE_SERVICE_DIR="${SHEBE_SERVICE_DIR:-services/shebe-server}"
@@ -70,12 +76,12 @@ main() {
     rustc --version
     cargo --version
 
-    # Build release binaries
+    # Build release binaries to build/ directory (matches Makefile convention)
     log "Building release binaries..."
-    cargo build --release
+    cargo build --release --target-dir build
 
     # Verify binaries exist
-    local target_dir="target/release"
+    local target_dir="build/release"
     local binaries=("shebe" "shebe-mcp")
     for binary in "${binaries[@]}"; do
         if [[ ! -f "${target_dir}/${binary}" ]]; then

@@ -6,7 +6,7 @@
 //!
 //! # Architecture
 //!
-//! The codebase is organized into two main modules:
+//! The codebase is organized into three main modules:
 //!
 //! - **core**: Domain logic (protocol-agnostic)
 //!   - config, error, types, xdg
@@ -18,16 +18,23 @@
 //! - **mcp**: MCP adapter (depends on core)
 //!   - server, tools, protocol
 //!
+//! - **cli**: CLI adapter (depends on core)
+//!   - commands, output formatting
+//!
 //! # Key Features
 //!
 //! - UTF-8 safe chunking (character-based, never panics)
 //! - BM25 search via Tantivy (no vector embeddings)
 //! - Session-based indexing (isolated indexes)
 //! - MCP server (14 tools)
+//! - CLI for scripting and manual operations
 //! - Production ready (Docker, logging)
 
 // Core domain logic (protocol-agnostic)
 pub mod core;
+
+// CLI (Command Line Interface) adapter
+pub mod cli;
 
 // MCP (Model Context Protocol) adapter
 pub mod mcp;

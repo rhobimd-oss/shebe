@@ -11,6 +11,7 @@
 #   ./scripts/ci-release.sh --preview v0.5.0  # Preview specific version
 #
 # Required environment variables (GitLab CI predefined):
+#   CI_PROJECT_DIR      - Repository root directory
 #   CI_COMMIT_TAG       - Git tag (e.g., v0.4.1)
 #   CI_PROJECT_URL      - GitLab project URL
 #   CI_PROJECT_ID       - GitLab project ID
@@ -24,8 +25,13 @@
 #----------------------------------------------------------
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+# Use CI_PROJECT_DIR in GitLab CI, otherwise calculate from script location
+if [[ -n "${CI_PROJECT_DIR:-}" ]]; then
+    REPO_ROOT="${CI_PROJECT_DIR}"
+else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+fi
 
 # Configuration
 RELEASE_DIR="${RELEASE_DIR:-releases}"

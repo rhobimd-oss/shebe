@@ -1,9 +1,11 @@
 # Grep/Ripgrep Comparison Test: AuthorizationPolicy in Istio 1.28
 
-**Date:** 2025-12-28
-**Repository:** ~/github/istio/istio
-**Symbol:** AuthorizationPolicy
-**Comparison:** Shebe find_references vs Grep (Claude-assisted)
+**Repository:** ~/github/istio/istio <br>
+**Symbol:** AuthorizationPolicy <br>
+**Comparison:** Shebe find_references vs Grep (Claude-assisted) <br>
+**Shebe Version:** 0.5.0 <br>
+**Document Version:** 1.0 <br>
+**Created:** 2025-12-28 <br>
 
 ## Grep Search Statistics
 
@@ -196,3 +198,11 @@ For refactoring a type like `AuthorizationPolicy` in a large codebase:
 **Shebe find_references** provides a 6-8x speedup and 2.7x token reduction while
 producing immediately actionable output with confidence scoring and pattern
 classification.
+
+---
+
+## Update Log
+
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-12-28 | 0.5.0 | 1.0 | Initial comparison test document |

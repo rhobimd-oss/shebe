@@ -1,9 +1,11 @@
 # Test Results: find_references CLI Command (shebe references)
 
-**Document:** 014-find-references-cli-test-results.md
-**Related:** docs/testing/014-find-references-test-results.md (MCP version)
-**Status:** Complete
-**Date:** 2025-12-31
+**Document:** 014-find-references-cli-test-results.md <br>
+**Related:** docs/testing/014-find-references-test-results.md (MCP version) <br>
+**Shebe Version:** 0.5.3 <br>
+**Document Version:** 1.0 <br>
+**Created:** 2025-12-31 <br>
+**Status:** Complete <br>
 
 ## Executive Summary
 
@@ -238,3 +240,11 @@ MCP `find_references` tool with:
 | TC-5.3b | 2025-12-31 | 30ms | 50 | 23/27/0 |
 | TC-5.5a | 2025-12-31 | 15ms | 50 | n/a |
 | TC-5.5b | 2025-12-31 | 26ms | 50 | n/a |
+
+---
+
+## Update Log
+
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-12-31 | 0.5.3 | 1.0 | Initial CLI test results document |

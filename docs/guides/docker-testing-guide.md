@@ -2,7 +2,9 @@
 
 **Purpose:** All Rust development and testing runs in Docker containers for consistency across environments
 
-**Last Updated:** 2025-11-01
+**Shebe Version:** 0.3.0 <br>
+**Document Version:** 2.0 <br>
+**Created:** 2025-11-01 <br>
 
 ---
 
@@ -421,6 +423,11 @@ docker compose run --rm shebe-test cargo fmt -- --check
 
 ---
 
-**Document Version:** 2.0
-**Last Updated:** 2025-11-01
-**Status:** Reflects current Makefile and docker-compose.yml configuration
+---
+
+## Update Log
+
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-11-01 | 0.3.0 | 2.0 | Complete rewrite for docker-compose workflow |
+| 2025-10-22 | 0.2.0 | 1.0 | Initial docker testing guide |

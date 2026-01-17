@@ -8,6 +8,7 @@ use shebe::core::types::IndexStats;
 use std::path::Path;
 
 /// Create test services with temporary storage
+#[allow(dead_code)] // Used in integration tests
 pub fn create_test_services() -> Services {
     let mut config = Config::default();
 
@@ -47,6 +48,7 @@ pub fn assert_valid_stats(stats: &IndexStats) {
 }
 
 /// Index a test repository and return the session ID
+#[allow(dead_code)] // Used in integration tests
 pub async fn index_test_repository(
     services: &Services,
     repo_path: &Path,
@@ -56,6 +58,7 @@ pub async fn index_test_repository(
 }
 
 /// Index a test repository with custom patterns
+#[allow(dead_code)] // Used in integration tests
 pub async fn index_test_repository_with_patterns(
     services: &Services,
     repo_path: &Path,
@@ -161,6 +164,7 @@ pub async fn index_test_repository_with_patterns(
 }
 
 /// Calculate total size of index directory on disk
+#[allow(dead_code)] // Used by index_test_repository_with_patterns
 fn calculate_index_size(session_path: &Path) -> u64 {
     use walkdir::WalkDir;
 

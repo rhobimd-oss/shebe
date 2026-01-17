@@ -8,9 +8,9 @@ use tempfile::TempDir;
 pub const OPENEMR_PATH: &str = "~/github/openemr/openemr";
 
 /// Test repository fixture for creating synthetic test data
+#[allow(dead_code)] // Used in integration tests
 pub struct TestRepo {
     pub dir: TempDir,
-    #[allow(dead_code)] // Reserved for future use
     pub files: Vec<PathBuf>,
 }
 
@@ -93,6 +93,7 @@ impl TestRepo {
     }
 
     /// Get path to the repository
+    #[allow(dead_code)] // Used in integration tests
     pub fn path(&self) -> &Path {
         self.dir.path()
     }

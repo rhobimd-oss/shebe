@@ -1,9 +1,11 @@
 # Serena MCP Comparison Test: AuthorizationPolicy in Istio 1.28
 
-**Date:** 2025-12-28
-**Repository:** ~/github/istio/istio
-**Symbol:** AuthorizationPolicy
-**Comparison:** Shebe find_references vs Serena MCP (Claude-assisted)
+**Repository:** ~/github/istio/istio <br>
+**Symbol:** AuthorizationPolicy <br>
+**Comparison:** Shebe find_references vs Serena MCP (Claude-assisted) <br>
+**Shebe Version:** 0.5.0 <br>
+**Document Version:** 1.0 <br>
+**Created:** 2025-12-28 <br>
 
 ## Serena Search Statistics
 
@@ -208,3 +210,11 @@ For refactoring a type like `AuthorizationPolicy` with multiple definitions and 
 **Recommendation:** Use Shebe for discovery phase, Serena for editing phase.
 - Shebe find_references: "What needs to change?" (1 call, ~4.5k tokens)
 - Serena replace_symbol_body: "Make the changes" (semantic editing)
+
+---
+
+## Update Log
+
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-12-28 | 0.5.0 | 1.0 | Initial Serena comparison document |

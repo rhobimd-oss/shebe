@@ -1,7 +1,7 @@
 # Shebe Installation Guide
 
-**Version:** 0.5.3
-**Last Updated:** 2025-12-31
+**Version:** 0.5.4
+**Last Updated:** 2026-01-17
 **Focus:** MCP Server (shebe-mcp) for Claude Code Integration
 
 ---
@@ -41,27 +41,20 @@ The fastest way to get started. Pre-built binaries are available for Linux x86_6
 ### Download and Install
 
 ```bash
-# Download the latest release
-curl -L -o shebe-v0.5.1-linux-x86_64.tar.gz \
-  "https://gitlab.com/rhobimd-oss/shebe/-/jobs/artifacts/v0.5.1/raw/releases/shebe-v0.5.1-linux-x86_64.tar.gz?job=build:shebe"
-
-# Verify checksum (optional but recommended)
-curl -L -o shebe.sha256 \
-  "https://gitlab.com/rhobimd-oss/shebe/-/jobs/artifacts/v0.5.1/raw/releases/shebe-v0.5.1-linux-x86_64.tar.gz.sha256?job=build:shebe"
-sha256sum -c shebe.sha256
+# Download the latest release (v0.5.5)
+export SHEBE_VESRION=0.5.5
+curl -LO "https://gitlab.com/api/v4/projects/75748935/packages/generic/shebe/${SHEBE_VESRION}/shebe-v${SHEBE_VESRION}-linux-x86_64.tar.gz"
+curl -LO "https://gitlab.com/api/v4/projects/75748935/packages/generic/shebe/${SHEBE_VESRION}/shebe-v${SHEBE_VESRION}-linux-x86_64.tar.gz.sha256"
+sha256sum -c shebe-v${SHEBE_VESRION}-linux-x86_64.tar.gz.sha256
 
 # Extract
-tar -xzf shebe-v0.5.1-linux-x86_64.tar.gz
+tar -xzf shebe-v${SHEBE_VESRION}-linux-x86_64.tar.gz
 
 # Install to PATH (choose one)
 sudo mv shebe shebe-mcp /usr/local/bin/          # System-wide
-# OR
-mkdir -p ~/.local/bin && mv shebe shebe-mcp ~/.local/bin/  # User-only
 
-# Test initialize method
-echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{'\
-'"protocolVersion":"2024-11-05","capabilities":{"tools":{}},'\
-'"clientInfo":{"name":"test","version":"1.0"}}}' | shebe-mcp
+# View default shebe config
+shebe show-config
 ```
 
 
@@ -411,7 +404,7 @@ You can run shebe alongside other MCP servers:
 ```bash
 # Download, extract, install
 curl -L -o shebe.tar.gz \
-  "https://gitlab.com/rhobimd-oss/shebe/-/jobs/artifacts/v0.5.1/raw/releases/shebe-v0.5.1-linux-x86_64.tar.gz?job=build:shebe"
+  "https://gitlab.com/api/v4/projects/75748935/packages/generic/shebe/0.5.4/shebe-v0.5.4-linux-x86_64.tar.gz"
 tar -xzf shebe.tar.gz
 sudo mv shebe shebe-mcp /usr/local/bin/
 ```
@@ -491,7 +484,7 @@ See [docs/Performance.md](./docs/Performance.md) for detailed benchmarks.
 
 ---
 
-**Last Updated:** 2025-12-31
-**Version:** 0.5.3
+**Last Updated:** 2026-01-17
+**Version:** 0.5.4
 **Status:** Production Ready (14 MCP tools, 397 tests passing)
 **Focus:** MCP Server for Claude Code Integration

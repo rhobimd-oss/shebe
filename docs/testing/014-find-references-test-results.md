@@ -2,8 +2,10 @@
 
 **Document:** 014-find-references-test-results.md <br>
 **Related:** docs/testing/014-find-references-manual-tests.md (Phase 4.6) <br>
+**Shebe Version:** 0.5.0 <br>
+**Document Version:** 1.0 <br>
+**Created:** 2025-12-10 <br>
 **Status:** Complete <br>
-**Date:** 2025-12-10 <br>
 
 ## Executive Summary
 
@@ -347,3 +349,11 @@ The `find_references` tool is production-ready with:
 | TC-5.5 (broad) | 2025-12-10 | PASS | 50 refs, 16ms |
 
 *TC-4.3 was falsely marked FAIL by test harness; functionality verified correct.
+
+---
+
+## Update Log
+
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-12-10 | 0.5.0 | 1.0 | Initial test results document |

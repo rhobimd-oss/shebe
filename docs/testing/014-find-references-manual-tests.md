@@ -2,6 +2,9 @@
 
 **Document:** 014-find-references-manual-tests.md <br>
 **Related:** dev-docs/work-plans/014-find-references-tool-01.md (Phase 4.6) <br>
+**Shebe Version:** 0.5.0 <br>
+**Document Version:** 1.0 <br>
+**Created:** 2025-12-10 <br>
 **Status:** Ready for Testing <br>
 
 ## Overview
@@ -646,3 +649,11 @@ Document any discovered limitations:
 1. Pattern-based (not AST) - may have false positives
 2. Chunk-based search - very long files may have duplicate matches
 3. Requires re-indexing if files change
+
+---
+
+## Update Log
+
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-12-10 | 0.5.0 | 1.0 | Initial manual test plan |

@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-01-17
+
+### Added
+- Comprehensive CLI usage guide (`docs/guides/cli-usage.md`, 424 lines)
+- Release documentation (RELEASE_NOTES.md, RELEASE_CHANGELOG.md)
+
+### Changed
+- Updated ARCHITECTURE.md with current tool and feature inventory (14 MCP tools, 10 CLI commands)
+- Updated README.md with accurate feature list and positioning
+- Updated INSTALLATION.md with clearer setup instructions
+- Updated all user-facing guides (mcp-quick-start, mcp-setup-guide, mcp-tools-reference)
+- Updated CI/CD release script with preview mode support
+- Updated .gitignore for release artifacts
+
+## [0.5.4] - 2026-01-16
+
+### Added
+- `shebe` CLI binary for standalone code search operations
+- 10 CLI commands: index-repository, search-code, find-references, list-sessions,
+  get-session-info, delete-session, reindex-session, show-config, get-server-info, completions
+- Human-readable and JSON output modes (`--format json`)
+- Shell completion support (bash, zsh, fish, PowerShell, elvish)
+- Colored terminal output (respects NO_COLOR environment variable)
+
+### Changed
+- Architecture: Two binaries sharing `core/` module (shebe-mcp, shebe)
+- Binary count: 1 -> 2 (added shebe CLI)
+- Added clap 4, clap_complete and colored dependencies
+
 ## [0.5.3] - 2025-12-31
 
 ### Removed
@@ -167,7 +196,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 130 total tests (79 unit, 7 integration, 37 UTF-8, 3 doc)
 - OpenEMR validation: 4,210 files indexed successfully
 
-[Unreleased]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.3...HEAD
+[Unreleased]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.5...HEAD
+[0.5.5]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.4...v0.5.5
+[0.5.4]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.3...v0.5.4
 [0.5.3]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.2...v0.5.3
 [0.5.2]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.1...v0.5.2
 [0.5.1]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.0...v0.5.1

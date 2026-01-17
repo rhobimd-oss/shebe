@@ -1,9 +1,11 @@
 # Grep Ground Truth for Eigen C++ Symbol Reference Tests
 
-**Document:** 015-grep-ground-truth-02.md
-**Generated:** 2025-12-28 20:37 UTC
-**Repository:** ~/gitlab/libeigen/eigen
-**Related:** 015-shebe-cpp-accuracy-test-plan-01.md
+**Document:** 015-grep-ground-truth-02.md <br>
+**Related:** 015-shebe-cpp-accuracy-test-plan-01.md <br>
+**Repository:** ~/gitlab/libeigen/eigen <br>
+**Shebe Version:** 0.5.0 <br>
+**Document Version:** 1.0 <br>
+**Created:** 2025-12-28 <br>
 
 ## Summary Table
 
@@ -241,3 +243,11 @@ This ground truth will be compared against:
 1. Shebe `find_references` results (015-shebe-cpp-accuracy-results-03.md)
 2. Serena `find_referencing_symbols` results (015-serena-cpp-accuracy-results-04.md)
 3. Final comparison analysis (015-cpp-accuracy-comparison-05.md)
+
+---
+
+## Update Log
+
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-12-28 | 0.5.0 | 1.0 | Initial ground truth document |

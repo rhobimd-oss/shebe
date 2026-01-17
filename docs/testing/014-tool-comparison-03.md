@@ -2,7 +2,9 @@
 
 **Document:** 014-tool-comparison-03.md <br>
 **Related:** 014-find-references-manual-tests.md, 014-find-references-test-results.md <br>
-**Date:** 2025-12-11 <br>
+**Shebe Version:** 0.5.0 <br>
+**Document Version:** 1.0 <br>
+**Created:** 2025-12-11 <br>
 **Status:** Complete <br>
 
 ## Overview
@@ -272,3 +274,11 @@ Need to find symbol references?
 See related documents for complete test execution logs:
 - `014-find-references-manual-tests.md` - Test plan and methodology
 - `014-find-references-test-results.md` - Detailed results per test case
+
+---
+
+## Update Log
+
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-12-11 | 0.5.0 | 1.0 | Initial tool comparison document |

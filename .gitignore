@@ -23,6 +23,8 @@ data
 .mcp.json
 CLAUDE.md
 releases
+RELEASE_CHANGELOG.md
+RELEASE_NOTES.md
 
 # Rust
 target/

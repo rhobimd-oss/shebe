@@ -4,6 +4,10 @@ Get Shebe MCP running with Claude Code in 5 minutes.
 
 **Time:** 5 minutes | **Difficulty:** Beginner
 
+**Shebe Version:** 0.5.3 <br>
+**Document Version:** 1.1 <br>
+**Created:** 2025-10-21 <br>
+
 ---
 
 ## Prerequisites
@@ -298,6 +302,11 @@ This is normal - binary files can't be indexed as text. The indexing will contin
 
 ---
 
-**Document Version:** 1.1
-**Last Updated:** 2025-12-31
-**Tested With:** Shebe v0.5.3
+---
+
+## Update Log
+
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-12-31 | 0.5.3 | 1.1 | Updated for MCP-only architecture |
+| 2025-10-21 | 0.2.0 | 1.0 | Initial quick start guide |

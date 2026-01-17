@@ -64,6 +64,8 @@ check:
 	@echo "Running cargo check in shebe-dev container..."
 	$(DOCKER_RUN) cargo check
 
+ci: test fmt clippy check
+
 # Interactive shell in shebe-dev container
 shell:
 	@echo "Starting interactive shell in shebe-dev container..."

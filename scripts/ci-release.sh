@@ -130,6 +130,65 @@ get_previous_tag() {
     git tag --sort=-version:refname | grep -v "^${CI_COMMIT_TAG}$" | head -1 || echo ""
 }
 
+# Build package registry URL for a given file
+# Uses numeric project ID for reliability
+get_package_url() {
+    local version="$1"
+    local filename="$2"
+    echo "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/shebe/${version}/${filename}"
+}
+
+# Upload release artifacts to GitLab Package Registry
+# Package registry is public for public projects, unlike job artifacts
+upload_to_package_registry() {
+    local version="$1"
+    local release_path="${REPO_ROOT}/${RELEASE_DIR}"
+    local tarball="shebe-v${version}-linux-x86_64.tar.gz"
+    local checksum="${tarball}.sha256"
+
+    log "Uploading to package registry..."
+
+    # Upload tarball
+    local tarball_url
+    tarball_url=$(get_package_url "${version}" "${tarball}")
+
+    local response
+    response=$(curl -s -w "\nHTTP_CODE:%{http_code}" \
+        --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+        --upload-file "${release_path}/${tarball}" \
+        "${tarball_url}")
+
+    local http_code
+    http_code=$(echo "${response}" | tail -1 | sed 's/.*HTTP_CODE://')
+
+    if [[ "${http_code}" -ne 201 ]]; then
+        local response_body
+        response_body=$(echo "${response}" | sed '$d')
+        error "Failed to upload tarball (HTTP ${http_code}): ${response_body}"
+    fi
+    log "Uploaded: ${tarball}"
+
+    # Upload checksum
+    local checksum_url
+    checksum_url=$(get_package_url "${version}" "${checksum}")
+
+    response=$(curl -s -w "\nHTTP_CODE:%{http_code}" \
+        --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+        --upload-file "${release_path}/${checksum}" \
+        "${checksum_url}")
+
+    http_code=$(echo "${response}" | tail -1 | sed 's/.*HTTP_CODE://')
+
+    if [[ "${http_code}" -ne 201 ]]; then
+        local response_body
+        response_body=$(echo "${response}" | sed '$d')
+        error "Failed to upload checksum (HTTP ${http_code}): ${response_body}"
+    fi
+    log "Uploaded: ${checksum}"
+
+    log "Package registry upload complete"
+}
+
 # Extract changelog section from CHANGELOG.md for the release.
 # Grabs the [Unreleased] section and rewrites the header with the version being released.
 # Falls back to git log if [Unreleased] section is empty or not found.
@@ -191,6 +250,12 @@ generate_release_notes() {
 
     log "Generating release notes..."
 
+    # Build package registry URLs
+    local tarball_url
+    local checksum_url
+    tarball_url=$(get_package_url "${version}" "shebe-v${version}-linux-x86_64.tar.gz")
+    checksum_url=$(get_package_url "${version}" "shebe-v${version}-linux-x86_64.tar.gz.sha256")
+
     cat > "${release_notes_file}" << EOF
 # Shebe ${CI_COMMIT_TAG}
 
@@ -201,13 +266,13 @@ generate_release_notes() {
 
 | Platform | Download | Checksum |
 |----------|----------|----------|
-| Linux x86_64 | [shebe-v${version}-linux-x86_64.tar.gz](${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/releases/shebe-v${version}-linux-x86_64.tar.gz?job=build:shebe) | [SHA256](${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/releases/shebe-v${version}-linux-x86_64.tar.gz.sha256?job=build:shebe) |
+| Linux x86_64 | [shebe-v${version}-linux-x86_64.tar.gz](${tarball_url}) | [SHA256](${checksum_url}) |
 
 ## Installation
 
 \`\`\`bash
 # Download and extract
-curl -LO "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/releases/shebe-v${version}-linux-x86_64.tar.gz?job=build:shebe"
+curl -LO "${tarball_url}"
 tar -xzf shebe-v${version}-linux-x86_64.tar.gz
 
 # Move binaries to PATH
@@ -229,6 +294,12 @@ create_gitlab_release() {
 
     log "Creating GitLab release..."
 
+    # Build package registry URLs for asset links
+    local tarball_url
+    local checksum_url
+    tarball_url=$(get_package_url "${version}" "shebe-v${version}-linux-x86_64.tar.gz")
+    checksum_url=$(get_package_url "${version}" "shebe-v${version}-linux-x86_64.tar.gz.sha256")
+
     # Build release payload
     local payload
     payload=$(jq -n \
@@ -236,8 +307,8 @@ create_gitlab_release() {
         --arg name "Shebe ${CI_COMMIT_TAG}" \
         --arg description "$(cat "${release_notes_file}")" \
         --arg ref "${CI_COMMIT_SHA}" \
-        --arg tarball_url "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/releases/shebe-v${version}-linux-x86_64.tar.gz?job=build:shebe" \
-        --arg checksum_url "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/releases/shebe-v${version}-linux-x86_64.tar.gz.sha256?job=build:shebe" \
+        --arg tarball_url "${tarball_url}" \
+        --arg checksum_url "${checksum_url}" \
         '{
             tag_name: $tag,
             name: $name,
@@ -329,7 +400,7 @@ main() {
     generate_release_notes "${version}"
 
     if [[ "${PREVIEW_MODE}" == "true" ]]; then
-        log "Preview mode - skipping GitLab API call"
+        log "Preview mode - skipping GitLab API calls"
         echo ""
         echo "================================================================================"
         echo "RELEASE NOTES PREVIEW"
@@ -340,7 +411,10 @@ main() {
         log "  - ${REPO_ROOT}/RELEASE_NOTES.md"
         log "  - ${REPO_ROOT}/RELEASE_CHANGELOG.md"
     else
-        # Create GitLab release
+        # Upload artifacts to package registry (public access)
+        upload_to_package_registry "${version}"
+
+        # Create GitLab release with links to package registry
         create_gitlab_release "${version}"
         log "Release process complete"
     fi

@@ -3,7 +3,9 @@
 
 Complete API reference for all Shebe MCP tools.
 
-**Version:** 0.7.1 <br>
+**Shebe Version:** 0.5.0 <br>
+**Document Version:** 2.0 <br>
+**Created:** 2025-10-21 <br>
 **Protocol:** JSON-RPC 2.0 over stdio <br>
 **Format:** Markdown responses <br>
 
@@ -2132,8 +2134,13 @@ And more. If language not detected, defaults to plaintext.
 
 ---
 
-**Document Version:** 2.0
-**Last Updated:** 2025-12-11
-**Protocol Version:** 2024-11-05
-**Tools:** 14 MCP tools (6 core + 8 ergonomic)
-**New in v0.5.0:** find_references tool for symbol reference discovery
+---
+
+## Update Log
+
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-12-11 | 0.5.0 | 2.0 | Added find_references tool, 14 MCP tools |
+| 2025-10-28 | 0.3.0 | 1.2 | Added reindex_session tool |
+| 2025-10-25 | 0.3.0 | 1.1 | Added ergonomic tools (read_file, list_dir, find_file, preview_chunk) |
+| 2025-10-21 | 0.2.0 | 1.0 | Initial tools reference with core tools |

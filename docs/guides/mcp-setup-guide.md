@@ -2,7 +2,10 @@
 
 **Estimated Time:** 10 minutes
 **Difficulty:** Beginner
-**Version:** 0.5.3
+
+**Shebe Version:** 0.5.3 <br>
+**Document Version:** 1.1 <br>
+**Created:** 2025-10-21 <br>
 
 ---
 
@@ -541,6 +544,11 @@ Happy coding with Shebe MCP!
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** 2025-10-21
-**Tested With:** Shebe v0.1.0, Claude Code (latest)
+---
+
+## Update Log
+
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-12-31 | 0.5.3 | 1.1 | Updated version reference to v0.5.3 |
+| 2025-10-21 | 0.1.0 | 1.0 | Initial setup guide |

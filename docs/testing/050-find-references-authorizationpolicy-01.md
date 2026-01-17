@@ -1,10 +1,12 @@
 # find_references Performance Test: AuthorizationPolicy in Istio 1.28
 
-**Date:** 2025-12-28
-**Session:** istio-1-28
-**Repository:** ~/github/istio/istio
-**Symbol:** AuthorizationPolicy
-**Symbol Type:** type
+**Session:** istio-1-28 <br>
+**Repository:** ~/github/istio/istio <br>
+**Symbol:** AuthorizationPolicy <br>
+**Symbol Type:** type <br>
+**Shebe Version:** 0.5.0 <br>
+**Document Version:** 1.0 <br>
+**Created:** 2025-12-28 <br>
 
 ## Session Statistics
 
@@ -124,3 +126,11 @@ For a type like `AuthorizationPolicy` in a large Go codebase (5,965 files):
 - BM25-based find_references provides semantic context understanding
 - Confidence scoring helps prioritize actual type usages vs mentions
 - Pattern classification aids in understanding usage context
+
+---
+
+## Update Log
+
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-12-28 | 0.5.0 | 1.0 | Initial performance test document |

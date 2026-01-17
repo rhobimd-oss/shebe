@@ -1,10 +1,11 @@
 # Work Efficiency Comparison: Refactor Workflow Tools
 
-**Document:** 016-work-efficiency-comparison.md
+**Document:** 016-work-efficiency-comparison.md <br>
 **Related:** 016-refactor-workflow-grep-03-results.md, 016-refactor-workflow-serena-02-results.md,
-016-refactor-workflow-shebe-find-references-01-results.md
-**Date:** 2025-12-28
-**Updated:** 2025-12-29
+016-refactor-workflow-shebe-find-references-01-results.md <br>
+**Shebe Version:** 0.5.0 <br>
+**Document Version:** 3.0 <br>
+**Created:** 2025-12-28 <br>
 
 ---
 
@@ -249,11 +250,11 @@ find_references:
 
 ---
 
-## Document Control
+## Update Log
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2025-12-28 | Claude | Initial comparison |
-| 2.0 | 2025-12-29 | Claude | Shebe config (max_k=500, context_lines=0): single-pass discovery, ~1 min, ~7k tokens |
-| 2.1 | 2025-12-29 | Claude | Simplified document: removed default config comparison |
-| 3.0 | 2025-12-29 | Claude | Accurate timing: Shebe 16ms discovery (4.6x faster than grep), updated all metrics |
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-12-29 | 0.5.0 | 3.0 | Accurate timing: Shebe 16ms discovery (4.6x faster than grep), updated all metrics |
+| 2025-12-29 | 0.5.0 | 2.1 | Simplified document: removed default config comparison |
+| 2025-12-29 | 0.5.0 | 2.0 | Shebe config (max_k=500, context_lines=0): single-pass discovery, ~1 min, ~7k tokens |
+| 2025-12-28 | 0.5.0 | 1.0 | Initial comparison |

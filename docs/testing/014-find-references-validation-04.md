@@ -1,8 +1,10 @@
 # Validation: Does find_references Solve the Original Problem?
 
-**Document:** 014-find-references-validation-04.md
-**Related:** dev-docs/analyses/014-serena-vs-shebe-context-usage-01.md (problem statement)
-**Date:** 2025-12-11
+**Document:** 014-find-references-validation-04.md <br>
+**Related:** dev-docs/analyses/014-serena-vs-shebe-context-usage-01.md (problem statement) <br>
+**Shebe Version:** 0.5.0 <br>
+**Document Version:** 1.0 <br>
+**Created:** 2025-12-11 <br>
 **Status:** Complete
 
 ## Purpose
@@ -290,3 +292,11 @@ queries, with Serena reserved for cases requiring semantic precision.
 | File grouping            | Output format verified                  |
 | No full bodies           | All tests                               |
 | False positive filtering | TC-2.2 (comments penalized)             |
+
+---
+
+## Update Log
+
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-12-11 | 0.5.0 | 1.0 | Initial validation document |

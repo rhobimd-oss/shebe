@@ -3,11 +3,12 @@
 **The Problem with Current AI-Assisted Code Search**
 
 When using AI coding assistants to refactor symbols across large codebases (6k+ files),
-developers face a choice: semantic precision (LSP tools, multiple round-trips) or raw speed
-(grep, unranked results). Shebe provides both - single-call discovery with confidence-scored,
-pattern-classified output.
+developers developers have to pick either semantic precision (LSP tools, multiple round-trips) 
+or raw speed (grep, unranked results). Shebe attempts to eliminate this tradeoff by being 
+a complementary tool that sits between the raw speed of ripgrep and the precision of LSP.
+Shebe provides single-call discovery with confidence-scored, pattern-classified output.
 
-**What about indexing time?** Shebe requires a one-time index (0.5s for ~6k files). Even
+**What about indexing cost?** Shebe requires a one-time index (0.5s for ~6k files). Even
 including this cost, index + search (0.5s + 2ms) completes faster than a single grep-based
 workflow iteration (15-20s). The index persists across sessions, so subsequent searches
 incur only the 2ms query cost.

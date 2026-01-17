@@ -2,9 +2,9 @@
 
 **Content Search for Code - Developer's Guide to the Codebase**
 
-**Version:** 0.6.0 <br>
-**Updated:** 2025-12-31 <br>
-**Status:** 14 MCP Tools, 397 Tests (Production Ready)
+**Version:** 0.5.4 <br>
+**Updated:** 2026-01-16 <br>
+**Status:** 14 MCP Tools, 10 CLI Commands, 397 Tests (Production Ready)
 
 
 > **Purpose:** This document helps you understand where to find code and how to make changes.
@@ -14,28 +14,35 @@
 
 ## Bird's Eye View
 
-Shebe is an **MCP-only RAG service** that provides BM25 full-text search for code repositories:
+Shebe is an **MCP-first RAG service** that provides BM25 full-text search for code repositories:
 
 ```
-     Claude Code (MCP Client)
-               |
-               | MCP Protocol (stdio)
-               v
-    +--------------------------------+
-    |   shebe-mcp (MCP Server)       |
-    |   - 14 MCP tools               |
-    |   - stdio transport            |
-    |   - Direct filesystem access   |
-    +---------------+----------------+
-                    |
-                    v
-    +---------------------------------------+
-    |  ~/.local/state/shebe/sessions/       |
-    |  (Tantivy indexes + session metadata) |
-    +---------------------------------------+
+     Claude Code (MCP Client)              Shell / Scripts
+               |                                  |
+               | MCP Protocol (stdio)             | Direct invocation
+               v                                  v
+    +--------------------------------+    +-------------------------+
+    |   shebe-mcp (MCP Server)       |    |   shebe (CLI)           |
+    |   - 14 MCP tools               |    |   - 10 commands         |
+    |   - stdio transport            |    |   - Human/JSON output   |
+    +---------------+----------------+    +------------+------------+
+                    |                                  |
+                    +----------------+-----------------+
+                                     |
+                                     v
+                    +---------------------------------------+
+                    |       core/ (Domain Logic)            |
+                    |  - Indexing, search, storage          |
+                    +---------------------------------------+
+                                     |
+                                     v
+                    +---------------------------------------+
+                    |  ~/.local/state/shebe/sessions/       |
+                    |  (Tantivy indexes + session metadata) |
+                    +---------------------------------------+
 ```
 
-**Key Insight:** Single binary, MCP-only access. No HTTP server required.
+**Key Insight:** Two binaries sharing core logic. No HTTP server required.
 
 ---
 
@@ -53,17 +60,18 @@ cargo test     # Run from here
 
 ### Repository Structure
 
-The codebase is organized into two top-level modules: `core/` and `mcp/`.
+The codebase is organized into three top-level modules: `core/`, `mcp/` and `cli/`.
 This separation provides clear boundaries between protocol-agnostic domain logic
-and the MCP adapter.
+and the adapter layers.
 
 ```
 shebe/                         # Repository root
 +-- services/shebe-server/     # Main Rust service
 |   +-- src/
-|   |   +-- lib.rs             # Library root (exports core, mcp)
+|   |   +-- lib.rs             # Library root (exports core, mcp, cli)
 |   |   +-- bin/
 |   |   |   +-- shebe_mcp.rs   # Entry: MCP server
+|   |   |   +-- shebe_cli.rs   # Entry: CLI
 |   |   |
 |   |   +-- core/              # Domain logic (protocol-agnostic)
 |   |   |   +-- mod.rs         # Core module root
@@ -84,16 +92,28 @@ shebe/                         # Repository root
 |   |   |       +-- pipeline.rs # Orchestration
 |   |   |
 |   |   +-- mcp/               # MCP adapter (depends on core)
-|   |       +-- mod.rs         # MCP module root
-|   |       +-- server.rs      # Stdio event loop
-|   |       +-- handlers.rs    # Protocol routing
-|   |       +-- protocol.rs    # JSON-RPC types
-|   |       +-- transport.rs   # Stdio transport
-|   |       +-- error.rs       # MCP error types
-|   |       +-- tools/         # 14 tool handlers
+|   |   |   +-- mod.rs         # MCP module root
+|   |   |   +-- server.rs      # Stdio event loop
+|   |   |   +-- handlers.rs    # Protocol routing
+|   |   |   +-- protocol.rs    # JSON-RPC types
+|   |   |   +-- transport.rs   # Stdio transport
+|   |   |   +-- error.rs       # MCP error types
+|   |   |   +-- tools/         # 14 tool handlers
+|   |   |
+|   |   +-- cli/               # CLI adapter (depends on core)
+|   |       +-- mod.rs         # CLI entry, Cli/Commands structs
+|   |       +-- output.rs      # Colors, formatting, print helpers
+|   |       +-- commands/      # 10 command handlers
+|   |           +-- index.rs       # index-repository
+|   |           +-- search.rs      # search-code
+|   |           +-- references.rs  # find-references
+|   |           +-- session.rs     # list/info/delete/reindex
+|   |           +-- config.rs      # show-config
+|   |           +-- info.rs        # get-server-info
+|   |           +-- completions.rs # Shell completions
 |   |
 |   +-- tests/                 # Integration tests
-|   +-- Cargo.toml             # 14 prod deps
+|   +-- Cargo.toml             # 16 prod deps (incl. clap, colored)
 +-- docs/
 |   +-- Performance.md         # Benchmarks
 |   +-- guides/                # User guides
@@ -110,18 +130,22 @@ shebe/                         # Repository root
               |  (domain logic)  |
               +--------+---------+
                        |
-                       v
-              +------------------+
-              |      mcp/        |
-              | (stdio adapter)  |
-              +------------------+
+          +------------+------------+
+          |                         |
+          v                         v
++------------------+      +------------------+
+|      mcp/        |      |      cli/        |
+| (stdio adapter)  |      | (clap adapter)   |
++------------------+      +------------------+
 ```
 
-**Rule:** `mcp/` can import from `core/`, but `core/` never imports from `mcp/`.
+**Rules:**
+- `mcp/` and `cli/` can import from `core/`, but `core/` never imports from adapters
+- `mcp/` and `cli/` do not import from each other
 
 ---
 
-## Entry Point
+## Entry Points
 
 ### MCP Server: `src/bin/shebe_mcp.rs`
 
@@ -140,6 +164,24 @@ async fn main() -> Result<()> {
 
 **Add MCP tools:** `src/mcp/tools/*.rs`
 
+### CLI: `src/bin/shebe_cli.rs`
+
+```rust
+use clap::Parser;
+use shebe::cli::{run, Cli};
+
+#[tokio::main]
+async fn main() {
+    let cli = Cli::parse();
+    if let Err(e) = run(cli).await {
+        eprintln!("Error: {e}");
+        std::process::exit(1);
+    }
+}
+```
+
+**Add CLI commands:** `src/cli/commands/*.rs`
+
 ---
 
 ## Key Files by Task
@@ -153,6 +195,15 @@ async fn main() -> Result<()> {
 5. Add tests in your tool file
 
 **Pattern:** See `preview_chunk.rs` (~420 LOC, 8 tests)
+
+### Adding a New CLI Command
+
+1. `src/cli/commands/your_cmd.rs` - Create command handler
+2. `src/cli/commands/mod.rs` - Export args struct
+3. `src/cli/mod.rs` - Add to Commands enum, add match arm in `run()`
+4. Add tests (manual testing or integration tests)
+
+**Pattern:** See `search.rs` or `session.rs` for examples
 
 ### Modifying Search
 
@@ -283,7 +334,7 @@ Schema {
 
 ## Dependencies
 
-14 production crates:
+16 production crates:
 
 | Crate               | Purpose       | Why              |
 |---------------------|---------------|------------------|
@@ -300,6 +351,9 @@ Schema {
 | async-trait         | Traits        | MCP              |
 | dirs                | XDG paths     | Cross-platform   |
 | once_cell           | Lazy statics  | Patterns         |
+| clap 4              | CLI parsing   | Derive, env      |
+| clap_complete       | Completions   | bash/zsh/fish    |
+| colored             | Terminal      | NO_COLOR aware   |
 
 ---
 
@@ -365,6 +419,27 @@ cargo run --bin shebe-mcp
 
 ---
 
+## CLI Commands (10)
+
+| Command            | Description                              | MCP Equivalent     |
+|--------------------|------------------------------------------|--------------------|
+| index-repository   | Index a repository for search            | index_repository   |
+| search-code        | BM25 full-text search                    | search_code        |
+| find-references    | Find symbol references                   | find_references    |
+| list-sessions      | List all indexed sessions                | list_sessions      |
+| get-session-info   | Show session details                     | get_session_info   |
+| delete-session     | Delete a session                         | delete_session     |
+| reindex-session    | Re-index using stored path               | reindex_session    |
+| show-config        | Display current configuration            | show_shebe_config  |
+| get-server-info    | Version and capabilities                 | get_server_info    |
+| completions        | Generate shell completions               | -                  |
+
+**Output formats:** Human-readable (default), JSON (`--format json`)
+**Colored output:** Respects NO_COLOR environment variable
+**Documentation:** See [docs/guides/cli-usage.md](./docs/guides/cli-usage.md)
+
+---
+
 ## Error Handling
 
 ```
@@ -385,8 +460,8 @@ ShebeError -> McpError -> JSON-RPC error
 ---
 
 **Document Status:** Living document
-**Version:** 0.6.0 (14 tools, 397 tests, MCP-only)
-**Updated:** 2025-12-31
+**Version:** 0.5.4 (14 MCP tools, 10 CLI commands, 397 tests)
+**Updated:** 2026-01-16
 **Performance:** Validated with 30/30 test scenarios (100% success rate)
 - **Indexing:** 1,928-11,210 files/sec (Istio: 5,605 files in 0.5s, OpenEMR: 6,364 files in 3.3s)
 - **Search:** 2ms latency, 210-650 tokens/query, 11 file types in single query

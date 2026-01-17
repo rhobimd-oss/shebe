@@ -1,8 +1,10 @@
 # C++ Symbol Reference Discovery Test Plan: Eigen Codebase
 
 **Document:** 015-shebe-cpp-accuracy-test-plan-01.md <br>
-**Created:** 2025-12-28 <br>
 **Purpose:** Comparative evaluation of refactoring tools for C++ symbol discovery <br>
+**Shebe Version:** 0.5.0 <br>
+**Document Version:** 1.0 <br>
+**Created:** 2025-12-28 <br>
 
 ## Research Question
 
@@ -448,3 +450,11 @@ Expression Types:
 2. **grep/ripgrep:** Execute tests, document in `015-grep-cpp-accuracy-results-03.md`
 3. **Serena:** Execute tests, document in `015-serena-cpp-accuracy-results-04.md`
 4. **Comparison:** Summarize findings in `015-cpp-accuracy-comparison-05.md`
+
+---
+
+## Update Log
+
+| Date | Shebe Version | Document Version | Changes |
+|------|---------------|------------------|---------|
+| 2025-12-28 | 0.5.0 | 1.0 | Initial test plan document |

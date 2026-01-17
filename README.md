@@ -7,8 +7,8 @@ Fast BM25 full-text search for code repositories with MCP integration for Claude
 
 ## Table of Contents
 
-- [Quick Start](#quick-start)
 - [What is Shebe?](#what-is-shebe)
+- [Quick Start](#quick-start)
 - [Why Shebe?](#why-shebe)
 - [Common Tasks](#common-tasks)
 - [Tool Selection Guide](#tool-selection-guide)
@@ -20,12 +20,6 @@ Fast BM25 full-text search for code repositories with MCP integration for Claude
 - [Project Status](#project-status)
 - [License](#license)
 - [Contributing](#contributing)
-
----
-
-## Quick Start
-
-See [INSTALLATION.md](./INSTALLATION.md).
 
 ---
 
@@ -46,19 +40,84 @@ large codebases using keyword search.
 
 ---
 
+## Quick Start
+
+### 1. Install
+
+```bash
+# Download and install (Linux x86_64)
+curl -L -o shebe.tar.gz \
+  "https://gitlab.com/api/v4/projects/75748935/packages/generic/shebe/0.5.4/shebe-v0.5.4-linux-x86_64.tar.gz"
+tar -xzf shebe.tar.gz
+sudo mv shebe shebe-mcp /usr/local/bin/
+```
+
+### 2. Index a Repository
+
+```bash
+# Clone a test repository
+git clone --depth 1 https://github.com/envoyproxy/envoy.git ~/envoy
+
+# Index it (creates session "envoy-v1")
+shebe index-repository ~/envoy envoy-v1
+# Output: Indexed 8,234 files (12,847 chunks) in 2.1s
+```
+
+### 3. Search Code
+
+```bash
+# Search for access log formatting
+shebe search-code envoy-v1 "accesslog format"
+```
+
+```
+Results for "accesslog format" in envoy-v1 (top 10):
+
+1. source/extensions/access_loggers/common/access_log_base.h [0.847]
+   class AccessLogBase : public AccessLog::Instance {
+     void formatAccessLog(...);
+
+2. source/common/formatter/substitution_formatter.cc [0.823]
+   SubstitutionFormatter::format(const StreamInfo& info) {
+```
+
+### 4. Find References
+
+```bash
+# Find all references to SubstitutionFormatter
+shebe find-references envoy-v1 SubstitutionFormatter --symbol-type type
+```
+
+```
+References to "SubstitutionFormatter" (type) - 23 found:
+
+HIGH CONFIDENCE (18):
+  source/common/formatter/substitution_formatter.h:45
+    class SubstitutionFormatter : public Formatter {
+
+  source/extensions/access_loggers/file/file_access_log.cc:28
+    std::unique_ptr<SubstitutionFormatter> formatter_;
+  ...
+```
+
+For detailed setup, see [INSTALLATION.md](./INSTALLATION.md).
+
+---
+
 ## Why Shebe?
 
 When using AI coding assistants to refactor symbols across large codebases (6k+ files),
-developers face a binary choice: precision (LSP-based tools) or efficiency (grep/ripgrep).
-Shebe attempts to eliminate this trade-off.
+developers are currently forced to pick either precision (LSP-based tools) 
+or efficiency (grep/ripgrep). Shebe attempts to bridge this trade-off by 
+acting as a complementary tool between grep/ripgrep and LSP tools.
 
 **Benchmark: Refactoring `AuthorizationPolicy` across Istio (~6k files)**
 
-| Approach | Searches | Time | Tokens |
-|----------|----------|------|--------|
-| Shebe `find_references` | 1 | 2-3s | ~4,500 |
-| Claude + Grep | 13 | 15-20s | ~12,000 |
-| Claude + Serena MCP | 8 | 25-30s | ~18,000 |
+| Approach                | Searches | Time   | Tokens  |
+|-------------------------|----------|--------|---------|
+| Shebe `find_references` | 1        | 2-3s   | ~4,500  |
+| Claude + Grep           | 13       | 15-20s | ~12,000 |
+| Claude + Serena MCP     | 8        | 25-30s | ~18,000 |
 
 Shebe provides 6-10x faster end-to-end time and 3-4x fewer tokens by returning
 confidence-scored, pattern-classified results in a single call.

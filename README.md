@@ -2,7 +2,32 @@
 
 **Simple RAG Service for Code Search**
 
-Fast BM25 full-text search for code repositories with MCP integration for Claude Code.
+Think of Shebe as a _temu turbopuffer_, only covering ~30% of Turbopuffer's features but
+delivering ~70-85% of the value for typical developer workflows; at zero cost, full
+offline capability and complete privacy (code never leaves your machine). This trade-off
+works because research[1][],[2][] shows that **70-85% of developer code search value comes from
+keyword-based queries**. Developers usually search with exact terms they already know (function
+names, API calls, error messages) and less so with natural language concepts. The tradeoff is
+that Shebe doesn't handle conceptual queries like "find authentication handling" - but
+searching "authentication handler" covers this case in most codebases*. For detailed
+analysis, see
+[docs/analyses/018-bm25-vs-vector-code-search-01.md](./docs/analyses/018-bm25-vs-vector-code-search-01.md).
+
+**Key Features:**
+- 2ms query latency
+- 2k-12k files/sec indexing (6k files in 0.5s)
+- 200-700 tokens/query
+- BM25 only - no embeddings or GPU
+- Full UTF-8 support (emoji, CJK, special characters)
+- 14 MCP tools for Claude Code ([reference](./docs/guides/mcp-tools-reference.md))
+
+**Positioning:** Complements structural tools (Serena MCP) with content search.
+
+*Assumes conventional naming. Semantic search better handles synonyms like "login" vs
+"authenticate".
+
+[1]: https://research.google/pubs/how-developers-search-for-code-a-case-study/
+[2]: https://sourcegraph.com/blog/keeping-it-boring-and-relevant-with-bm25f
 
 
 ## Table of Contents
@@ -28,15 +53,7 @@ Fast BM25 full-text search for code repositories with MCP integration for Claude
 Shebe provides **content search** for code - find functions, APIs and patterns across
 large codebases using keyword search.
 
-**Key Features:**
-- 2ms query latency
-- 2k-12k files/sec indexing (6k files in 0.5s)
-- 200-700 tokens/query
-- BM25 only - no embeddings or GPU
-- Full UTF-8 support (emoji, CJK, special characters)
-- 14 MCP tools for Claude Code ([reference](./docs/guides/mcp-tools-reference.md))
 
-**Positioning:** Complements structural tools (Serena MCP) with content search.
 
 ---
 
@@ -133,6 +150,7 @@ See [WHY_SHEBE.md](./WHY_SHEBE.md) for detailed benchmarks and tool comparisons.
 | Non-code files (YAML, md) | Yes | Yes | No |
 | Token efficiency | 200-700 | 2,000-8,000 | 1,000-3,000 |
 | Speed (5k+ files) | 2-32ms | 100-1000ms | 500-5000ms |
+
 
 ---
 

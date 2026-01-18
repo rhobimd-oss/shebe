@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/mcpb/v0.4/manifest.schema.json",
   "name": "health.rhobimd.oss/shebe",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "title": "Shebe - BM25 Code Search",
   "description": "Fast BM25 full-text search for code repositories. Index codebases and search with 2ms latency. 14 MCP tools for code exploration, file discovery and symbol references.",
   "author": {

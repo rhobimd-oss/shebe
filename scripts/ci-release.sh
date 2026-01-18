@@ -45,6 +45,9 @@ RELEASE_ARTIFACTS=(
     "linux-x86_64-musl:Linux x86_64 (musl, static)"
 )
 
+# MCPB bundle (separate handling due to different filename pattern)
+MCPB_ARTIFACT="shebe-v{VERSION}.mcpb"
+
 #----------------------------------------------------------
 # Functions
 #----------------------------------------------------------
@@ -274,6 +277,15 @@ generate_release_notes() {
 "
     done
 
+    # Add MCPB bundle row
+    local mcpb_name="shebe-v${version}.mcpb"
+    local mcpb_url
+    local mcpb_checksum_url
+    mcpb_url=$(get_package_url "${version}" "${mcpb_name}")
+    mcpb_checksum_url=$(get_package_url "${version}" "${mcpb_name}.sha256")
+    downloads_table="${downloads_table}| **MCP Bundle** | [${mcpb_name}](${mcpb_url}) | [SHA256](${mcpb_checksum_url}) |
+"
+
     # Get URLs for installation example (use glibc version)
     local install_tarball="shebe-v${version}-linux-x86_64.tar.gz"
     local install_url
@@ -340,6 +352,16 @@ create_gitlab_release() {
         # Add checksum link
         asset_links="${asset_links},{\"name\":\"${tarball}.sha256\",\"url\":\"${checksum_url}\",\"link_type\":\"other\"}"
     done
+
+    # Add MCPB bundle links
+    local mcpb_name="shebe-v${version}.mcpb"
+    local mcpb_url
+    local mcpb_checksum_url
+    mcpb_url=$(get_package_url "${version}" "${mcpb_name}")
+    mcpb_checksum_url=$(get_package_url "${version}" "${mcpb_name}.sha256")
+    asset_links="${asset_links},{\"name\":\"${mcpb_name}\",\"url\":\"${mcpb_url}\",\"link_type\":\"package\"}"
+    asset_links="${asset_links},{\"name\":\"${mcpb_name}.sha256\",\"url\":\"${mcpb_checksum_url}\",\"link_type\":\"other\"}"
+
     asset_links="${asset_links}]"
 
     # Build release payload

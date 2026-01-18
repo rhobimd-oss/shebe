@@ -2,9 +2,15 @@
 # Shebe CI/CD Pipeline
 #
 # Stages:
+#   - cache: Build Rust dependency cache (only when Cargo.lock changes)
 #   - test: Run tests, fmt check, clippy, coverage
 #   - build: Build release binaries (tags only, parallel matrix for glibc/musl)
 #   - release: Create GitLab release with artifacts (tags only)
+#
+# Cache Strategy:
+#   - cache:rust job runs ONLY when Cargo.toml/Cargo.lock changes (push policy)
+#   - All other jobs use pull-only policy to consume the cache
+#   - Saves ~3.5min per pipeline by avoiding redundant cache uploads
 #
 # Scripts:
 #   - scripts/ci-build.sh: Build binaries and create tarballs
@@ -12,6 +18,7 @@
 #--------------------------------------------------------------------------------------
 
 stages:
+  - cache
   - test
   - build
   - release
@@ -21,7 +28,8 @@ variables:
   RUST_BACKTRACE: "1"
   SHEBE_SERVICE_DIR: services/shebe-server
 
-# Cache configuration for Rust builds
+# Cache configuration - all jobs use pull-only
+# The cache:rust job is the sole producer (push policy)
 .rust_cache:
   cache:
     key:
@@ -30,6 +38,7 @@ variables:
     paths:
       - .cargo/
       - services/shebe-server/target/
+    policy: pull
 
 # Rules for shebe service changes
 .shebe-rules: &shebe-rules
@@ -44,15 +53,54 @@ variables:
   - if: '$CI_PIPELINE_SOURCE == "schedule"'
   - if: '$CI_PIPELINE_SOURCE == "api"'
 
+# Rules for cache rebuild (only when Cargo files change)
+.cache-rules: &cache-rules
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    changes:
+      - services/shebe-server/Cargo.toml
+      - services/shebe-server/Cargo.lock
+  - if: '$CI_COMMIT_BRANCH == "main"'
+    changes:
+      - services/shebe-server/Cargo.toml
+      - services/shebe-server/Cargo.lock
+
 # Rules for tag-based releases
 .release-rules: &release-rules
   - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
 
 #--------------------------------------------------------------------------------------
+# Cache Stage
+# Builds and uploads Rust dependency cache ONLY when Cargo.toml/Cargo.lock changes.
+# All other jobs use pull-only policy, saving ~3.5min per pipeline.
+#--------------------------------------------------------------------------------------
+
+cache:rust:
+  stage: cache
+  image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-b1.88-slim
+  script:
+    - |
+      set -euo pipefail
+      cd ${SHEBE_SERVICE_DIR}
+      echo "=== Building dependency cache ==="
+      cargo check --all-features --workspace
+      echo "=== Cache build complete ==="
+  cache:
+    key:
+      files:
+        - services/shebe-server/Cargo.lock
+    paths:
+      - .cargo/
+      - services/shebe-server/target/
+    policy: push
+  interruptible: true
+  timeout: 15m
+  rules: *cache-rules
+
+#--------------------------------------------------------------------------------------
 # Test Stage
 #--------------------------------------------------------------------------------------
 
-dummy:job:
+test:shebe:
   stage: test
   image: registry.gitlab.com/rhobimd-oss/cicd/alpine:20251111-b3.13-alpine3.22-bc832d850
   script:
@@ -71,6 +119,7 @@ test:shebe:
   stage: test
   image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-b1.88-slim
   extends: .rust_cache
+  needs: []  # Don't wait for cache job (it's optional)
   script:
     - |
       set -euo pipefail
@@ -150,14 +199,15 @@ build:shebe:
 
 release:shebe:
   stage: release
-  image: registry.gitlab.com/rhobimd-oss/cicd/alpine:20251111-b3.13-alpine3.22-bc832d850
+  image: registry.gitlab.com/rhobimd-oss/cicd/alpine:20260117b-b3.13-alpine3.22-b287ff20c
   variables:
     GIT_STRATEGY: clone
     GIT_DEPTH: 0
   before_script:
     - git config --global --add safe.directory "${CI_PROJECT_DIR}"
   script:
-    - ./scripts/ci-release.sh
+    - ./scripts/ci-mcpb.sh # Create MCPB bundle from musl binary
+    - ./scripts/ci-release.sh # Create GitLab release with all artifacts
   rules: *release-rules
   needs:
     - job: build:shebe

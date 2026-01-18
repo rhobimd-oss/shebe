@@ -1,0 +1,24 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "health.rhobimd.oss/shebe",
+  "description": "Fast BM25 full-text search for code repositories. 14 MCP tools, 2ms search latency.",
+  "repository": {
+    "url": "https://gitlab.com/rhobimd-oss/shebe",
+    "source": "gitlab"
+  },
+  "homepage": "https://gitlab.com/rhobimd-oss/shebe",
+  "license": "Apache-2.0",
+  "version": "0.5.5",
+  "packages": [
+    {
+      "registryType": "mcpb",
+      "identifier": "https://gitlab.com/api/v4/projects/rhobimd-oss%2Fshebe/packages/generic/shebe/0.5.5/shebe-v0.5.5.mcpb",
+      "fileSha256": "5bfab21a41284d7bbff6eed497753b268f2cc19c7c458ddd97e29fca89f98389",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ],
+  "categories": ["developer-tools", "search"],
+  "keywords": ["bm25", "code-search", "tantivy", "rust", "rag"]
+}

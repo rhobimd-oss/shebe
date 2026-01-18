@@ -3,7 +3,7 @@
 #
 # Stages:
 #   - test: Run tests, fmt check, clippy, coverage
-#   - build: Build release binaries (tags only)
+#   - build: Build release binaries (tags only, parallel matrix for glibc/musl)
 #   - release: Create GitLab release with artifacts (tags only)
 #
 # Scripts:
@@ -109,22 +109,31 @@ test:shebe:
     when: always
 
 #--------------------------------------------------------------------------------------
-# Build Stage
+# Build Stage (Parallel Matrix)
+#
+# Builds glibc and musl targets in parallel for faster CI.
+# Each job produces a tarball uploaded as artifact for the release stage.
 #--------------------------------------------------------------------------------------
 
 build:shebe:
   stage: build
-  image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-b1.88-slim
+  image: registry.gitlab.com/rhobimd-oss/cicd/rust:20260119-b1.88-slim-rc
   extends: .rust_cache
   variables:
     CARGO_TERM_COLOR: always
+  parallel:
+    matrix:
+      - BUILD_TARGET: x86_64-unknown-linux-gnu
+        ARTIFACT_SUFFIX: linux-x86_64
+      - BUILD_TARGET: x86_64-unknown-linux-musl
+        ARTIFACT_SUFFIX: linux-x86_64-musl
   script:
     - ./scripts/ci-build.sh
   interruptible: true
   timeout: 30m
   rules: *release-rules
   artifacts:
-    name: "shebe-${CI_COMMIT_TAG}"
+    name: "shebe-${CI_COMMIT_TAG}-${ARTIFACT_SUFFIX}"
     paths:
       - releases/
       - build.env
@@ -136,6 +145,7 @@ build:shebe:
 #--------------------------------------------------------------------------------------
 # Release Stage
 # Uses CI_JOB_TOKEN for API authentication (no manual token needed)
+# Collects artifacts from all matrix jobs
 #--------------------------------------------------------------------------------------
 
 release:shebe:

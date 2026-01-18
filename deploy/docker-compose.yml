@@ -17,11 +17,9 @@ networks:
   shebe-network:
     driver: bridge
 
-
 services:
-
   shebe-dev:
-    image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-b1.88-slim
+    image: registry.gitlab.com/rhobimd-oss/cicd/rust:20260119-b1.88-slim-rc
     container_name: shebe-dev
     working_dir: /workspace
     volumes:
@@ -42,4 +40,3 @@ services:
     stdin_open: true
     tty: true
     command: bash
-

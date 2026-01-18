@@ -3,6 +3,7 @@
 # Shebe CI Release Script
 #
 # Creates a GitLab release with changelog and artifact links.
+# Uploads both glibc and musl tarballs to package registry.
 # Uses CI_JOB_TOKEN for authentication (no manual token needed).
 #
 # Usage:
@@ -36,6 +37,13 @@ fi
 # Configuration
 RELEASE_DIR="${RELEASE_DIR:-releases}"
 PREVIEW_MODE=false
+
+# Release artifacts: "filename-pattern:description"
+# Each pattern is expanded with version
+RELEASE_ARTIFACTS=(
+    "linux-x86_64:Linux x86_64 (glibc)"
+    "linux-x86_64-musl:Linux x86_64 (musl, static)"
+)
 
 #----------------------------------------------------------
 # Functions
@@ -138,25 +146,20 @@ get_package_url() {
     echo "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/shebe/${version}/${filename}"
 }
 
-# Upload release artifacts to GitLab Package Registry
-# Package registry is public for public projects, unlike job artifacts
-upload_to_package_registry() {
-    local version="$1"
-    local release_path="${REPO_ROOT}/${RELEASE_DIR}"
-    local tarball="shebe-v${version}-linux-x86_64.tar.gz"
-    local checksum="${tarball}.sha256"
+# Upload a single file to package registry
+upload_file() {
+    local url="$1"
+    local filepath="$2"
+    local filename
+    filename=$(basename "${filepath}")
 
-    log "Uploading to package registry..."
-
-    # Upload tarball
-    local tarball_url
-    tarball_url=$(get_package_url "${version}" "${tarball}")
+    log "Uploading: ${filename}"
 
     local response
     response=$(curl -s -w "\nHTTP_CODE:%{http_code}" \
         --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
-        --upload-file "${release_path}/${tarball}" \
-        "${tarball_url}")
+        --upload-file "${filepath}" \
+        "${url}")
 
     local http_code
     http_code=$(echo "${response}" | tail -1 | sed 's/.*HTTP_CODE://')
@@ -164,27 +167,35 @@ upload_to_package_registry() {
     if [[ "${http_code}" -ne 201 ]]; then
         local response_body
         response_body=$(echo "${response}" | sed '$d')
-        error "Failed to upload tarball (HTTP ${http_code}): ${response_body}"
+        error "Failed to upload ${filename} (HTTP ${http_code}): ${response_body}"
     fi
-    log "Uploaded: ${tarball}"
+    log "Uploaded: ${filename}"
+}
 
-    # Upload checksum
-    local checksum_url
-    checksum_url=$(get_package_url "${version}" "${checksum}")
+# Upload release artifacts to GitLab Package Registry
+# Package registry is public for public projects, unlike job artifacts
+upload_to_package_registry() {
+    local version="$1"
+    local release_path="${REPO_ROOT}/${RELEASE_DIR}"
 
-    response=$(curl -s -w "\nHTTP_CODE:%{http_code}" \
-        --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
-        --upload-file "${release_path}/${checksum}" \
-        "${checksum_url}")
+    log "Uploading to package registry..."
 
-    http_code=$(echo "${response}" | tail -1 | sed 's/.*HTTP_CODE://')
+    # Upload each artifact (tarball + checksum)
+    for artifact_spec in "${RELEASE_ARTIFACTS[@]}"; do
+        IFS=':' read -r suffix description <<< "${artifact_spec}"
+        local tarball="shebe-v${version}-${suffix}.tar.gz"
+        local checksum="${tarball}.sha256"
 
-    if [[ "${http_code}" -ne 201 ]]; then
-        local response_body
-        response_body=$(echo "${response}" | sed '$d')
-        error "Failed to upload checksum (HTTP ${http_code}): ${response_body}"
-    fi
-    log "Uploaded: ${checksum}"
+        # Upload tarball
+        local tarball_url
+        tarball_url=$(get_package_url "${version}" "${tarball}")
+        upload_file "${tarball_url}" "${release_path}/${tarball}"
+
+        # Upload checksum
+        local checksum_url
+        checksum_url=$(get_package_url "${version}" "${checksum}")
+        upload_file "${checksum_url}" "${release_path}/${checksum}"
+    done
 
     log "Package registry upload complete"
 }
@@ -250,11 +261,23 @@ generate_release_notes() {
 
     log "Generating release notes..."
 
-    # Build package registry URLs
-    local tarball_url
-    local checksum_url
-    tarball_url=$(get_package_url "${version}" "shebe-v${version}-linux-x86_64.tar.gz")
-    checksum_url=$(get_package_url "${version}" "shebe-v${version}-linux-x86_64.tar.gz.sha256")
+    # Build downloads table rows
+    local downloads_table=""
+    for artifact_spec in "${RELEASE_ARTIFACTS[@]}"; do
+        IFS=':' read -r suffix description <<< "${artifact_spec}"
+        local tarball="shebe-v${version}-${suffix}.tar.gz"
+        local tarball_url
+        local checksum_url
+        tarball_url=$(get_package_url "${version}" "${tarball}")
+        checksum_url=$(get_package_url "${version}" "${tarball}.sha256")
+        downloads_table="${downloads_table}| ${description} | [${tarball}](${tarball_url}) | [SHA256](${checksum_url}) |
+"
+    done
+
+    # Get URLs for installation example (use glibc version)
+    local install_tarball="shebe-v${version}-linux-x86_64.tar.gz"
+    local install_url
+    install_url=$(get_package_url "${version}" "${install_tarball}")
 
     cat > "${release_notes_file}" << EOF
 # Shebe ${CI_COMMIT_TAG}
@@ -266,14 +289,16 @@ generate_release_notes() {
 
 | Platform | Download | Checksum |
 |----------|----------|----------|
-| Linux x86_64 | [shebe-v${version}-linux-x86_64.tar.gz](${tarball_url}) | [SHA256](${checksum_url}) |
+${downloads_table}
+**Note:** Use the musl (static) build for MCPB bundles or Alpine-based containers.
+Use the glibc build for standard Linux distributions.
 
 ## Installation
 
 \`\`\`bash
-# Download and extract
-curl -LO "${tarball_url}"
-tar -xzf shebe-v${version}-linux-x86_64.tar.gz
+# Download and extract (glibc version)
+curl -LO "${install_url}"
+tar -xzf ${install_tarball}
 
 # Move binaries to PATH
 sudo mv shebe shebe-mcp /usr/local/bin/
@@ -294,11 +319,28 @@ create_gitlab_release() {
 
     log "Creating GitLab release..."
 
-    # Build package registry URLs for asset links
-    local tarball_url
-    local checksum_url
-    tarball_url=$(get_package_url "${version}" "shebe-v${version}-linux-x86_64.tar.gz")
-    checksum_url=$(get_package_url "${version}" "shebe-v${version}-linux-x86_64.tar.gz.sha256")
+    # Build asset links JSON array
+    local asset_links="["
+    local first=true
+    for artifact_spec in "${RELEASE_ARTIFACTS[@]}"; do
+        IFS=':' read -r suffix description <<< "${artifact_spec}"
+        local tarball="shebe-v${version}-${suffix}.tar.gz"
+        local tarball_url
+        local checksum_url
+        tarball_url=$(get_package_url "${version}" "${tarball}")
+        checksum_url=$(get_package_url "${version}" "${tarball}.sha256")
+
+        if [[ "${first}" != "true" ]]; then
+            asset_links="${asset_links},"
+        fi
+        first=false
+
+        # Add tarball link
+        asset_links="${asset_links}{\"name\":\"${tarball}\",\"url\":\"${tarball_url}\",\"link_type\":\"package\"}"
+        # Add checksum link
+        asset_links="${asset_links},{\"name\":\"${tarball}.sha256\",\"url\":\"${checksum_url}\",\"link_type\":\"other\"}"
+    done
+    asset_links="${asset_links}]"
 
     # Build release payload
     local payload
@@ -307,26 +349,14 @@ create_gitlab_release() {
         --arg name "Shebe ${CI_COMMIT_TAG}" \
         --arg description "$(cat "${release_notes_file}")" \
         --arg ref "${CI_COMMIT_SHA}" \
-        --arg tarball_url "${tarball_url}" \
-        --arg checksum_url "${checksum_url}" \
+        --argjson links "${asset_links}" \
         '{
             tag_name: $tag,
             name: $name,
             description: $description,
             ref: $ref,
             assets: {
-                links: [
-                    {
-                        name: "shebe-linux-x86_64.tar.gz",
-                        url: $tarball_url,
-                        link_type: "package"
-                    },
-                    {
-                        name: "shebe-linux-x86_64.tar.gz.sha256",
-                        url: $checksum_url,
-                        link_type: "other"
-                    }
-                ]
+                links: $links
             }
         }')
 

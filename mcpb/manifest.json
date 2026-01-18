@@ -1,0 +1,82 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/mcpb/v0.4/manifest.schema.json",
+  "name": "health.rhobimd.oss/shebe",
+  "version": "0.5.5",
+  "title": "Shebe - BM25 Code Search",
+  "description": "Fast BM25 full-text search for code repositories. Index codebases and search with 2ms latency. 14 MCP tools for code exploration, file discovery and symbol references.",
+  "author": {
+    "name": "RHOBIMD",
+    "url": "https://rhobimd.health"
+  },
+  "repository": "https://gitlab.com/rhobimd-oss/shebe",
+  "homepage": "https://gitlab.com/rhobimd-oss/shebe",
+  "license": "Apache-2.0",
+  "server": {
+    "type": "binary",
+    "platforms": {
+      "linux-x64": {
+        "command": "./server/shebe-mcp"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "index_repository",
+      "description": "Index a code repository for BM25 full-text search"
+    },
+    {
+      "name": "search_code",
+      "description": "BM25 full-text search across indexed codebase"
+    },
+    {
+      "name": "find_references",
+      "description": "Find symbol references with confidence scoring"
+    },
+    {
+      "name": "list_sessions",
+      "description": "List all indexed sessions"
+    },
+    {
+      "name": "get_session_info",
+      "description": "Get detailed session metadata and statistics"
+    },
+    {
+      "name": "delete_session",
+      "description": "Delete an indexed session"
+    },
+    {
+      "name": "reindex_session",
+      "description": "Re-index session using stored configuration"
+    },
+    {
+      "name": "upgrade_session",
+      "description": "Upgrade session to latest schema version"
+    },
+    {
+      "name": "read_file",
+      "description": "Read file contents from indexed session"
+    },
+    {
+      "name": "find_file",
+      "description": "Find files by glob or regex pattern"
+    },
+    {
+      "name": "list_dir",
+      "description": "List directory contents in session"
+    },
+    {
+      "name": "preview_chunk",
+      "description": "Show context lines around search result"
+    },
+    {
+      "name": "get_server_info",
+      "description": "Get server version and capabilities"
+    },
+    {
+      "name": "show_shebe_config",
+      "description": "Show current server configuration"
+    }
+  ],
+  "categories": ["developer-tools", "search", "code-analysis"],
+  "keywords": ["bm25", "code-search", "full-text-search", "tantivy", "rust", "rag"]
+}

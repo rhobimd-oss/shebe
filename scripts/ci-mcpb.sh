@@ -13,13 +13,13 @@
 #   ./scripts/ci-mcpb.sh --preview    # Local preview (no upload)
 #
 # Required environment variables (GitLab CI predefined):
-#   CI_COMMIT_TAG       - Git tag (e.g., v0.5.6)
 #   CI_PROJECT_ID       - GitLab project ID
 #   CI_API_V4_URL       - GitLab API URL
 #   CI_JOB_TOKEN        - Job token for API authentication
 #
 # Optional:
 #   RELEASE_DIR         - Directory containing release artifacts (default: releases)
+#   SHEBE_SERVICE_DIR   - Path to shebe-server (default: services/shebe-server)
 #----------------------------------------------------------
 set -euo pipefail
 
@@ -31,7 +31,9 @@ else
     REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 fi
 
+SHEBE_SERVICE_DIR="${SHEBE_SERVICE_DIR:-services/shebe-server}"
 RELEASE_DIR="${RELEASE_DIR:-releases}"
+CARGO_TOML="${REPO_ROOT}/${SHEBE_SERVICE_DIR}/Cargo.toml"
 PREVIEW_MODE=false
 
 #----------------------------------------------------------
@@ -45,6 +47,13 @@ log() {
 error() {
     echo "[ci-mcpb] ERROR: $*" >&2
     exit 1
+}
+
+extract_version() {
+    if [[ ! -f "${CARGO_TOML}" ]]; then
+        error "Cargo.toml not found at ${CARGO_TOML}"
+    fi
+    grep '^version' "${CARGO_TOML}" | head -1 | sed 's/.*"\(.*\)".*/\1/'
 }
 
 # Check required dependencies
@@ -154,17 +163,11 @@ main() {
 
     cd "${REPO_ROOT}"
 
-    # Get version from tag or VERSION file
+    # Extract version from Cargo.toml
     local version
-    if [[ -n "${CI_COMMIT_TAG:-}" ]]; then
-        version="${CI_COMMIT_TAG#v}"
-    else
-        local version_file="${REPO_ROOT}/services/shebe-server/VERSION"
-        if [[ -f "${version_file}" ]]; then
-            version="$(cat "${version_file}")"
-        else
-            error "No CI_COMMIT_TAG or VERSION file found"
-        fi
+    version=$(extract_version)
+    if [[ -z "${version}" ]]; then
+        error "Failed to extract version from Cargo.toml"
     fi
 
     log "Creating MCPB bundle for version ${version}"

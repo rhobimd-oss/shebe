@@ -35,7 +35,9 @@ else
 fi
 
 # Configuration
+SHEBE_SERVICE_DIR="${SHEBE_SERVICE_DIR:-services/shebe-server}"
 RELEASE_DIR="${RELEASE_DIR:-releases}"
+CARGO_TOML="${REPO_ROOT}/${SHEBE_SERVICE_DIR}/Cargo.toml"
 PREVIEW_MODE=false
 
 # Release artifacts: "filename-pattern:description"
@@ -61,6 +63,13 @@ error() {
     exit 1
 }
 
+extract_version() {
+    if [[ ! -f "${CARGO_TOML}" ]]; then
+        error "Cargo.toml not found at ${CARGO_TOML}"
+    fi
+    grep '^version' "${CARGO_TOML}" | head -1 | sed 's/.*"\(.*\)".*/\1/'
+}
+
 usage() {
     echo "Usage: $0 [--preview [VERSION]]"
     echo ""
@@ -78,17 +87,15 @@ usage() {
 setup_preview_environment() {
     local version="${1:-}"
 
-    # Get version from VERSION file if not provided
+    # Get version from Cargo.toml if not provided
     if [[ -z "${version}" ]]; then
-        local version_file="${REPO_ROOT}/services/shebe-server/VERSION"
-        if [[ -f "${version_file}" ]]; then
-            version="v$(cat "${version_file}")"
-        else
-            error "No version provided and VERSION file not found"
+        version=$(extract_version)
+        if [[ -z "${version}" ]]; then
+            error "Failed to extract version from Cargo.toml"
         fi
     fi
 
-    # Ensure version starts with 'v'
+    # Ensure version starts with 'v' for tag
     if [[ "${version}" != v* ]]; then
         version="v${version}"
     fi
@@ -440,8 +447,12 @@ main() {
     # Validate environment
     validate_environment
 
-    # Extract version from tag (strip 'v' prefix)
-    local version="${CI_COMMIT_TAG#v}"
+    # Extract version from Cargo.toml
+    local version
+    version=$(extract_version)
+    if [[ -z "${version}" ]]; then
+        error "Failed to extract version from Cargo.toml"
+    fi
     log "Version: ${version}"
 
     # Extract changelog section for this version from CHANGELOG.md

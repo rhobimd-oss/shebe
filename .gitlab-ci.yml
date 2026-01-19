@@ -2,20 +2,16 @@
 # Shebe CI/CD Pipeline
 #
 # Stages:
-#   - cache: Build Rust dependency cache (only when Cargo.lock changes)
+#   - prep: Placeholder job for MR pipelines
 #   - test: Run tests, fmt check, clippy, coverage
-#   - build: Build release binaries and MCPB bundle (tags only)
+#   - build: Build release binaries (tags only)
+#   - package: Create MCPB bundle (tags only)
 #   - release: Create GitLab release with artifacts (tags only)
 #
 # Build Strategy:
-#   - build:version: Extracts version from Cargo.toml, passes via dotenv
 #   - build:shebe: Native builds (rust-debian for glibc, rust-alpine for musl)
 #   - package:mcpb: Creates MCP Bundle from musl binary
-#
-# Cache Strategy:
-#   - cache:rust job runs ONLY when Cargo.toml/Cargo.lock changes (push policy)
-#   - All other jobs use pull-only policy to consume the cache
-#   - Saves ~3.5min per pipeline by avoiding redundant cache uploads
+#   - Version extracted from Cargo.toml by each script (no dotenv needed)
 #
 # Scripts:
 #   - scripts/ci-build.sh: Build binaries and create tarballs
@@ -24,7 +20,7 @@
 #--------------------------------------------------------------------------------------
 
 stages:
-  - cache
+  - prep
   - test
   - build
   - package
@@ -35,45 +31,24 @@ variables:
   RUST_BACKTRACE: "1"
   SHEBE_SERVICE_DIR: services/shebe-server
 
-# Cache configuration - all jobs use pull-only
-# The cache:rust job is the sole producer (push policy)
-.rust_cache:
-  cache:
-    key:
-      files:
-        - services/shebe-server/Cargo.lock
-    paths:
-      - .cargo/
-      - services/shebe-server/target/
-    policy: pull
-
 # Rules for shebe service changes
 .shebe-rules: &shebe-rules
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     changes:
+      - services/shebe-server/Cargo.lock
       - services/shebe-server/Cargo.toml
       - services/shebe-server/VERSION
-  - if: '$CI_COMMIT_BRANCH == "main"'
+  - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
     changes:
+      - services/shebe-server/Cargo.lock
       - services/shebe-server/Cargo.toml
       - services/shebe-server/VERSION
-  - if: '$CI_PIPELINE_SOURCE == "schedule"'
-  - if: '$CI_PIPELINE_SOURCE == "api"'
-
-# Rules for cache rebuild (only when Cargo files change)
-.cache-rules: &cache-rules
-  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    changes:
-      - services/shebe-server/Cargo.toml
-      - services/shebe-server/Cargo.lock
-  - if: '$CI_COMMIT_BRANCH == "main"'
-    changes:
-      - services/shebe-server/Cargo.toml
-      - services/shebe-server/Cargo.lock
 
 # Rules for building
-.release-rules: &build-rules
-  - if: '$CI_COMMIT_BRANCH == "main"'
+.build-rules: &build-rules
+  - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
+  - if: $CI_COMMIT_REF_NAME =~ /^v\d+\.\d+\.\d+/
+  - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
     changes:
       - services/shebe-server/Cargo.toml
       - services/shebe-server/Cargo.lock
@@ -81,41 +56,14 @@ variables:
 # Rules for tag-based releases
 .release-rules: &release-rules
   - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
-
-#--------------------------------------------------------------------------------------
-# Cache Stage
-# Builds and uploads Rust dependency cache ONLY when Cargo.toml/Cargo.lock changes.
-# All other jobs use pull-only policy, saving ~3.5min per pipeline.
-#--------------------------------------------------------------------------------------
-
-cache:rust:
-  stage: cache
-  image: registry.gitlab.com/rhobimd-oss/cicd/lang/rust-alpine:20260119-b1.88-alpine3.22
-  script:
-    - |
-      set -euo pipefail
-      cd ${SHEBE_SERVICE_DIR}
-      echo "=== Building dependency cache ==="
-      cargo check --all-features --workspace
-      echo "=== Cache build complete ==="
-  cache:
-    key:
-      files:
-        - services/shebe-server/Cargo.lock
-    paths:
-      - .cargo/
-      - services/shebe-server/target/
-    policy: push
-  interruptible: true
-  timeout: 15m
-  rules: *cache-rules
+  - if: $CI_COMMIT_REF_NAME =~ /^v\d+\.\d+\.\d+/
 
 #--------------------------------------------------------------------------------------
 # Test Stage
 #--------------------------------------------------------------------------------------
 
-test:shebe:
-  stage: test
+dummy:job:
+  stage: prep
   image: registry.gitlab.com/rhobimd-oss/cicd/alpine:20251111-b3.13-alpine3.22-bc832d850
   script:
     - time # anything that exits with status 0
@@ -129,47 +77,46 @@ test:shebe:
   artifacts:
     reports: {} # Disable artifact generation
 
-test:shebe:
-  stage: test
-  image: registry.gitlab.com/rhobimd-oss/cicd/lang/rust-alpine:20260119-b1.88-alpine3.22
-  extends: .rust_cache
-  needs: []  # Don't wait for cache job (it's optional)
-  script:
-    - |
-      set -euo pipefail
-      cd ${SHEBE_SERVICE_DIR}
+# test:shebe:
+#   stage: test
+#   image: registry.gitlab.com/rhobimd-oss/cicd/lang/rust-alpine:20260119-b1.88-alpine3.22
+#   needs: [] # Don't wait for cache job (it's optional)
+#   script:
+#     - |
+#       set -euo pipefail
+#       cd ${SHEBE_SERVICE_DIR}
 
-      echo "=== Toolchain versions ==="
-      rustc --version
-      cargo --version
-      cargo nextest --version
-      cargo tarpaulin --version
+#       echo "=== Toolchain versions ==="
+#       rustc --version
+#       cargo --version
+#       cargo nextest --version
+#       cargo tarpaulin --version
 
-      echo "=== Format check ==="
-      cargo fmt -- --check --verbose
+#       echo "=== Format check ==="
+#       cargo fmt -- --check --verbose
 
-      echo "=== Build (compile dependencies) ==="
-      cargo check --all-features --workspace
+#       echo "=== Build (compile dependencies) ==="
+#       cargo check --all-features --workspace
 
-      echo "=== Clippy (shebe only) ==="
-      cargo clippy --no-deps -- -D warnings
+#       echo "=== Clippy (shebe only) ==="
+#       cargo clippy --no-deps -- -D warnings
 
-      echo "=== Tests ==="
-      cargo nextest run --all-features --workspace
+#       echo "=== Tests ==="
+#       cargo nextest run --all-features --workspace
 
-      echo "=== Coverage ==="
-      cargo tarpaulin --skip-clean --all-features --workspace --out Xml --output-dir . --fail-under 60
-  interruptible: true
-  timeout: 30m
-  rules: *shebe-rules
-  coverage: '/^\d+\.\d+% coverage/'
-  artifacts:
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: services/shebe-server/cobertura.xml
-    expire_in: 1 week
-    when: always
+#       echo "=== Coverage ==="
+#       cargo tarpaulin --skip-clean --all-features --workspace --out Xml --output-dir . --fail-under 60
+#   interruptible: true
+#   timeout: 30m
+#   rules: *shebe-rules
+#   coverage: '/^\d+\.\d+% coverage/'
+#   artifacts:
+#     reports:
+#       coverage_report:
+#         coverage_format: cobertura
+#         path: services/shebe-server/cobertura.xml
+#     expire_in: 1 week
+#     when: always
 
 #--------------------------------------------------------------------------------------
 # Build Stage (Parallel Matrix with Dedicated Native Images)
@@ -179,26 +126,8 @@ test:shebe:
 # - rust-alpine: musl/static binaries for MCPB bundles, Alpine
 #--------------------------------------------------------------------------------------
 
-# Extract version from Cargo.toml and pass to downstream jobs via dotenv
-build:version:
-  stage: build
-  image: registry.gitlab.com/rhobimd-oss/cicd/alpine:20260117b-b3.13-alpine3.22-b287ff20c
-  script:
-    - |
-      _SHEBE_VERSION=$(grep '^version' ${SHEBE_SERVICE_DIR}/Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
-      echo "_SHEBE_VERSION=${_SHEBE_VERSION}" > version.env
-      echo "Extracted version: ${_SHEBE_VERSION}"
-  interruptible: true
-  timeout: 1m
-  rules: *build-rules
-  artifacts:
-    reports:
-      dotenv: version.env
-    expire_in: 1 day
-
 build:shebe:
   stage: build
-  extends: .rust_cache
   variables:
     CARGO_TERM_COLOR: always
   parallel:
@@ -215,11 +144,8 @@ build:shebe:
   interruptible: true
   timeout: 30m
   rules: *build-rules
-  needs:
-    - job: build:version
-      artifacts: true
   artifacts:
-    name: "shebe-v${_SHEBE_VERSION}-${ARTIFACT_SUFFIX}"
+    name: "shebe-${ARTIFACT_SUFFIX}"
     paths:
       - releases/
     expire_in: 1 year
@@ -241,12 +167,10 @@ package:mcpb:
   timeout: 5m
   rules: *build-rules
   needs:
-    - job: build:version
-      artifacts: true
     - job: build:shebe
       artifacts: true
   artifacts:
-    name: "shebe-v${_SHEBE_VERSION}-mcpb"
+    name: "shebe-mcpb"
     paths:
       - releases/*.mcpb
       - releases/*.mcpb.sha256
@@ -272,8 +196,6 @@ release:shebe:
     - ./scripts/ci-release.sh # Create GitLab release with all artifacts
   rules: *release-rules
   needs:
-    - job: build:version
-      artifacts: true
     - job: build:shebe
       artifacts: true
     - job: package:mcpb

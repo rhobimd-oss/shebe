@@ -35,7 +35,7 @@ tool selection quickly:
 - **Shebe** - Ranked results, large codebases (1k+ files), polyglot search, boolean queries
 - **Serena** - Symbol refactoring, AST-aware edits, type-safe renaming
 
-**ALternatives:**
+**Alternatives:**
 Cloud solutions like [turbopuffer][] and [nia][] come at a premium.
 Shebe is a free, local-only alternative. See [WHY_SHEBE.md](./WHY_SHEBE.md)
 for benchmarks.
@@ -52,7 +52,6 @@ for benchmarks.
 ## Table of Contents
 
 - [Quick Start](#quick-start)
-- [Why Shebe?](#why-shebe)
 - [Common Tasks](#common-tasks)
 - [Configuration](#configuration)
 - [Documentation](#documentation)
@@ -137,28 +136,6 @@ HIGH CONFIDENCE (18):
 ```
 
 For detailed setup, see [INSTALLATION.md](./INSTALLATION.md).
-
----
-
-## Why Shebe?
-
-When using AI coding assistants to refactor symbols across large codebases (6k+ files),
-developers are currently forced to pick either precision (LSP-based tools) 
-or efficiency (grep/ripgrep). There are tools like [turbopuffer][] and [nia][] but 
-these cost $$$. Shebe is a free, local-only, simpler and smaller alternative 
-to these tools. See [WHY_SHEBE.md](./WHY_SHEBE.md) for 2 examples of detailed 
-benchmarks and tool comparisons.
-
-### Quick Comparison
-
-| Capability | Shebe | grep/ripgrep | Serena MCP |
-|------------|-------|--------------|------------|
-| Ranked results (BM25) | Yes | No | No |
-| Confidence scoring | Yes | No | No |
-| Non-code files (YAML, md) | Yes | Yes | No |
-| Token efficiency | 200-700 | 2,000-8,000 | 1,000-3,000 |
-| Speed (5k+ files) | 2-32ms | 100-1000ms | 500-5000ms |
-
 
 ---
 

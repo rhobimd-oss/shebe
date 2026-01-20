@@ -81,7 +81,7 @@ shebe/
 - Run `cargo clippy` and fix all warnings
 
 ### Testing
-- All 392 tests must pass before submitting MR
+- All tests must pass before submitting MR
 - Add tests for new features
 - Minimum 85% line coverage required
 

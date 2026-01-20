@@ -1,38 +1,52 @@
 # Shebe
 
-**Simple RAG Service for Code Search**
+**Fast Code Search via BM25**
 
-Shebe provides a tiny subset of a full-featured code-search-API's functionality.
-Think of Shebe as a _temu [nia][] or [turbopuffer][]_. The premise of Shebe is 
-that this tiny tool foregoes the complexity of a powerful API but still
-delivers ~70-85% of the value for typical developer workflows; at zero cost, full
-offline capability and complete privacy (code never leaves your machine). Research[1][],[2][] 
-shows that **70-85% of developer code search value comes from keyword-based queries**. 
-Developers usually search with exact terms they already know (function
-names, API calls, error messages) and less so with natural language concepts. Github's codesearch 
-famously runs without vector search. And so Shebe doesn't handle conceptual queries 
-like "find authentication handling" - because developers would usually search for 
-"authentication handler" and BM25 excels* at this. 
-For detailed analysis, see [bm25-vs-vector-code-search][].
+Shebe is a fast and simple local code-search tool powered by BM25. No embeddings, 
+No GPU, No cloud.
 
-**Key Features:**
-- 2ms query latency
-- 2k-12k files/sec indexing (6k files in 0.5s)
-- 200-700 tokens/query
-- BM25 only - no embeddings or GPU
-- Full UTF-8 support (emoji, CJK, special characters)
-- 14 MCP tools for Claude Code ([reference](./docs/guides/mcp-tools-reference.md))
+Research shows [70-85% of developer code search][research-1] value comes from
+keyword-based queries. Developers search with exact terms they know:
+function names, API calls, error messages. [BM25 excels at this][research-2].
 
-**Positioning:** Complements structural tools (Serena MCP) with content search.
+**Trade-offs:**
+- Repositories must be cloned locally before indexing (no remote URL support)
+- No semantic similarity: "login" does not match "authenticate". However, BM25
+  supports multi-term queries without performance degradation - agents quickly
+  learn to include synonyms (e.g., `login OR authenticate OR sign-in`). For true
+  semantic search, pair with vector tools. See [detailed analysis][bm25-analysis].
 
-*Assumes conventional naming. Semantic search better handles synonyms like "login" vs
-"authenticate".
 
+**Capabilities:**
+  - 2ms query latency
+  - 2k-12k files/sec indexing (6k files in 0.5s)
+  - 200-700 tokens/query
+  - Full UTF-8 support (emoji, CJK, special characters)
+  - 14 MCP tools for coding agents (claude, codex etc) ([reference](./docs/guides/mcp-tools-reference.md))
+
+**Size:**
+  - ~10k lines of Rust source code (and another ~10k LoC test code). 
+  - 2 binaries (cli and mcp) each at ~8MB.
+
+**Positioning:**
+Complements structural tools (Serena MCP) with content search. Coding agents learn
+tool selection quickly:
+- **grep/ripgrep** - Exact regex patterns, exhaustive matches, small codebases
+- **Shebe** - Ranked results, large codebases (1k+ files), polyglot search, boolean queries
+- **Serena** - Symbol refactoring, AST-aware edits, type-safe renaming
+
+**ALternatives:**
+Cloud solutions like [turbopuffer][] and [nia][] come at a premium.
+Shebe is a free, local-only alternative. See [WHY_SHEBE.md](./WHY_SHEBE.md)
+for benchmarks.
+
+
+[tantivy]: https://github.com/quickwit-oss/tantivy
+[research-1]: https://research.google/pubs/how-developers-search-for-code-a-case-study/
+[research-2]: https://sourcegraph.com/blog/keeping-it-boring-and-relevant-with-bm25f
+[bm25-analysis]: ./docs/analyses/018-bm25-vs-vector-code-search-01.md
 [nia]: https://www.trynia.ai/#pricing
 [turbopuffer]: https://turbopuffer.com/pricing
-[1]: https://research.google/pubs/how-developers-search-for-code-a-case-study/
-[2]: https://sourcegraph.com/blog/keeping-it-boring-and-relevant-with-bm25f
-[bm25-vs-vector-code-search]: ./docs/analyses/018-bm25-vs-vector-code-search-01.md
 
 
 ## Table of Contents
@@ -58,11 +72,20 @@ For detailed analysis, see [bm25-vs-vector-code-search][].
 ### 1. Install
 
 ```bash
-# Download and install (Linux x86_64)
-curl -L -o shebe.tar.gz \
-  "https://gitlab.com/api/v4/projects/75748935/packages/generic/shebe/0.5.4/shebe-v0.5.4-linux-x86_64.tar.gz"
-tar -xzf shebe.tar.gz
+# Download the latest release
+export SHEBE_VERSION=0.5.6-rc3
+curl -LO "https://gitlab.com/api/v4/projects/75748935/packages/generic/shebe/${SHEBE_VERSION}/shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz"
+curl -LO "https://gitlab.com/api/v4/projects/75748935/packages/generic/shebe/${SHEBE_VERSION}/shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz.sha256"
+
+# Verify checksum
+sha256sum -c shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz.sha256
+
+# Extract and install
+tar -xzf shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz
 sudo mv shebe shebe-mcp /usr/local/bin/
+
+# check version
+shebe --version
 ```
 
 ### 2. Index a Repository
@@ -222,8 +245,6 @@ See [docs/Performance.md](./docs/Performance.md) for detailed benchmarks.
 
 ## Architecture
 
-### System Design
-
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for developer guide.
 
 ---
@@ -245,10 +266,10 @@ For detailed troubleshooting, see [docs/guides/mcp-setup-guide.md](./docs/guides
 
 ## Project Status
 
-**Version:** 0.6.0
-**Status:** Production Ready - MCP-Only Architecture (14 Tools)
-**Testing:** 397 tests (86.76% coverage) + 30 performance scenarios (100% pass rate)
-**Next:** Stage 3 (CI/CD Pipeline)
+**Version:** v0.5.X  
+**Status:** Release Candidate  
+**Testing:** 76% coverage  
+**Next:** Pagination for `list_dir` and `read_file` when more than 500 files match a search term
 
 See [CHANGELOG.md](./CHANGELOG.md) for version history.
 
@@ -263,13 +284,3 @@ See [LICENSE](./LICENSE).
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
-
-**Quick checklist:**
-1. Read [ARCHITECTURE.md](./ARCHITECTURE.md) for codebase guide
-2. All 397 tests must pass (`make test`)
-3. Zero clippy warnings (`make clippy`)
-4. Max 120 char line length
-5. Maintain >85% test coverage (currently 86.76%)
-6. Single commit per feature branch
-
-See [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) for community guidelines.

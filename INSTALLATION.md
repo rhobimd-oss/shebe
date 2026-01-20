@@ -11,7 +11,7 @@ Pre-built binaries are available for Linux x86_64.
 
 ```bash
 # Download the latest release
-export SHEBE_VERSION=0.5.5
+export SHEBE_VERSION=0.5.6-rc3
 curl -LO "https://gitlab.com/api/v4/projects/75748935/packages/generic/shebe/${SHEBE_VERSION}/shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz"
 curl -LO "https://gitlab.com/api/v4/projects/75748935/packages/generic/shebe/${SHEBE_VERSION}/shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz.sha256"
 
@@ -153,4 +153,3 @@ For MCP-specific issues, see [docs/guides/mcp-setup-guide.md](./docs/guides/mcp-
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - System architecture
 - [CONFIGURATION.md](./CONFIGURATION.md) - All configuration options
 - [CHANGELOG.md](./CHANGELOG.md) - Version history
-

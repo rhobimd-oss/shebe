@@ -67,7 +67,7 @@ dummy:job:
   script:
     - time # anything that exits with status 0
   interruptible: true
-  timeout: 15s
+  timeout: 60s
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   before_script: [] # Disable any global before_script

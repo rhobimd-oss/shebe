@@ -5,8 +5,8 @@
 # - Manual workflow_dispatch (for testing)
 #
 # Builds:
-# - x86_64-apple-darwin (Intel Macs) on macos-13
-# - aarch64-apple-darwin (Apple Silicon) on macos-14
+# - x86_64-apple-darwin (Intel Macs) on macos-15
+# - aarch64-apple-darwin (Apple Silicon) on macos-15
 #
 # Flow:
 # 1. GitLab CI builds Linux binaries and creates draft GitHub release
@@ -42,11 +42,11 @@ jobs:
         include:
           # Intel Mac (older Macs, Rosetta 2 fallback)
           - target: x86_64-apple-darwin
-            os: macos-13
+            os: macos-15
             arch: x86_64
           # Apple Silicon (M1/M2/M3)
           - target: aarch64-apple-darwin
-            os: macos-14
+            os: macos-15
             arch: aarch64
 
     runs-on: ${{ matrix.os }}

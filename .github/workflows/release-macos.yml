@@ -5,8 +5,8 @@
 # - Manual workflow_dispatch (for testing)
 #
 # Builds:
-# - x86_64-apple-darwin (Intel Macs) on macos-15
-# - aarch64-apple-darwin (Apple Silicon) on macos-15
+# - x86_64-apple-darwin (Intel Macs) on macos-13
+# - aarch64-apple-darwin (Apple Silicon) on macos-14
 #
 # Flow:
 # 1. GitLab CI builds Linux binaries and creates draft GitHub release
@@ -15,20 +15,15 @@
 # 4. This workflow uploads macOS artifacts to the existing release
 # 5. This workflow publishes the release (removes draft status)
 
-name: Build macOS Binaries
+name: build-macOS-binaries
 
 on:
   # Triggered by GitLab CI via API (primary)
   repository_dispatch:
     types: [build-macos]
 
-  # Manual trigger for testing
+  # Manual trigger for testing (builds from main)
   workflow_dispatch:
-    inputs:
-      version:
-        description: "Version tag (e.g., v0.6.0)"
-        required: true
-        type: string
 
 env:
   CARGO_TERM_COLOR: always
@@ -54,8 +49,6 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.client_payload.ref || inputs.version }}
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -96,8 +89,6 @@ jobs:
     steps:
       - name: Checkout source (for Cargo.toml)
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.client_payload.ref || inputs.version || 'main' }}
 
       - name: Extract version from Cargo.toml
         id: version

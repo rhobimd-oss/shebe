@@ -32,6 +32,7 @@ variables:
   SHEBE_SERVICE_DIR: services/shebe-server
   SHEBE_GITHUB_REPO: "rhobimd-oss/shebe"
 
+# File changes to trigger rules
 .shebe-changes: &shebe-changes
   paths:
     - services/shebe-server/Cargo.lock
@@ -40,8 +41,6 @@ variables:
 
 # Rules for shebe service changes
 .shebe-rules: &shebe-rules
-  - if: $CI_MERGE_REQUEST_ID
-    changes: *shebe-changes
   - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
     changes: *shebe-changes
   - if: $CI_MERGE_REQUEST_ID

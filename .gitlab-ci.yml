@@ -4,19 +4,18 @@
 # Stages:
 #   - prep: Placeholder job for MR pipelines
 #   - test: Run tests, fmt check, clippy, coverage
-#   - build: Build release binaries (tags only)
-#   - package: Create MCPB bundle (tags only)
-#   - release: Create GitLab release with artifacts (tags only)
+#   - build: Build release binaries and upload to package registry (tags only)
+#   - release: Create MCPB bundle and GitLab release (tags only)
 #
 # Build Strategy:
-#   - build:shebe: Native builds (rust-debian for glibc, rust-alpine for musl)
+#   - build:linux: Native builds (rust-debian for glibc, rust-alpine for musl)
 #   - package:mcpb: Creates MCP Bundle from musl binary
-#   - Version extracted from Cargo.toml by each script (no dotenv needed)
+#   - Version extracted from Cargo.toml by rci tool
 #
-# Scripts:
-#   - scripts/ci-build.sh: Build binaries and create tarballs
-#   - scripts/ci-mcpb.sh: Create MCPB bundle from musl binary
-#   - scripts/ci-release.sh: Create GitLab release via API
+# Tools:
+#   - rci v0.1.1-rc1: CI/CD automation tool (replaces bash scripts)
+#     Downloaded from: registry.gitlab.com/rhobimd-oss/cicd (package registry)
+#     New in 0.1.1: --publish-package-registry flag for build and mcpb create
 #--------------------------------------------------------------------------------------
 
 stages:
@@ -26,11 +25,25 @@ stages:
   - release
   - publish
 
+default:
+  interruptible: true
+  image: registry.gitlab.com/rhobimd-oss/cicd/lang/rust-alpine:20260121-b1.88-alpine3.22
+
 variables:
   CARGO_HOME: $CI_PROJECT_DIR/.cargo
+  CARGO_INCREMENTAL: "0"
   RUST_BACKTRACE: "1"
   SHEBE_SERVICE_DIR: services/shebe-server
   SHEBE_GITHUB_REPO: "rhobimd-oss/shebe"
+  RCI_VERSION: "0.1.2-rc0"
+  # sccache S3-compatible configuration (DigitalOcean Spaces)
+  # Credentials set at rhobimd-oss group level
+  SCCACHE_BUCKET: rhobimd-rust-cache
+  SCCACHE_REGION: fra1
+  SCCACHE_ENDPOINT: fra1.digitaloceanspaces.com
+  SCCACHE_S3_USE_SSL: "true"
+  AWS_ACCESS_KEY_ID: ${SCCACHE_AWS_ACCESS_KEY_ID}
+  AWS_SECRET_ACCESS_KEY: ${SCCACHE_AWS_SECRET_ACCESS_KEY}
 
 # File changes to trigger rules
 .shebe-changes: &shebe-changes
@@ -65,61 +78,71 @@ variables:
 
 dummy:job:
   stage: prep
-  image: registry.gitlab.com/rhobimd-oss/cicd/alpine:20251111-b3.13-alpine3.22-bc832d850
+  timeout: 60s
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
   variables:
     GIT_STRATEGY: none
   script:
     - time # anything that exits with status 0
-  interruptible: true
-  timeout: 60s
-  rules:
-    - if: $CI_MERGE_REQUEST_ID
   before_script: [] # Disable any global before_script
   after_script: [] # Disable any global after_script
   cache: {} # Disable caching
   artifacts:
     reports: {} # Disable artifact generation
 
-# test:shebe:
-#   stage: test
-#   image: registry.gitlab.com/rhobimd-oss/cicd/lang/rust-alpine:20260119-b1.88-alpine3.22
-#   needs: [] # Don't wait for cache job (it's optional)
-#   script:
-#     - |
-#       set -euo pipefail
-#       cd ${SHEBE_SERVICE_DIR}
+test:shebe:
+  stage: test
+  needs: [] # Don't wait for cache job (it's optional)
+  timeout: 15m
+  rules: *shebe-rules
+  variables:
+    RUSTC_WRAPPER: /usr/local/bin/sccache
+  before_script:
+    - sccache --start-server || true
+    - echo "Initial sccache stats:" && sccache --show-stats
+  script:
+    - |
+      set -euo pipefail
+      cd ${SHEBE_SERVICE_DIR}
 
-#       echo "=== Toolchain versions ==="
-#       rustc --version
-#       cargo --version
-#       cargo nextest --version
-#       cargo tarpaulin --version
+      echo "=== Toolchain versions ==="
+      rustc --version
+      cargo --version
+      cargo nextest --version
+      cargo tarpaulin --version
 
-#       echo "=== Format check ==="
-#       cargo fmt -- --check --verbose
+      echo "=== Format check ==="
+      cargo fmt -- --check --verbose
 
-#       echo "=== Build (compile dependencies) ==="
-#       cargo check --all-features --workspace
+      echo "=== Build (compile dependencies) ==="
+      cargo check --all-features --workspace
 
-#       echo "=== Clippy (shebe only) ==="
-#       cargo clippy --no-deps -- -D warnings
+      echo "=== Clippy (shebe only) ==="
+      cargo clippy --no-deps -- -D warnings
 
-#       echo "=== Tests ==="
-#       cargo nextest run --all-features --workspace
+      echo "=== Tests ==="
+      cargo nextest run --all-features --workspace
 
-#       echo "=== Coverage ==="
-#       cargo tarpaulin --skip-clean --all-features --workspace --out Xml --output-dir . --fail-under 60
-#   interruptible: true
-#   timeout: 30m
-#   rules: *shebe-rules
-#   coverage: '/^\d+\.\d+% coverage/'
-#   artifacts:
-#     reports:
-#       coverage_report:
-#         coverage_format: cobertura
-#         path: services/shebe-server/cobertura.xml
-#     expire_in: 1 week
-#     when: always
+      echo "=== Coverage ==="
+      cargo tarpaulin --skip-clean --all-features --workspace --out Xml --output-dir . --fail-under 60
+  after_script:
+    - echo "Final sccache stats:" && sccache --show-stats || true
+    - sccache --stop-server || true
+  cache:
+    key: "shebe-deps"
+    paths:
+      - .cargo/registry/cache/
+      - .cargo/registry/index/
+      - .cargo/git/db/
+  coverage: '/^\d+\.\d+% coverage/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: services/shebe-server/cobertura.xml
+    expire_in: 1 week
+    when: always
 
 #--------------------------------------------------------------------------------------
 # Build Stage
@@ -133,29 +156,39 @@ build:linux:
   stage: build
   parallel:
     matrix:
-      - BUILD_IMAGE: lang/rust-debian:20260118-b1.88-slim-trixie
+      - BUILD_IMAGE: lang/rust-debian:20260121-b1.88-slim-trixie
         ARTIFACT_SUFFIX: linux-x86_64
-        BUILD_MODE: dynamic
-      - BUILD_IMAGE: lang/rust-alpine:20260119-b1.88-alpine3.22
+      - BUILD_IMAGE: lang/rust-alpine:20260121-b1.88-alpine3.22
         ARTIFACT_SUFFIX: linux-x86_64-musl
-        BUILD_MODE: static
-  interruptible: true
-  timeout: 30m
-  rules: *release-rules
+  timeout: 15m
+  rules: *build-rules
   image: registry.gitlab.com/rhobimd-oss/cicd/${BUILD_IMAGE}
   variables:
     GIT_STRATEGY: fetch
     CARGO_TERM_COLOR: always
-    PREVIEW_MODE: true
+    RUSTC_WRAPPER: /usr/local/bin/sccache
+  before_script:
+    - sccache --start-server || true
+    - echo "Initial sccache stats:" && sccache --show-stats
   script:
-    - ./scripts/ci-build.sh --dry-run
+    - |
+      rci build --service-dir services/shebe-server --suffix ${ARTIFACT_SUFFIX} --publish-package-registry
+      if [ "${ARTIFACT_SUFFIX}" = "linux-x86_64-musl" ]; then
+        rci mcpb create --service-dir services/shebe-server --publish-package-registry
+      fi
+  after_script:
+    - echo "Final sccache stats:" && sccache --show-stats || true
+    - sccache --stop-server || true
+  cache:
+    key: "shebe-deps"
+    paths:
+      - .cargo/registry/cache/
+      - .cargo/registry/index/
+      - .cargo/git/db/
   artifacts:
-    name: "shebe-${ARTIFACT_SUFFIX}"
     paths:
       - releases/
-      - services/shebe-server/Cargo.toml
-    expire_in: 1 year
-    when: on_success
+    expire_in: 1 day
 
 #--------------------------------------------------------------------------------------
 # Trigger GitHub Actions for macOS Builds
@@ -167,14 +200,15 @@ build:linux:
 #   SHEBE_GITHUB_TOKEN - GitHub Personal Access Token with repo scope (masked, protected)
 #--------------------------------------------------------------------------------------
 
+# Disabled for rci migration - macOS builds triggered separately
 build:macos:
   stage: build
-  image: registry.gitlab.com/rhobimd-oss/cicd/alpine:20260119-b3.13-alpine3.22-b287ff20c-rc
+  timeout: 5m
   variables:
     GIT_STRATEGY: fetch
-  interruptible: true
-  timeout: 5m
-  rules: *build-rules
+  needs:
+    - job: build:linux
+  rules: *release-rules
   script:
     - |
       set -euo pipefail
@@ -202,108 +236,49 @@ build:macos:
       echo "Check progress at: https://github.com/${SHEBE_GITHUB_REPO}/actions"
 
 #--------------------------------------------------------------------------------------
-# Build MCPB Bundle
-#
-# Creates MCP Bundle (.mcpb) from the musl static binary for MCP Registry publication.
-# Runs after build:shebe completes (needs musl tarball artifact).
-#--------------------------------------------------------------------------------------
-
-package:mcpb:
-  stage: release
-  image: registry.gitlab.com/rhobimd-oss/cicd/alpine:20260117b-b3.13-alpine3.22-b287ff20c
-  variables:
-    GIT_STRATEGY: fetch
-    PREVIEW_MODE: true
-  script:
-    - ./scripts/ci-mcpb.sh --preview
-  interruptible: true
-  timeout: 5m
-  rules: *release-rules
-  needs:
-    - job: build:linux
-      artifacts: true
-  artifacts:
-    name: "shebe-mcpb"
-    paths:
-      - releases/*.mcpb
-      - releases/*.mcpb.sha256
-      - releases/server.json
-    expire_in: 1 year
-    when: on_success
-
-#--------------------------------------------------------------------------------------
 # Release Stage
-# Uses CI_JOB_TOKEN for API authentication (no manual token needed)
-# Collects artifacts from build:shebe and package:mcpb
+#
+# Creates releases on both GitLab and GitHub:
+#   - GitLab: Primary release with asset links to package registry
+#   - GitHub: Draft release with uploaded artifacts (for Zed extension compatibility)
+#
+# CI/CD Variables Required:
+#   SHEBE_GITHUB_TOKEN - GitHub PAT with repo scope (masked, protected)
+#
+# Note: Artifacts already uploaded to package registry by build jobs.
 #--------------------------------------------------------------------------------------
 
 release:shebe:
   stage: release
-  image: registry.gitlab.com/rhobimd-oss/cicd/alpine:20260117b-b3.13-alpine3.22-b287ff20c
-  variables:
-    GIT_STRATEGY: fetch
-    GIT_DEPTH: 0
-    PREVIEW_MODE: true
-  before_script:
-    - git config --global --add safe.directory "${CI_PROJECT_DIR}"
-  script:
-    - ./scripts/ci-release.sh --preview # Create GitLab release with all artifacts
-  rules: *release-rules
   needs:
     - job: build:linux
       artifacts: true
-    - job: package:mcpb
-      artifacts: true
-  artifacts:
-    paths:
-      - RELEASE_NOTES.md
-      - CHANGELOG.md
-    expire_in: 1 year
-
-#--------------------------------------------------------------------------------------
-# GitHub Release (for Zed Extension)
-#
-# Creates a draft GitHub release and uploads Linux artifacts.
-# Required because Zed's extension API only reads from GitHub releases.
-# macOS builds are triggered separately in build:macos job.
-#
-# CI/CD Variables Required:
-#   GITHUB_PAT - GitHub Personal Access Token with repo scope (masked, protected)
-#
-# Script: scripts/ci-github-release.sh
-#--------------------------------------------------------------------------------------
-
-# release:github:
-#   stage: release
-#   image: registry.gitlab.com/rhobimd-oss/cicd/alpine:20260119-b3.13-alpine3.22-b287ff20c-rc
-#   script:
-#     - ./scripts/ci-github-release.sh --no-trigger
-#   artifacts:
-#     reports:
-#       dotenv: github_release.env
-#   rules: *release-rules
-#   needs:
-#     - job: build:linux
-#       artifacts: true
+  rules: *build-rules
+  variables:
+    GIT_STRATEGY: fetch
+    GIT_DEPTH: 0
+  before_script:
+    - git config --global --add safe.directory "${CI_PROJECT_DIR}"
+  script:
+    - rci release gitlab --service-dir services/shebe-server --force
+    - rci release github --service-dir services/shebe-server --force
 
 #--------------------------------------------------------------------------------------
 # Publish to MCP Registry (Manual Trigger)
 #
 # Publishes Shebe to the official MCP Registry (registry.modelcontextprotocol.io).
-# Requires MCP_PRIVATE_KEY CI/CD variable for DNS-based authentication.
-# Manual trigger to prevent accidental publication.
+# Runs after release:shebe to ensure download URLs in server.json are valid.
+#
+# CI/CD Variables Required:
+#   MCP_PRIVATE_KEY - Private key for DNS-based authentication (masked, protected)
+#
+# Manual trigger to prevent accidental publication to public registry.
 #--------------------------------------------------------------------------------------
 
-# publish:mcp-registry:
-#   stage: publish
-#   image: registry.gitlab.com/rhobimd-oss/cicd/alpine:20260119-b3.13-alpine3.22-b287ff20c-rc
-#   variables:
-#     MCP_DOMAIN: "oss.rhobimd.health"
-#   script:
-#     - ./scripts/ci-mcpb-publish.sh
-#   rules: *release-rules
-#   needs:
-#     - job: package:mcpb
-#       artifacts: true
-#     - job: release:shebe
-#       artifacts: false
+publish:mcp-registry:
+  stage: publish
+  rules: *build-rules
+  variables:
+    GIT_STRATEGY: fetch
+  script:
+    - rci mcpb publish --verify --from-registry

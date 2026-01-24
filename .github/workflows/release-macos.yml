@@ -68,7 +68,7 @@ jobs:
 
       - name: Build and package
         id: build
-        run: ./scripts/ci-github-build.sh --target ${{ matrix.target }}
+        run: ./deploy/ci-github-build.sh --target ${{ matrix.target }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

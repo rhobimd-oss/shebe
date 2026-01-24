@@ -1,7 +1,7 @@
 # Shebe CI/CD Pipeline
 
-**Version:** 1.1
-**Updated:** 2026-01-21
+**Version:** 2.0
+**Updated:** 2026-01-24
 
 This document describes the CI/CD pipeline for building, testing and releasing Shebe.
 
@@ -14,6 +14,9 @@ Shebe uses a dual-platform CI/CD strategy:
 - **GitLab CI:** Primary CI/CD for testing, Linux builds and GitLab releases
 - **GitHub Actions:** macOS builds (requires native Apple runners)
 
+All CI/CD automation is handled by the `rci` tool (v0.1.3-rc6), which replaces
+the previous bash scripts with a centralized, tested binary.
+
 ```
                             Tag Push (v*.*.*)
                                   |
@@ -21,45 +24,78 @@ Shebe uses a dual-platform CI/CD strategy:
 +------------------------------------------------------------------+
 |                         GitLab CI                                |
 |                                                                  |
+|  STAGE 1: test                                                   |
 |  +-----------+                                                   |
-|  | test:shebe|  (MR pipelines only, currently disabled)          |
+|  | test:shebe|  cargo fmt, clippy, nextest                       |
 |  +-----------+                                                   |
-|                                                                  |
-|  BUILD STAGE (parallel):                                         |
-|  +---------------+        +---------------+                      |
-|  | build:linux   |        | build:macos   |                      |
-|  | (2x parallel) |        | (triggers GH) |----+                 |
-|  +-------+-------+        +---------------+    |                 |
-|          |                                     |                 |
-|          v                                     |                 |
-|  RELEASE STAGE:                                |                 |
-|  +---------------+  +---------------+          |                 |
-|  | package:mcpb  |  | release:shebe |          |                 |
-|  | (MCPB bundle) |  | (GitLab rel.) |          |                 |
-|  +---------------+  +---------------+          |                 |
-|                                                                  |
+|        |                                                         |
+|        v                                                         |
+|  STAGE 2: build (parallel matrix)                                |
+|  +------------------+     +------------------+                    |
+|  | build:linux      |     | build:linux      |                    |
+|  | (glibc)          |     | (musl + mcpb)    |                    |
+|  | rci build        |     | rci build        |                    |
+|  +--------+---------+     | rci mcpb create  |                    |
+|           |               +--------+---------+                    |
+|           +-------+----------------+                              |
+|                   |                                               |
+|                   v                                               |
+|           +---------------+                                       |
+|           | build:macos   |---> triggers GitHub Actions           |
+|           +-------+-------+                                       |
+|                   |                                               |
+|                   v                                               |
+|  STAGE 3: release (manual)                                       |
+|  +---------------+                                                |
+|  | release:shebe | rci release gitlab                             |
+|  | [play button] | rci release github (draft)                     |
+|  +-------+-------+                                                |
+|          |                                                        |
+|          v                                                        |
+|  STAGE 4: publish (manual)                                        |
+|  +--------------------+                                           |
+|  | publish:mcp-registry | rci mcpb publish                        |
+|  | [play button]        |                                         |
+|  +--------------------+                                           |
 +------------------------------------------------------------------+
-                                                 |
-                         repository_dispatch     | (from build:macos)
-                                                 v
+                                  |
+                    repository_dispatch (from build:macos)
+                                  |
+                                  v
 +------------------------------------------------------------------+
 |                       GitHub Actions                             |
 |                                                                  |
 |  +-------------------+     +-------------------+                  |
-|  | Build macOS x86_64| --> | Upload to Release |                  |
-|  | Build macOS arm64 |     | Publish Release   |                  |
+|  | build (matrix)    |     | release           |                  |
+|  | - x86_64-darwin   | --> | - Upload artifacts|                  |
+|  | - aarch64-darwin  |     | - Publish release |                  |
 |  +-------------------+     +-------------------+                  |
-|                                                                  |
 +------------------------------------------------------------------+
                                   |
                                   v
-                        GitHub Release (published)
-                        - darwin-x86_64.tar.gz
-                        - darwin-aarch64.tar.gz
+                  +-------------------------------+
+                  | Published Releases            |
+                  | GitLab: linux-x86_64, musl    |
+                  | GitHub: darwin-x86_64, arm64  |
+                  +-------------------------------+
 ```
 
-**Note:** The `release:github` job is currently disabled. Linux artifacts are uploaded
-to GitLab Package Registry only. GitHub releases contain macOS binaries only.
+---
+
+## rci Tool
+
+All CI/CD automation uses the `rci` tool from `registry.gitlab.com/rhobimd-oss/cicd`.
+
+| Command | Purpose | Previous Script |
+|---------|---------|-----------------|
+| `rci build` | Build binaries, create tarballs | `scripts/ci-build.sh` |
+| `rci mcpb create` | Create MCP Bundle | `scripts/ci-mcpb.sh` |
+| `rci release gitlab` | Create GitLab release | `scripts/ci-release.sh` |
+| `rci release github` | Create GitHub release | `scripts/ci-github-release.sh` |
+| `rci mcpb publish` | Publish to MCP Registry | `scripts/ci-mcpb-publish.sh` |
+| `rci cache restore/save` | S3-based build cache | N/A |
+
+The rci tool is pre-installed in the CI Docker images.
 
 ---
 
@@ -81,7 +117,7 @@ Placeholder job for merge request pipelines. Ensures pipelines always have at le
 
 ### Stage 2: test
 
-**Job:** `test:shebe` (currently disabled)
+**Job:** `test:shebe`
 
 Runs on merge requests and main branch pushes when Rust files change.
 
@@ -90,22 +126,15 @@ Runs on merge requests and main branch pushes when Rust files change.
 | Format | `cargo fmt --check` | No differences |
 | Lint | `cargo clippy` | Zero warnings |
 | Tests | `cargo nextest` | All passing |
-| Coverage | `cargo tarpaulin` | >= 60% |
 
 **Triggers:**
 - Merge request with changes to `Cargo.toml` or `Cargo.lock`
 - Push to main with Rust file changes
-
-**Artifacts:**
-- `cobertura.xml` - Coverage report (Cobertura format)
-
-**Status:** Currently commented out in `.gitlab-ci.yml`. Tests are run locally before commits.
+- Tag push
 
 ---
 
 ### Stage 3: build
-
-Two parallel jobs run in this stage:
 
 **Job:** `build:linux`
 
@@ -116,19 +145,24 @@ Builds Linux release binaries using parallel matrix strategy.
 | glibc | rust-debian | `shebe-vX.Y.Z-linux-x86_64.tar.gz` | Standard Linux |
 | musl | rust-alpine | `shebe-vX.Y.Z-linux-x86_64-musl.tar.gz` | Alpine, MCPB |
 
-**Script:** `scripts/ci-build.sh`
+**Commands:**
+```bash
+rci build --service-dir services/shebe-server --suffix ${ARTIFACT_SUFFIX} --publish-package-registry
 
-**Current Mode:** Preview/dry-run (`PREVIEW_MODE: true`, `--dry-run` flag)
+# For musl variant only:
+rci mcpb create --service-dir services/shebe-server --publish-package-registry
+```
 
 **Artifacts:**
 - `releases/*.tar.gz` - Binary tarballs
 - `releases/*.sha256` - Checksums
+- `releases/*.mcpb` - MCP Bundle (musl only)
 
 ---
 
 **Job:** `build:macos`
 
-Triggers GitHub Actions to build macOS binaries. Runs in parallel with `build:linux`.
+Triggers GitHub Actions to build macOS binaries. Runs after `build:linux`.
 
 **Actions:**
 - Extracts version from `Cargo.toml`
@@ -139,82 +173,38 @@ Triggers GitHub Actions to build macOS binaries. Runs in parallel with `build:li
 - `SHEBE_GITHUB_TOKEN` - GitHub Personal Access Token with repo scope
 - `SHEBE_GITHUB_REPO` - Target repository (default: `rhobimd-oss/shebe`)
 
-**Triggers:**
-- Tag push matching `v*.*.*`
-- Push to main with Cargo.toml/Cargo.lock changes
-
 ---
 
 ### Stage 4: release
 
-**Job:** `package:mcpb`
-
-Creates MCP Bundle (.mcpb) from the musl static binary.
-
-| Input | Output |
-|-------|--------|
-| `shebe-vX.Y.Z-linux-x86_64-musl.tar.gz` | `shebe-mcp-vX.Y.Z.mcpb` |
-
-**Script:** `scripts/ci-mcpb.sh`
-
-**Artifacts:**
-- `releases/*.mcpb` - MCP Bundle
-- `releases/*.mcpb.sha256` - Checksum
-- `releases/server.json` - MCP server manifest
-
----
-
 **Job:** `release:shebe`
 
-Creates GitLab release with changelog and artifact links.
+Creates releases on both GitLab and GitHub.
 
-**Script:** `scripts/ci-release.sh`
-
-**Current Mode:** Preview (`PREVIEW_MODE: true`, `--preview` flag)
+**Commands:**
+```bash
+rci release gitlab --service-dir services/shebe-server --force
+rci release github --service-dir services/shebe-server --force
+```
 
 **Features:**
 - Extracts changelog from `CHANGELOG.md`
 - Uploads artifacts to GitLab Package Registry
 - Creates release with asset links
-- Supports `--preview` mode for local testing
-
-**Artifacts:**
-- `RELEASE_NOTES.md` - Generated release notes
-- `CHANGELOG.md` - Full changelog
-
----
-
-**Job:** `release:github` (currently disabled)
-
-Creates GitHub release and uploads Linux artifacts.
-
-**Script:** `scripts/ci-github-release.sh --no-trigger`
-
-**Actions:**
-1. Creates draft GitHub release (or uses existing)
-2. Uploads Linux artifacts to GitHub release
-3. Saves release ID to `github_release.env`
-
-Note: macOS builds are triggered separately by `build:macos` job.
-
-**Required Variables:**
-- `SHEBE_GITHUB_TOKEN` - GitHub Personal Access Token (masked, protected)
-
-**Artifacts:**
-- `github_release.env` - Contains `GITHUB_RELEASE_ID`
-
-**Status:** Currently commented out in `.gitlab-ci.yml`. GitHub releases are created
-by the macOS GitHub Actions workflow when triggered.
+- Creates draft GitHub release with Linux artifacts
 
 ---
 
 ### Stage 5: publish
 
-**Job:** `publish:mcp-registry` (manual, currently disabled)
+**Job:** `publish:mcp-registry` (manual trigger)
 
 Publishes to official MCP Registry.
 
-**Script:** `scripts/ci-mcpb-publish.sh`
+**Command:**
+```bash
+rci mcpb publish --from-registry
+```
 
 **Required Variables:**
 - `MCP_PRIVATE_KEY` - DNS-based authentication key
@@ -238,8 +228,8 @@ Builds macOS binaries on native Apple runners.
 
 | Target | Runner | Architecture |
 |--------|--------|--------------|
-| `x86_64-apple-darwin` | macos-13 | Intel |
-| `aarch64-apple-darwin` | macos-14 | Apple Silicon |
+| `x86_64-apple-darwin` | macos-15 | Intel |
+| `aarch64-apple-darwin` | macos-15 | Apple Silicon |
 
 ### Jobs
 
@@ -248,10 +238,10 @@ Builds macOS binaries on native Apple runners.
 1. Checkout source at ref/tag
 2. Install Rust toolchain
 3. Cache cargo registry
-4. Build and package via `scripts/ci-github-build.sh`
+4. Build and package via `deploy/ci-github-build.sh`
 5. Upload as GitHub Actions artifact
 
-**Script:** `scripts/ci-github-build.sh --target <target>`
+**Script:** `deploy/ci-github-build.sh --target <target>`
 
 The script:
 - Extracts version from `Cargo.toml`
@@ -276,8 +266,10 @@ The script:
 | Variable | Type | Scope | Description |
 |----------|------|-------|-------------|
 | `SHEBE_GITHUB_TOKEN` | Masked, Protected | Tags | GitHub PAT with `repo` scope |
-| `SHEBE_GITHUB_REPO` | Variable | All | Target GitHub repository (default: `rhobimd-oss/shebe`) |
+| `SHEBE_GITHUB_REPO` | Variable | All | Target GitHub repository |
 | `MCP_PRIVATE_KEY` | Masked, Protected | Tags | MCP Registry auth key |
+| `SCCACHE_AWS_ACCESS_KEY_ID` | Masked | All | S3 cache credentials |
+| `SCCACHE_AWS_SECRET_ACCESS_KEY` | Masked | All | S3 cache credentials |
 
 ### Creating GitHub PAT
 
@@ -292,37 +284,31 @@ The script:
 
 ---
 
-## Scripts
+## Local Testing
 
-All CI scripts support `--preview` mode for local testing.
+### macOS Build Script
 
-| Script | Purpose | Platform | Preview |
-|--------|---------|----------|---------|
-| `scripts/ci-build.sh` | Build Linux binaries, create tarballs | GitLab CI | Yes |
-| `scripts/ci-github-build.sh` | Build macOS binaries, create tarballs | GitHub Actions | Yes |
-| `scripts/ci-mcpb.sh` | Create MCP Bundle | GitLab CI | Yes |
-| `scripts/ci-release.sh` | Create GitLab release | GitLab CI | Yes |
-| `scripts/ci-github-release.sh` | Create GitHub release, trigger macOS | GitLab CI | Yes |
-| `scripts/ci-mcpb-publish.sh` | Publish to MCP Registry | GitLab CI | Yes |
-
-### Local Testing
+The macOS build script can be tested locally:
 
 ```bash
-# Preview GitLab Linux build
-./scripts/ci-build.sh --preview
+# Preview macOS build (no actual build)
+./deploy/ci-github-build.sh --target aarch64-apple-darwin --preview
+./deploy/ci-github-build.sh --target x86_64-apple-darwin --preview
 
-# Preview GitHub macOS build (specify target)
-./scripts/ci-github-build.sh --target aarch64-apple-darwin --preview
-./scripts/ci-github-build.sh --target x86_64-apple-darwin --preview
+# Actual build (requires Rust toolchain)
+./deploy/ci-github-build.sh --target aarch64-apple-darwin
+```
 
-# Preview GitLab release
-./scripts/ci-release.sh --preview
+### rci Commands
 
-# Preview GitHub release
-./scripts/ci-github-release.sh --preview
+The rci tool can be used locally via the development container:
 
-# Preview specific version
-./scripts/ci-release.sh --preview v0.6.0
+```bash
+# Build with rci
+make rci-build
+
+# Create MCPB
+make rci-mcpb
 ```
 
 ---
@@ -365,8 +351,8 @@ shebe-v0.6.0-linux-x86_64/
    ```
 
 4. **Pipeline executes:**
-   - GitLab builds Linux binaries
-   - GitLab creates releases (GitLab + GitHub draft)
+   - GitLab builds Linux binaries (`rci build`)
+   - GitLab creates releases (`rci release gitlab/github`)
    - GitHub Actions builds macOS binaries
    - GitHub Actions publishes final release
 
@@ -442,6 +428,13 @@ grep '^version' services/shebe-server/Cargo.toml | head -1 | sed 's/.*"\(.*\)".*
 - **MCPB bundles:** Single portable binary
 - **Alpine containers:** Native compatibility
 
+### Why rci Tool?
+
+- **Centralized logic:** Single source of truth for CI/CD operations
+- **Tested:** The tool itself has tests, reducing CI script bugs
+- **Consistent:** Same behavior across GitLab, local dev, and any CI system
+- **Maintainable:** Changes to CI logic happen in one place
+
 ---
 
 ## References
@@ -450,3 +443,4 @@ grep '^version' services/shebe-server/Cargo.toml | head -1 | sed 's/.*"\(.*\)".*
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [GitHub REST API: Releases](https://docs.github.com/en/rest/releases)
 - [Zed Extension API](https://docs.rs/zed_extension_api)
+- [rci Tool](https://gitlab.com/rhobimd-oss/cicd) (internal)

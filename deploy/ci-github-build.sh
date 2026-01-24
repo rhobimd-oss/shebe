@@ -6,8 +6,8 @@
 # Designed to run in GitHub Actions but testable locally.
 #
 # Usage:
-#   ./scripts/ci-github-build.sh --target aarch64-apple-darwin
-#   ./scripts/ci-github-build.sh --target x86_64-apple-darwin --preview
+#   ./deploy/ci-github-build.sh --target aarch64-apple-darwin
+#   ./deploy/ci-github-build.sh --target x86_64-apple-darwin --preview
 #
 # Required:
 #   --target TARGET    Rust target triple (e.g., aarch64-apple-darwin)

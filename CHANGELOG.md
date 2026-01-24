@@ -7,19 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.6] - 2026-01-24
+
 ### Added
 - MCP Registry publication support (work plan 019 phase 6)
   - `publish:mcp-registry` CI job with manual trigger for controlled releases
-  - `scripts/ci-mcpb-publish.sh` for registry publication with DNS authentication
+  - DNS-based authentication via `rci mcpb publish`
   - Validates server.json and verifies publication via registry API
 
 ### Changed
+- CI/CD pipeline migrated to rci tool v0.1.3-rc6 (replaces bash scripts)
+  - `rci build` replaces ci-build.sh
+  - `rci release gitlab` replaces ci-release.sh
+  - `rci release github` replaces ci-github-release.sh
+  - `rci mcpb create` replaces ci-mcpb.sh
+  - `rci mcpb publish` replaces ci-mcpb-publish.sh
 - MCPB filename pattern: `shebe-v{version}.mcpb` -> `shebe-mcp-v{version}.mcpb`
   - Required by MCP Registry URL validation (filename must contain 'mcp')
 - Added `filepath` to MCPB asset link for direct download URL pattern
-  - Enables MCP Registry URL pattern: `/releases/tag/downloads/filename`
-- Refactored version extraction to use Cargo.toml directly in CI scripts
-- Added `publish` stage to CI/CD pipeline
+- Manual trigger for `release:shebe` and `publish:mcp-registry` jobs
+- Moved `ci-github-build.sh` to `deploy/` directory
+- Updated docs/CICD.md to document rci tool usage (v2.0)
+
+### Removed
+- `scripts/` directory (~2,200 LOC of bash scripts)
+  - ci-build.sh, ci-release.sh, ci-mcpb.sh, ci-mcpb-publish.sh, ci-github-release.sh
+  - generate-commit-message.sh (moved to cicd repo)
+  - Analysis scripts (analyze-claude-errors.py, analyze-serena-context.py)
+- `make commit` target (commit message generation handled by cicd repo)
 
 ## [0.5.5] - 2026-01-17
 
@@ -210,7 +225,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 130 total tests (79 unit, 7 integration, 37 UTF-8, 3 doc)
 - OpenEMR validation: 4,210 files indexed successfully
 
-[Unreleased]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.5...HEAD
+[Unreleased]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.6...HEAD
+[0.5.6]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.5...v0.5.6
 [0.5.5]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.4...v0.5.5
 [0.5.4]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.3...v0.5.4
 [0.5.3]: https://gitlab.com/rhobimd-oss/shebe/-/compare/v0.5.2...v0.5.3

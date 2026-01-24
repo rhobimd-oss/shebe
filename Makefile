@@ -113,10 +113,6 @@ clean:
 	docker volume rm deploy_cargo-registry-musl deploy_cargo-git-musl deploy_cargo-target-musl 2>/dev/null || true
 	@echo "Docker volumes cleaned"
 
-.PHONY: commit
-commit:
-	scripts/generate-commit-message.sh --all
-
 # SHEBE BINARIES ---------------------------------------------------------------
 VERSION ?= $(shell cat services/shebe-server/VERSION)
 ARCH := linux-x86_64

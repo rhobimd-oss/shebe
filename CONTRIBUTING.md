@@ -59,8 +59,7 @@ shebe/
 │   ├── tests/                 # Tests
 │   └── Cargo.toml             # Dependencies
 ├── docs/                      # Documentation
-├── deploy/                    # Deployment configs
-└── scripts/                   # Utility scripts
+└── deploy/                    # Deployment configs
 ```
 
 **Key Directories:**

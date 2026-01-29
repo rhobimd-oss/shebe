@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- MCP server notification handling per JSON-RPC 2.0 spec
+  - Notifications (no `id` field) no longer receive responses
+  - `notifications/initialized` method routed correctly alongside `initialized`
+  - `notifications/cancelled` method handled gracefully
+- Development container sccache support for shebe-dev (glibc) container
+  - Makefile targets now use `entrypoint.sh with-sccache` for consistent caching
+  - Added `shell-no-cache` target for plain shell access
+  - Docker image tag updated for shebe-dev-musl container
+
+### Added
+- Test coverage expansion across core and MCP modules
+  - XDG directory resolution tests (state, cache, sessions, logs, progress, query cache)
+  - MCP error mapping tests (all ShebeError -> McpError conversions)
+  - MCP server unit tests (initialize, notification, ping, unknown method)
+  - MCP handler integration tests (notifications/initialized, notifications/cancelled)
+  - Tantivy boundary tests (empty index search, concurrent readers)
+  - Storage validator tests (indexed session validation)
+  - Preview chunk context extraction tests
+- Test envelope philosophy documentation (`docs/testing/000-test-envelope-philosophy.md`)
+- Coverage expansion plan (`docs/testing/001-coverage-expansion-plan-01.md`)
+
 ## [0.5.6] - 2026-01-24
 
 ### Added

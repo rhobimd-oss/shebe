@@ -331,4 +331,84 @@ mod tests {
             "SCHEMA_VERSION should be 3 after adding repository_path and patterns"
         );
     }
+
+    // --- Phase 1C: Boundary tests ---
+
+    #[test]
+    fn test_search_empty_index() {
+        let temp_dir = tempdir().unwrap();
+        let index_dir = temp_dir.path().join("empty_index");
+        let mut index = TantivyIndex::create(&index_dir).unwrap();
+
+        // Commit empty index so reader can access it
+        index.commit().unwrap();
+
+        let reader = index.reader().unwrap();
+        let searcher = reader.searcher();
+        let schema = index.schema();
+
+        let text_field = schema.get_field("text").unwrap();
+        let query_parser = tantivy::query::QueryParser::for_index(index.index(), vec![text_field]);
+        let query = query_parser.parse_query("anything").unwrap();
+
+        let top_docs = searcher
+            .search(&query, &tantivy::collector::TopDocs::with_limit(10))
+            .unwrap();
+
+        assert!(top_docs.is_empty(), "Empty index should return no results");
+    }
+
+    #[test]
+    fn test_reader_after_adding_chunks() {
+        let temp_dir = tempdir().unwrap();
+        let index_dir = temp_dir.path().join("search_index");
+        let mut index = TantivyIndex::create(&index_dir).unwrap();
+
+        let chunks = vec![
+            Chunk {
+                text: "fn hello_world() { println!(\"hello\"); }".to_string(),
+                file_path: PathBuf::from("/src/main.rs"),
+                start_offset: 0,
+                end_offset: 40,
+                chunk_index: 0,
+            },
+            Chunk {
+                text: "fn goodbye() { println!(\"bye\"); }".to_string(),
+                file_path: PathBuf::from("/src/lib.rs"),
+                start_offset: 0,
+                end_offset: 34,
+                chunk_index: 0,
+            },
+        ];
+
+        index.add_chunks(&chunks, "test-session").unwrap();
+        index.commit().unwrap();
+
+        let reader = index.reader().unwrap();
+        let searcher = reader.searcher();
+        let schema = index.schema();
+
+        let text_field = schema.get_field("text").unwrap();
+        let query_parser = tantivy::query::QueryParser::for_index(index.index(), vec![text_field]);
+        let query = query_parser.parse_query("hello_world").unwrap();
+
+        let top_docs = searcher
+            .search(&query, &tantivy::collector::TopDocs::with_limit(10))
+            .unwrap();
+
+        assert_eq!(top_docs.len(), 1, "Should find exactly one match");
+    }
+
+    #[test]
+    fn test_debug_impl() {
+        let temp_dir = tempdir().unwrap();
+        let index_dir = temp_dir.path().join("debug_index");
+        let index = TantivyIndex::create(&index_dir).unwrap();
+
+        let debug_str = format!("{:?}", index);
+        assert!(
+            debug_str.contains("TantivyIndex"),
+            "Debug output should contain struct name"
+        );
+    }
 }

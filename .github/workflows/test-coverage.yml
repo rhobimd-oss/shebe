@@ -1,0 +1,49 @@
+# Run test coverage on pushes to main
+#
+# Uses cargo-tarpaulin with 70% minimum threshold.
+# Mirrors the local `make test-coverage` target.
+
+name: test-coverage
+
+on:
+  push:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  coverage:
+    name: Test coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            services/shebe-server/target
+          key: coverage-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            coverage-cargo-
+
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin
+
+      - name: Run coverage
+        working-directory: services/shebe-server
+        run: >
+          cargo tarpaulin
+          --all-features
+          --workspace
+          --out Xml
+          --output-dir .
+          --fail-under 70

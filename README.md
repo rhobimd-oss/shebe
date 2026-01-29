@@ -1,5 +1,7 @@
 # Shebe
 
+[![pipeline status](https://gitlab.com/rhobimd-oss/shebe-releases/badges/main/pipeline.svg)](https://gitlab.com/rhobimd-oss/shebe-releases/-/commits/main) [![coverage report](https://gitlab.com/rhobimd-oss/shebe-releases/badges/main/coverage.svg)](https://gitlab.com/rhobimd-oss/shebe-releases/-/commits/main) [![Latest Release](https://gitlab.com/rhobimd-oss/shebe-releases/-/badges/release.svg)](https://gitlab.com/rhobimd-oss/shebe-releases/-/releases)
+
 **Fast Code Search via BM25**
 
 Shebe is a fast and simple local code-search tool powered by BM25. No embeddings, 

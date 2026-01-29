@@ -277,4 +277,129 @@ mod tests {
         let size = calculate_directory_size(Path::new("/nonexistent/path"));
         assert_eq!(size, 0);
     }
+
+    // --- Phase 1B: Center test ---
+
+    #[test]
+    fn test_validate_indexed_session() {
+        let temp_dir = tempdir().unwrap();
+        let manager = StorageManager::new(temp_dir.path().to_path_buf());
+
+        let config = SessionConfig::default();
+        let mut tantivy_index = manager
+            .create_session("indexed-session", PathBuf::from("/test/repo"), config)
+            .unwrap();
+
+        // Add a chunk so the session has real data
+        let chunk = crate::core::types::Chunk {
+            text: "fn main() { println!(\"hello\"); }".to_string(),
+            file_path: PathBuf::from("/test/repo/main.rs"),
+            start_offset: 0,
+            end_offset: 33,
+            chunk_index: 0,
+        };
+        tantivy_index
+            .add_chunks(&[chunk], "indexed-session")
+            .unwrap();
+        tantivy_index.commit().unwrap();
+
+        // Update metadata to reflect indexed data
+        let mut metadata = manager.get_session_metadata("indexed-session").unwrap();
+        let actual_size =
+            calculate_directory_size(&manager.get_session_path("indexed-session").join("tantivy"));
+        metadata.files_indexed = 1;
+        metadata.chunks_created = 1;
+        metadata.index_size_bytes = actual_size;
+        manager
+            .update_session_metadata("indexed-session", &metadata)
+            .unwrap();
+
+        let validator = MetadataValidator::new(&manager);
+        let report = validator.validate_session("indexed-session").unwrap();
+
+        assert!(report.is_consistent);
+        assert!(report.size_matches);
+        assert_eq!(report.metadata_files, 1);
+        assert_eq!(report.metadata_chunks, 1);
+    }
+
+    // --- Phase 1B: Boundary tests ---
+
+    #[test]
+    fn test_validate_session_with_tampered_metadata() {
+        let temp_dir = tempdir().unwrap();
+        let manager = StorageManager::new(temp_dir.path().to_path_buf());
+
+        let config = SessionConfig::default();
+        let mut tantivy_index = manager
+            .create_session("tampered-session", PathBuf::from("/test/repo"), config)
+            .unwrap();
+
+        // Add data so the index is non-trivial
+        let chunks: Vec<crate::core::types::Chunk> = (0..50)
+            .map(|i| crate::core::types::Chunk {
+                text: format!("content block {} with some text", i),
+                file_path: PathBuf::from(format!("/test/repo/file{}.rs", i)),
+                start_offset: 0,
+                end_offset: 30,
+                chunk_index: 0,
+            })
+            .collect();
+        tantivy_index
+            .add_chunks(&chunks, "tampered-session")
+            .unwrap();
+        tantivy_index.commit().unwrap();
+
+        // Set metadata with wrong files_indexed value
+        let actual_size =
+            calculate_directory_size(&manager.get_session_path("tampered-session").join("tantivy"));
+        let mut metadata = manager.get_session_metadata("tampered-session").unwrap();
+        metadata.files_indexed = 0; // Wrong -- should be 50
+        metadata.chunks_created = 0; // Wrong -- should be 50
+        metadata.index_size_bytes = actual_size; // Size is correct
+        manager
+            .update_session_metadata("tampered-session", &metadata)
+            .unwrap();
+
+        let validator = MetadataValidator::new(&manager);
+        let report = validator.validate_session("tampered-session").unwrap();
+
+        // Size matches but file/chunk counts are wrong
+        assert!(report.size_matches);
+        // If index is > 100KB threshold, is_consistent should be false
+        // because files_indexed=0 with substantial data
+        if report.actual_size > 100 * 1024 {
+            assert!(
+                !report.is_consistent,
+                "Should be inconsistent: metadata shows 0 files \
+                 but index has substantial data"
+            );
+        }
+    }
+
+    #[test]
+    fn test_validate_session_missing_tantivy_dir() {
+        let temp_dir = tempdir().unwrap();
+        let manager = StorageManager::new(temp_dir.path().to_path_buf());
+
+        let config = SessionConfig::default();
+        manager
+            .create_session("broken-session", PathBuf::from("/test/repo"), config)
+            .unwrap();
+
+        // Delete the tantivy directory
+        let tantivy_path = manager.get_session_path("broken-session").join("tantivy");
+        if tantivy_path.exists() {
+            std::fs::remove_dir_all(&tantivy_path).unwrap();
+        }
+
+        let validator = MetadataValidator::new(&manager);
+        let report = validator.validate_session("broken-session").unwrap();
+
+        // With tantivy dir missing, actual_size should be 0
+        assert_eq!(report.actual_size, 0);
+        // Empty session with 0 metadata should still be "consistent"
+        // since both sides agree there is no data
+        assert!(report.is_consistent);
+    }
 }

@@ -356,4 +356,260 @@ mod tests {
 
         clear_env_vars();
     }
+
+    // --- Phase 1A: Center tests ---
+
+    #[test]
+    #[serial]
+    fn test_xdg_resolve_state_dir() {
+        clear_env_vars();
+        env::set_var("XDG_STATE_HOME", "/custom/state");
+
+        let xdg = XdgDirs::new();
+        assert_eq!(xdg.state_dir, PathBuf::from("/custom/state/shebe"));
+
+        clear_env_vars();
+    }
+
+    #[test]
+    #[serial]
+    fn test_xdg_resolve_cache_dir() {
+        clear_env_vars();
+        env::set_var("XDG_CACHE_HOME", "/custom/cache");
+
+        let xdg = XdgDirs::new();
+        assert_eq!(xdg.cache_dir, PathBuf::from("/custom/cache/shebe"));
+
+        clear_env_vars();
+    }
+
+    #[test]
+    #[serial]
+    fn test_xdg_sessions_dir() {
+        clear_env_vars();
+        env::set_var("SHEBE_DATA_DIR", "/test/data");
+
+        let xdg = XdgDirs::new();
+        assert_eq!(xdg.sessions_dir(), PathBuf::from("/test/data/sessions"));
+
+        clear_env_vars();
+    }
+
+    #[test]
+    #[serial]
+    fn test_xdg_logs_dir() {
+        clear_env_vars();
+        env::set_var("SHEBE_STATE_DIR", "/test/state");
+
+        let xdg = XdgDirs::new();
+        assert_eq!(xdg.logs_dir(), PathBuf::from("/test/state/logs"));
+
+        clear_env_vars();
+    }
+
+    #[test]
+    #[serial]
+    fn test_xdg_progress_dir() {
+        clear_env_vars();
+        env::set_var("SHEBE_STATE_DIR", "/test/state");
+
+        let xdg = XdgDirs::new();
+        assert_eq!(xdg.progress_dir(), PathBuf::from("/test/state/progress"));
+
+        clear_env_vars();
+    }
+
+    #[test]
+    #[serial]
+    fn test_xdg_query_cache_dir() {
+        clear_env_vars();
+        env::set_var("SHEBE_CACHE_DIR", "/test/cache");
+
+        let xdg = XdgDirs::new();
+        assert_eq!(
+            xdg.query_cache_dir(),
+            PathBuf::from("/test/cache/query-cache")
+        );
+
+        clear_env_vars();
+    }
+
+    #[test]
+    #[serial]
+    fn test_shebe_state_dir_priority() {
+        clear_env_vars();
+        env::set_var("XDG_STATE_HOME", "/xdg/state");
+        env::set_var("SHEBE_STATE_DIR", "/shebe/state");
+
+        let xdg = XdgDirs::new();
+        assert_eq!(
+            xdg.state_dir,
+            PathBuf::from("/shebe/state"),
+            "SHEBE_STATE_DIR should take priority over XDG_STATE_HOME"
+        );
+
+        clear_env_vars();
+    }
+
+    #[test]
+    #[serial]
+    fn test_shebe_cache_dir_priority() {
+        clear_env_vars();
+        env::set_var("XDG_CACHE_HOME", "/xdg/cache");
+        env::set_var("SHEBE_CACHE_DIR", "/shebe/cache");
+
+        let xdg = XdgDirs::new();
+        assert_eq!(
+            xdg.cache_dir,
+            PathBuf::from("/shebe/cache"),
+            "SHEBE_CACHE_DIR should take priority over XDG_CACHE_HOME"
+        );
+
+        clear_env_vars();
+    }
+
+    // --- Phase 1A: Boundary tests ---
+
+    #[test]
+    #[serial]
+    fn test_xdg_ensure_dirs_exist() {
+        clear_env_vars();
+        let temp = tempfile::tempdir().unwrap();
+        let base = temp.path().join("xdg_test");
+
+        env::set_var("SHEBE_CONFIG_DIR", base.join("config").to_str().unwrap());
+        env::set_var("SHEBE_DATA_DIR", base.join("data").to_str().unwrap());
+        env::set_var("SHEBE_STATE_DIR", base.join("state").to_str().unwrap());
+
+        let xdg = XdgDirs::new();
+        xdg.ensure_dirs_exist().unwrap();
+
+        assert!(base.join("config").exists());
+        assert!(base.join("data").join("sessions").exists());
+        assert!(base.join("state").join("logs").exists());
+
+        clear_env_vars();
+    }
+
+    #[test]
+    #[serial]
+    fn test_xdg_ensure_dirs_idempotent() {
+        clear_env_vars();
+        let temp = tempfile::tempdir().unwrap();
+        let base = temp.path().join("xdg_idem");
+
+        env::set_var("SHEBE_CONFIG_DIR", base.join("config").to_str().unwrap());
+        env::set_var("SHEBE_DATA_DIR", base.join("data").to_str().unwrap());
+        env::set_var("SHEBE_STATE_DIR", base.join("state").to_str().unwrap());
+
+        let xdg = XdgDirs::new();
+        xdg.ensure_dirs_exist().unwrap();
+        // Call again -- should not error
+        xdg.ensure_dirs_exist().unwrap();
+
+        assert!(base.join("config").exists());
+
+        clear_env_vars();
+    }
+
+    // --- Phase 1A: Beyond-boundary tests ---
+
+    #[test]
+    #[serial]
+    fn test_xdg_migrate_no_legacy_file() {
+        clear_env_vars();
+        let temp = tempfile::tempdir().unwrap();
+        env::set_var(
+            "SHEBE_CONFIG_DIR",
+            temp.path().join("cfg").to_str().unwrap(),
+        );
+
+        let xdg = XdgDirs::new();
+        // No ./shebe.toml exists, migrate should be a no-op
+        let result = migrate_legacy_paths(&xdg);
+        assert!(result.is_ok());
+        // Config file should NOT have been created
+        assert!(!xdg.config_file().exists());
+
+        clear_env_vars();
+    }
+
+    #[test]
+    #[serial]
+    fn test_xdg_migrate_with_legacy_file() {
+        clear_env_vars();
+        let temp = tempfile::tempdir().unwrap();
+        let cfg_dir = temp.path().join("cfg");
+        env::set_var("SHEBE_CONFIG_DIR", cfg_dir.to_str().unwrap());
+
+        // Create legacy config in current directory
+        let original_dir = env::current_dir().unwrap();
+        env::set_current_dir(temp.path()).unwrap();
+        fs::write("shebe.toml", "key = \"value\"").unwrap();
+
+        let xdg = XdgDirs::new();
+        migrate_legacy_paths(&xdg).unwrap();
+
+        // Config file should now exist with copied content
+        let new_config = xdg.config_file();
+        assert!(new_config.exists());
+        let content = fs::read_to_string(&new_config).unwrap();
+        assert_eq!(content, "key = \"value\"");
+
+        // Legacy file should still exist (safe copy)
+        assert!(temp.path().join("shebe.toml").exists());
+
+        env::set_current_dir(original_dir).unwrap();
+        clear_env_vars();
+    }
+
+    #[test]
+    #[serial]
+    fn test_xdg_migrate_does_not_overwrite() {
+        clear_env_vars();
+        let temp = tempfile::tempdir().unwrap();
+        let cfg_dir = temp.path().join("cfg");
+        fs::create_dir_all(&cfg_dir).unwrap();
+        env::set_var("SHEBE_CONFIG_DIR", cfg_dir.to_str().unwrap());
+
+        let original_dir = env::current_dir().unwrap();
+        env::set_current_dir(temp.path()).unwrap();
+
+        // Create legacy config
+        fs::write("shebe.toml", "legacy = true").unwrap();
+
+        // Create existing config at XDG path
+        let xdg = XdgDirs::new();
+        fs::write(xdg.config_file(), "existing = true").unwrap();
+
+        migrate_legacy_paths(&xdg).unwrap();
+
+        // Existing config should NOT be overwritten
+        let content = fs::read_to_string(xdg.config_file()).unwrap();
+        assert_eq!(content, "existing = true");
+
+        env::set_current_dir(original_dir).unwrap();
+        clear_env_vars();
+    }
+
+    #[test]
+    #[serial]
+    fn test_xdg_default_impl() {
+        clear_env_vars();
+        let xdg = XdgDirs::default();
+        assert!(xdg.config_dir.ends_with(".config/shebe"));
+
+        clear_env_vars();
+    }
+
+    #[test]
+    #[serial]
+    fn test_xdg_log_paths_does_not_panic() {
+        clear_env_vars();
+        let xdg = XdgDirs::new();
+        // log_paths should not panic even without a tracing subscriber
+        xdg.log_paths();
+
+        clear_env_vars();
+    }
 }

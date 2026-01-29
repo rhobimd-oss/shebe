@@ -38,6 +38,8 @@ services:
       - cargo-git:/usr/local/cargo/git
       # Cache build artifacts (speeds up incremental builds)
       - cargo-target:/workspace/target
+      # Entrypoint script for sccache lifecycle management
+      - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
     env_file: .env
     cap_add:
       - SYS_PTRACE
@@ -51,7 +53,7 @@ services:
   # Use for: testing sccache, release builds, MCPB creation
   # Mirrors CI environment (uses sccache instead of local cargo cache volumes)
   shebe-dev-musl:
-    image: registry.gitlab.com/rhobimd-oss/cicd/lang/rust-alpine:20260123-b1.88-slim-trixie
+    image: registry.gitlab.com/rhobimd-oss/cicd/lang/rust-alpine:20260123-b1.88-alpine3.22
     container_name: shebe-dev-musl
     working_dir: /workspace
     volumes:
@@ -62,7 +64,7 @@ services:
       # Entrypoint script for sccache lifecycle management
       - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
       # Local rci binary for testing (temporary)
-      - /tmp/rci-musl:/usr/local/bin/rci:ro
+      # /tmp/rci-musl:/usr/local/bin/rci:ro
     env_file: .env
     stdin_open: true
     tty: true

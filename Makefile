@@ -25,8 +25,9 @@ PROJECT_DIR ?= $(PWD)
 # DEVELOPMENT TARGETS ----------------------------------------------------------
 # shebe-dev: Debian/glibc for tests, linting, formatting
 # shebe-dev-musl: Alpine/musl for static builds with sccache (mirrors CI)
-COMPOSE := docker compose --file ${PROJECT_DIR}/deploy/docker-compose.yml run --rm
-RUN_DEV := $(COMPOSE) shebe-dev
+COMPOSE := docker compose --file ${PROJECT_DIR}/deploy/docker-compose.yml run --rm --remove-orphans
+RUN_DEV := $(COMPOSE) shebe-dev entrypoint.sh with-sccache
+RUN_DEV_NO_CACHE := $(COMPOSE) shebe-dev entrypoint.sh without-sccache
 RUN_MUSL := $(COMPOSE) shebe-dev-musl entrypoint.sh with-sccache
 RUN_MUSL_NO_CACHE := $(COMPOSE) shebe-dev-musl entrypoint.sh without-sccache
 
@@ -68,12 +69,22 @@ check:
 	@echo "Running cargo check in shebe-dev container..."
 	$(RUN_DEV) cargo check
 
-ci: test fmt clippy check
+ci:
+	@echo "Running full CI suite in single container..."
+	$(RUN_DEV) bash -c "\
+		cargo nextest run --color=always && \
+		cargo fmt -- --check --verbose && \
+		cargo clippy --no-deps -- -D warnings && \
+		cargo check"
 
-# Interactive shell in shebe-dev container
+# Interactive shell in shebe-dev container (with sccache)
 shell:
 	@echo "Starting interactive shell in shebe-dev container..."
-	cd deploy && docker compose run --rm shebe-dev bash
+	$(COMPOSE) shebe-dev entrypoint.sh with-sccache bash
+
+shell-no-cache:
+	@echo "Starting interactive shell (no sccache)..."
+	$(COMPOSE) shebe-dev bash
 
 ## ------------------------------------------------------------------------------------
 ##                           BUILD TARGETS
@@ -179,7 +190,7 @@ shebe-test:
 help:
 	@echo "Shebe Makefile Targets:"
 	@echo ""
-	@echo "Development Targets (shebe-dev container - Debian/glibc):"
+	@echo "Development Targets (shebe-dev + sccache - Debian/glibc):"
 	@echo "  build                Build debug binary"
 	@echo "  build-release        Build release binary"
 	@echo "  test                 Run tests with cargo nextest"
@@ -188,7 +199,8 @@ help:
 	@echo "  fmt-check            Check code formatting"
 	@echo "  clippy               Run clippy linter"
 	@echo "  check                Run cargo check"
-	@echo "  shell                Open interactive shell in shebe-dev"
+	@echo "  shell                Shell with sccache"
+	@echo "  shell-no-cache       Shell without sccache"
 	@echo "  clean                Clean Docker volumes"
 	@echo ""
 	@echo "Musl + sccache Targets (shebe-dev-musl - mirrors CI):"

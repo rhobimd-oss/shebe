@@ -12,7 +12,7 @@ use crate::mcp::tools::{
 use serde_json::{json, Value};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use tracing::info;
+use tracing::{debug, info};
 
 pub struct ProtocolHandlers {
     initialized: AtomicBool,
@@ -87,6 +87,22 @@ impl ProtocolHandlers {
         info!("Server initialized");
 
         // Initialized is a notification, no response needed
+        Ok(JsonRpcResponse {
+            jsonrpc: "2.0".to_string(),
+            id: None,
+            result: None,
+            error: None,
+        })
+    }
+
+    /// Handle cancellation notification
+    pub async fn handle_cancelled(
+        &self,
+        _request: JsonRpcRequest,
+    ) -> Result<JsonRpcResponse, McpError> {
+        debug!("Received cancellation notification");
+
+        // Cancellation is a notification, no response needed
         Ok(JsonRpcResponse {
             jsonrpc: "2.0".to_string(),
             id: None,

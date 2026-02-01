@@ -2,6 +2,8 @@
 
 [![pipeline status](https://gitlab.com/rhobimd-oss/shebe/badges/main/pipeline.svg)](https://gitlab.com/rhobimd-oss/shebe/-/commits/main) [![coverage report](https://gitlab.com/rhobimd-oss/shebe/badges/main/coverage.svg)](https://gitlab.com/rhobimd-oss/shebe/-/commits/main) [![Latest Release](https://gitlab.com/rhobimd-oss/shebe/-/badges/release.svg)](https://gitlab.com/rhobimd-oss/shebe/-/releases)
 
+![Shebe find_references example](docs/images/find-references-example.jpg)
+
 **Fast Code Search via BM25**
 
 Shebe is a fast and simple local code-search tool powered by BM25. No embeddings, 
@@ -55,6 +57,7 @@ for benchmarks.
 
 - [Quick Start](#quick-start)
 - [Common Tasks](#common-tasks)
+- [Refactoring Workflow](#refactoring-workflow)
 - [Configuration](#configuration)
 - [Documentation](#documentation)
 - [Performance](#performance)
@@ -72,20 +75,26 @@ for benchmarks.
 
 ### 1. Install
 
+**Homebrew (macOS and Linux):**
+
 ```bash
-# Download the latest release
-export SHEBE_VERSION=0.5.6-rc3
-curl -LO "https://gitlab.com/api/v4/projects/75748935/packages/generic/shebe/${SHEBE_VERSION}/shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz"
-curl -LO "https://gitlab.com/api/v4/projects/75748935/packages/generic/shebe/${SHEBE_VERSION}/shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz.sha256"
+brew tap rhobimd-oss/shebe-releases \
+  https://github.com/rhobimd-oss/shebe-releases
+brew install shebe
+```
 
-# Verify checksum
-sha256sum -c shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz.sha256
+**Manual download (Linux x86_64):**
 
-# Extract and install
+```bash
+export SHEBE_VERSION=0.5.7
+curl -LO "https://github.com/rhobimd-oss/shebe-releases/releases/download/v${SHEBE_VERSION}/shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz"
 tar -xzf shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz
 sudo mv shebe shebe-mcp /usr/local/bin/
+```
 
-# check version
+**Verify:**
+
+```bash
 shebe --version
 ```
 
@@ -153,6 +162,42 @@ Quick links to accomplish specific goals:
 | Find files by pattern    | `find_file`                        | [Reference](./docs/guides/mcp-tools-reference.md#tool-find_file)       |
 | View file with context   | `read_file` or `preview_chunk`     | [Reference](./docs/guides/mcp-tools-reference.md#tool-read_file)       |
 | Update stale index       | `reindex_session`                  | [Reference](./docs/guides/mcp-tools-reference.md#tool-reindex_session) |
+
+### Refactoring Workflow
+
+Shebe's `find_references` and `search_code` tools work together to enumerate
+all code locations affected by a refactoring task. In this example, Claude Code
+uses Shebe to analyze a pagination work plan and identify every file that needs
+to change -- completing the full impact analysis in ~1 minute.
+
+<details>
+<summary>View full workflow (6 screenshots)</summary>
+
+**Step 1: Index repository and run parallel find_references**
+
+![Index and find references](docs/images/refactor-01-index-and-find-references.jpg)
+
+**Step 2: search_code locates CLI routing code**
+
+![Search code results](docs/images/refactor-02-search-code-results.jpg)
+
+**Step 3: Structured analysis -- source files needing changes**
+
+![Analysis source files](docs/images/refactor-03-analysis-source-files.jpg)
+
+**Step 4: New modules, wiring and documentation**
+
+![Analysis modules and docs](docs/images/refactor-04-analysis-modules-docs.jpg)
+
+**Step 5: File creation plan and exclusion list**
+
+![Analysis new files](docs/images/refactor-05-analysis-new-files.jpg)
+
+**Step 6: Impact summary (~11 files, 1m 14s)**
+
+![Summary table](docs/images/refactor-06-summary-table.jpg)
+
+</details>
 
 ---
 

@@ -1,43 +1,99 @@
 # Shebe Installation Guide
 
 **Version:** 0.5.7
-**Last Updated:** 2026-01-18
+**Last Updated:** 2026-02-01
 
 ---
 
-## Quick Install (Pre-built Binary)
+## Homebrew (macOS and Linux)
 
-Pre-built binaries are available for Linux x86_64.
+The recommended install method. Installs both `shebe` (CLI) and
+`shebe-mcp` (MCP server) binaries.
 
 ```bash
-# Download the latest release
-export SHEBE_VERSION=0.5.6-rc3
+brew tap rhobimd-oss/shebe-releases \
+  https://github.com/rhobimd-oss/shebe-releases
+brew install shebe
+```
+
+Upgrade after a new release:
+
+```bash
+brew update && brew upgrade shebe
+```
+
+---
+
+## Manual Download (GitHub)
+
+Pre-built binaries from GitHub releases:
+
+```bash
+export SHEBE_VERSION=0.5.7
+curl -LO "https://github.com/rhobimd-oss/shebe-releases/releases/download/v${SHEBE_VERSION}/shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz"
+tar -xzf shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz
+sudo mv shebe shebe-mcp /usr/local/bin/
+```
+
+See [GitHub Releases](https://github.com/rhobimd-oss/shebe-releases/releases)
+for all platforms.
+
+---
+
+## Manual Download (GitLab)
+
+Pre-built binaries from the GitLab package registry:
+
+```bash
+export SHEBE_VERSION=0.5.7
 curl -LO "https://gitlab.com/api/v4/projects/75748935/packages/generic/shebe/${SHEBE_VERSION}/shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz"
 curl -LO "https://gitlab.com/api/v4/projects/75748935/packages/generic/shebe/${SHEBE_VERSION}/shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz.sha256"
 
-# Verify checksum
 sha256sum -c shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz.sha256
-
-# Extract and install
 tar -xzf shebe-v${SHEBE_VERSION}-linux-x86_64.tar.gz
 sudo mv shebe shebe-mcp /usr/local/bin/
-
-# Verify installation
-shebe --version
-shebe-mcp --help
 ```
 
-### Available Binaries
+See [GitLab Releases](https://gitlab.com/rhobimd-oss/shebe/-/releases)
+for all platforms.
 
-| Platform | Architecture            | Status            |
-|----------|-------------------------|-------------------|
-| Linux    | x86_64 (glibc)          | Available         |
-| Linux    | x86_64-musl (static)    | Available         |
-| Linux    | aarch64 (ARM64)         | Planned           |
-| macOS    | x86_64 / Apple Silicon  | Build from source |
-| Windows  | x86_64                  | Build from source |
+---
 
-See [All Releases](https://gitlab.com/rhobimd-oss/shebe/-/releases) for download links.
+## Editor Extensions
+
+### Zed
+
+Search for "Shebe" in Zed's extension panel, or add to
+`.zed/settings.json`:
+
+```json
+{
+  "context_servers": {
+    "shebe-mcp": {
+      "command": {
+        "path": "shebe-mcp"
+      }
+    }
+  }
+}
+```
+
+### Other Editors
+
+See the [shebe-releases](https://github.com/rhobimd-oss/shebe-releases)
+repository for VS Code and other editor extensions.
+
+---
+
+## Available Binaries
+
+| Platform | Architecture           | Status    |
+|----------|------------------------|-----------|
+| Linux    | x86_64 (glibc)         | Available |
+| Linux    | x86_64-musl (static)   | Available |
+| macOS    | ARM (Apple Silicon)    | Available |
+| macOS    | x86_64 (Intel)         | Available |
+| Linux    | aarch64 (ARM64)        | Planned   |
 
 ---
 

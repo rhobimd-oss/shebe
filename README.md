@@ -2,7 +2,7 @@
 
 [![pipeline status](https://gitlab.com/rhobimd-oss/shebe/badges/main/pipeline.svg)](https://gitlab.com/rhobimd-oss/shebe/-/commits/main) [![coverage report](https://gitlab.com/rhobimd-oss/shebe/badges/main/coverage.svg)](https://gitlab.com/rhobimd-oss/shebe/-/commits/main) [![Latest Release](https://gitlab.com/rhobimd-oss/shebe/-/badges/release.svg)](https://gitlab.com/rhobimd-oss/shebe/-/releases)
 
-![Shebe find_references example](docs/images/find-references-example.jpg)
+![Shebe find_references example](docs/images/find-references-example.webp)
 
 **Fast Code Search via BM25**
 
@@ -175,27 +175,27 @@ to change -- completing the full impact analysis in ~1 minute.
 
 **Step 1: Index repository and run parallel find_references**
 
-![Index and find references](docs/images/refactor-01-index-and-find-references.jpg)
+![Index and find references](docs/images/refactor-01-index-and-find-references.webp)
 
 **Step 2: search_code locates CLI routing code**
 
-![Search code results](docs/images/refactor-02-search-code-results.jpg)
+![Search code results](docs/images/refactor-02-search-code-results.webp)
 
 **Step 3: Structured analysis -- source files needing changes**
 
-![Analysis source files](docs/images/refactor-03-analysis-source-files.jpg)
+![Analysis source files](docs/images/refactor-03-analysis-source-files.webp)
 
 **Step 4: New modules, wiring and documentation**
 
-![Analysis modules and docs](docs/images/refactor-04-analysis-modules-docs.jpg)
+![Analysis modules and docs](docs/images/refactor-04-analysis-modules-docs.webp)
 
 **Step 5: File creation plan and exclusion list**
 
-![Analysis new files](docs/images/refactor-05-analysis-new-files.jpg)
+![Analysis new files](docs/images/refactor-05-analysis-new-files.webp)
 
 **Step 6: Impact summary (~11 files, 1m 14s)**
 
-![Summary table](docs/images/refactor-06-summary-table.jpg)
+![Summary table](docs/images/refactor-06-summary-table.webp)
 
 </details>
 

@@ -88,7 +88,7 @@ supported platforms and troubleshooting.
 **Manual download (Linux x86_64):**
 
 ```bash
-export SHEBE_VERSION=v0.5.8
+export SHEBE_VERSION=v0.6.0
 curl -LO "https://github.com/shebe-oss/shebe/releases/download/${SHEBE_VERSION}/shebe-${SHEBE_VERSION}-linux-x86_64.tar.gz"
 curl -LO "https://github.com/shebe-oss/shebe/releases/download/${SHEBE_VERSION}/shebe-${SHEBE_VERSION}-linux-x86_64.tar.gz.sha256"
 
@@ -295,7 +295,7 @@ For detailed troubleshooting, see [docs/guides/mcp-setup-guide.md](./docs/guides
 
 ## Project Status
 
-**Version:** v0.5.10 (latest release: v0.5.8)  
+**Version:** v0.6.0  
 **Status:** Production Ready  
 **Testing:** 581 tests passing, 84.77% line coverage  
 **Next:** MCP Registry secondary directories and Zed extension publication

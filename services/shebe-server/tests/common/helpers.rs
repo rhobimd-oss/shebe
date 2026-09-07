@@ -147,7 +147,7 @@ pub async fn index_test_repository_with_patterns(
             include_patterns: include_for_config,
             exclude_patterns: exclude_for_config,
         },
-        schema_version: 3,
+        schema_version: shebe::core::storage::SCHEMA_VERSION,
     };
 
     services

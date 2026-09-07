@@ -232,7 +232,7 @@ mod tests {
             chunks_created: 500,
             index_size_bytes: 52428800, // 50 MB
             config: SessionConfig::default(),
-            schema_version: 3,
+            schema_version: crate::core::storage::SCHEMA_VERSION,
         };
 
         let output = handler.format_info(&metadata);

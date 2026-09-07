@@ -2,8 +2,8 @@
 
 **Content Search for Code - Developer's Guide to the Codebase**
 
-**Version:** 0.5.10 <br>
-**Updated:** 2026-07-24 <br>
+**Version:** 0.6.0 <br>
+**Updated:** 2026-09-07 <br>
 **Status:** 14 MCP Tools, 10 CLI Commands, 581 Tests (Production Ready)
 
 
@@ -116,7 +116,7 @@ shebe/                         # Repository root
 |   |           +-- completions.rs # Shell completions
 |   |
 |   +-- tests/                 # Integration tests
-|   +-- Cargo.toml             # 20 prod deps (incl. clap, colored, base64)
+|   +-- Cargo.toml             # 19 prod deps (incl. clap, colored, base64)
 +-- docs/
 |   +-- Performance.md         # Benchmarks
 |   +-- guides/                # User guides
@@ -296,12 +296,12 @@ async fn main() {
 
 **Developers must respect:**
 
-1. **Rust:** 1.88+
+1. **Rust:** 1.88+ (MSRV), CI toolchain 1.97
 2. **UTF-8:** Never split multi-byte chars
 3. **Sessions:** All ops scoped to session
 4. **Line length:** Max 120 chars
 5. **Tests:** All 581 must pass (100% success rate)
-6. **Schema:** v3 with repository_path and last_indexed_at fields
+6. **Schema:** v4 (tantivy 0.26, index format 7) with repository_path and last_indexed_at fields
 
 ### Storage Layout
 
@@ -317,7 +317,7 @@ Logs and progress files live separately in the XDG state dir
 
 **INVARIANT:** `meta.json` and Tantivy must sync
 
-### Tantivy Schema (v3)
+### Tantivy Schema (v4)
 
 ```rust
 Schema {
@@ -334,23 +334,23 @@ Schema {
 **INVARIANTS:**
 - `file_path + chunk_index` = unique key
 - `chunk_index` must be INDEXED for preview_chunk queries
-- Schema version tracked in SessionMetadata (`SCHEMA_VERSION = 3` in
+- Schema version tracked in SessionMetadata (`SCHEMA_VERSION = 4` in
   `src/core/storage/tantivy.rs`)
 
 **Version history:** v1 initial; v2 made `chunk_index` INDEXED (preview_chunk);
-v3 added `repository_path`, `last_indexed_at` and patterns to SessionMetadata
-(the Tantivy field set itself is unchanged since v2).
+v3 added `repository_path`, `last_indexed_at` and patterns to SessionMetadata;
+v4 moved to tantivy 0.26 (index format 7, nanosecond dates). The Tantivy
+field set is unchanged since v2.
 
 ---
 
 ## Dependencies
 
-20 production crates:
+19 production crates:
 
 | Crate               | Purpose       | Why                          |
 |---------------------|---------------|------------------------------|
-| tantivy 0.22        | BM25          | Pure Rust                    |
-| oneshot >=0.1.12    | Tantivy dep   | Pinned: use-after-free fix   |
+| tantivy 0.26        | BM25          | Pure Rust                    |
 | tokio 1.x           | Async         | Standard                     |
 | serde/serde_json    | JSON          | API                          |
 | base64 0.23         | Encoding      | Pagination cursors           |
@@ -475,8 +475,8 @@ ShebeError -> McpError -> JSON-RPC error
 ---
 
 **Document Status:** Living document
-**Version:** 0.5.10 (14 MCP tools, 10 CLI commands, 581 tests)
-**Updated:** 2026-07-24
+**Version:** 0.6.0 (14 MCP tools, 10 CLI commands, 581 tests)
+**Updated:** 2026-09-07
 **Performance:** Validated with 30/30 test scenarios (100% success rate)
 - **Indexing:** 1,928-11,210 files/sec (Istio: 5,605 files in 0.5s, OpenEMR: 6,364 files in 3.3s)
 - **Search:** 2ms latency, 210-650 tokens/query, 11 file types in single query

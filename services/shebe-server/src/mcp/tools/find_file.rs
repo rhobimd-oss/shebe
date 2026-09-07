@@ -71,7 +71,7 @@ impl FindFileHandler {
         let mut files = HashSet::new();
 
         let top_docs = searcher
-            .search(&query, &TopDocs::with_limit(100000))
+            .search(&query, &TopDocs::with_limit(100000).order_by_score())
             .map_err(|e| McpError::InternalError(format!("Search failed: {e}")))?;
 
         for (_score, doc_address) in top_docs {

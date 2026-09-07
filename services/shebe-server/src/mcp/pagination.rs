@@ -87,7 +87,7 @@ mod tests {
             chunks_created: 8741,
             index_size_bytes: 0,
             config: crate::core::storage::SessionConfig::default(),
-            schema_version: 3,
+            schema_version: crate::core::storage::SCHEMA_VERSION,
         }
     }
 

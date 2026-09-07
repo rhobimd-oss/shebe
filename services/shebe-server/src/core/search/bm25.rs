@@ -61,8 +61,8 @@ impl SearchService {
         // Determine k (result limit)
         let k_limit = k.unwrap_or(self.default_k).min(self.max_k);
 
-        // Open session index
-        let index = self.storage.open_session(session_id)?;
+        // Open session index (read-only, no writer lock)
+        let index = self.storage.open_session_read(session_id)?;
         let reader = index
             .reader()
             .map_err(|e| ShebeError::SearchFailed(format!("Failed to create reader: {e}")))?;
@@ -221,6 +221,25 @@ mod tests {
 
         assert!(!response.results.is_empty());
         assert!(response.results[0].text.contains("async function"));
+    }
+
+    #[tokio::test]
+    async fn test_search_text_prefix_matches() {
+        let (service, _temp) = setup_test_service().await;
+        let storage = Arc::clone(&service.storage);
+        create_test_session(&storage, "test-session").await;
+
+        // The text: prefix must reach the same chunk as the bare term
+        let bare = service
+            .search_session("test-session", "process_data", Some(10))
+            .unwrap();
+        let prefixed = service
+            .search_session("test-session", "text:process_data", Some(10))
+            .unwrap();
+
+        assert!(!bare.results.is_empty());
+        assert_eq!(prefixed.count, bare.count);
+        assert_eq!(prefixed.results[0].text, bare.results[0].text);
     }
 
     #[tokio::test]

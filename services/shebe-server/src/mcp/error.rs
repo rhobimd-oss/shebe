@@ -72,6 +72,12 @@ impl From<crate::core::error::ShebeError> for McpError {
                 format!("Search failed: {s}"),
             ),
             ShebeError::StorageError(s) => McpError::InternalError(format!("Storage error: {s}")),
+            // The tool call is valid and the resource is busy, so this is a
+            // ToolError like SessionAlreadyExists. The full display text
+            // travels to the client unchanged.
+            e @ ShebeError::IndexLocked { .. } => {
+                McpError::ToolError(crate::mcp::protocol::INDEX_LOCKED, e.to_string())
+            }
             ShebeError::IoError(e) => McpError::InternalError(format!("I/O error: {e}")),
             ShebeError::SerdeError(e) => {
                 McpError::InternalError(format!("Serialization error: {e}"))
@@ -181,6 +187,27 @@ mod tests {
         match mcp {
             McpError::ToolError(code, _) => {
                 assert_eq!(code, protocol::SEARCH_FAILED);
+            }
+            other => panic!("Expected ToolError, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_index_locked_maps_to_tool_error() {
+        let err = ShebeError::IndexLocked {
+            session: "busy-session".to_string(),
+            lock_path: "/tmp/tantivy/.tantivy-writer.lock".to_string(),
+            attempts: 5,
+            waited_ms: 1500,
+        };
+        let mcp: McpError = err.into();
+        match mcp {
+            McpError::ToolError(code, msg) => {
+                assert_eq!(code, protocol::INDEX_LOCKED);
+                assert!(msg.contains("busy-session"));
+                assert!(msg.contains(".tantivy-writer.lock"));
+                assert!(msg.contains("5 attempts"));
+                assert!(msg.contains("Retry after it completes"));
             }
             other => panic!("Expected ToolError, got: {other:?}"),
         }

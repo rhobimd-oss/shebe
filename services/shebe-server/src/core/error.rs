@@ -47,6 +47,20 @@ pub enum ShebeError {
     #[error("Storage error: {0}")]
     StorageError(String),
 
+    #[error(
+        "Index for session '{session}' is locked by another writer.\n\
+         Lock file: {lock_path}\n\
+         Gave up after {attempts} attempts over {waited_ms} ms.\n\
+         Another shebe process indexes this session. The OS releases the lock\n\
+         when that process finishes or exits. Retry after it completes."
+    )]
+    IndexLocked {
+        session: String,
+        lock_path: String,
+        attempts: u32,
+        waited_ms: u64,
+    },
+
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
 

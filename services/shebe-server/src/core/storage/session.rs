@@ -4,7 +4,7 @@
 //! creation, deletion and metadata tracking.
 
 use crate::core::error::{Result, ShebeError};
-use crate::core::storage::tantivy::{TantivyIndex, SCHEMA_VERSION};
+use crate::core::storage::tantivy::{TantivyIndex, TantivyReader, SCHEMA_VERSION};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -96,7 +96,7 @@ impl StorageManager {
 
         // Create Tantivy index
         let tantivy_dir = self.tantivy_dir(session_id);
-        let index = TantivyIndex::create(&tantivy_dir)?;
+        let index = TantivyIndex::create(&tantivy_dir, session_id)?;
 
         // Write initial metadata
         let now = Utc::now();
@@ -116,8 +116,8 @@ impl StorageManager {
         Ok(index)
     }
 
-    /// Open an existing session
-    pub fn open_session(&self, session_id: &str) -> Result<TantivyIndex> {
+    /// Open an existing session for reading. Takes no writer lock.
+    pub fn open_session_read(&self, session_id: &str) -> Result<TantivyReader> {
         let tantivy_dir = self.tantivy_dir(session_id);
 
         if !tantivy_dir.exists() {
@@ -138,7 +138,7 @@ impl StorageManager {
             )));
         }
 
-        TantivyIndex::open(&tantivy_dir)
+        TantivyReader::open(&tantivy_dir)
     }
 
     /// Check if a session exists
@@ -385,7 +385,7 @@ mod tests {
     }
 
     #[test]
-    fn test_open_session() {
+    fn test_open_session_read() {
         let temp_dir = tempdir().unwrap();
         let manager = StorageManager::new(temp_dir.path().to_path_buf());
 
@@ -396,17 +396,17 @@ mod tests {
             .create_session("test-session", repo_path.clone(), config)
             .unwrap();
 
-        // Open existing session
-        let result = manager.open_session("test-session");
+        // Open existing session for reading
+        let result = manager.open_session_read("test-session");
         assert!(result.is_ok());
     }
 
     #[test]
-    fn test_open_nonexistent_session() {
+    fn test_open_session_read_nonexistent() {
         let temp_dir = tempdir().unwrap();
         let manager = StorageManager::new(temp_dir.path().to_path_buf());
 
-        let result = manager.open_session("nonexistent");
+        let result = manager.open_session_read("nonexistent");
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),
@@ -829,7 +829,7 @@ mod tests {
     }
 
     #[test]
-    fn test_open_old_schema_version_fails() {
+    fn test_open_session_read_schema_version() {
         let temp_dir = tempdir().unwrap();
         let manager = StorageManager::new(temp_dir.path().to_path_buf());
 
@@ -842,19 +842,19 @@ mod tests {
 
         // Manually update metadata to simulate old schema version
         let mut metadata = manager.get_session_metadata("test-session").unwrap();
-        metadata.schema_version = 1; // Old schema version
+        metadata.schema_version = 3; // Old schema version (closest to current)
         manager
             .update_session_metadata("test-session", &metadata)
             .unwrap();
 
         // Attempt to open session should fail with clear error
-        let result = manager.open_session("test-session");
+        let result = manager.open_session_read("test-session");
         assert!(result.is_err(), "Opening old schema should fail");
 
         let err = result.unwrap_err();
         let err_msg = format!("{:?}", err);
         assert!(
-            err_msg.contains("schema v1") && err_msg.contains("current version"),
+            err_msg.contains("schema v3") && err_msg.contains("current version"),
             "Error should mention schema version: {}",
             err_msg
         );

@@ -6,7 +6,8 @@
 //!
 //! # Architecture
 //!
-//! - **TantivyIndex**: Wraps Tantivy index operations
+//! - **TantivyIndex**: Wraps Tantivy write operations (create, add, commit)
+//! - **TantivyReader**: Read-only index handle, takes no writer lock
 //! - **StorageManager**: Manages session-based storage
 //! - **SessionMetadata**: Tracks session statistics
 //!

@@ -39,11 +39,10 @@ impl ReadFileHandler {
         let index = self
             .services
             .storage
-            .open_session(session)
+            .open_session_read(session)
             .map_err(McpError::from)?;
 
         let reader = index
-            .index()
             .reader()
             .map_err(|e| McpError::InternalError(format!("Failed to open index reader: {e}")))?;
 

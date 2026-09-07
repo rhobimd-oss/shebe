@@ -38,7 +38,7 @@ static MULTI_COLON_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\w+:\w+:\w+
 /// # Examples
 ///
 /// ```
-/// use shebe_server::core::search::preprocess_query;
+/// use shebe::core::search::preprocess_query;
 ///
 /// // Normal mode: Curly braces are escaped
 /// assert_eq!(preprocess_query("{id}", false), "\\{id\\}");
@@ -120,7 +120,7 @@ fn escape_all_special(s: &str) -> String {
 }
 
 // Valid field names for Tantivy schema
-const VALID_FIELDS: [&str; 2] = ["content", "file_path"];
+const VALID_FIELDS: [&str; 2] = ["text", "file_path"];
 
 // Pattern to detect potential field prefixes (word:nonspace)
 // We'll do additional validation in code to avoid look-behind
@@ -134,13 +134,14 @@ static FIELD_PREFIX_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\w+):([^\s
 /// # Examples
 ///
 /// ```
-/// use shebe_server::core::search::validate_query_fields;
+/// use shebe::core::search::validate_query_fields;
 ///
 /// // Valid fields pass
-/// assert!(validate_query_fields("content:test").is_ok());
+/// assert!(validate_query_fields("text:test").is_ok());
 /// assert!(validate_query_fields("file_path:main.rs").is_ok());
 ///
 /// // Invalid fields return helpful errors
+/// assert!(validate_query_fields("content:test").is_err());
 /// assert!(validate_query_fields("file:test.rs").is_err());
 /// ```
 pub fn validate_query_fields(query: &str) -> Result<(), ShebeError> {
@@ -194,7 +195,7 @@ pub fn validate_query_fields(query: &str) -> Result<(), ShebeError> {
 fn suggest_field_alias(field: &str) -> Option<String> {
     match field.to_lowercase().as_str() {
         "file" | "filename" | "path" | "filepath" | "name" => Some("file_path".to_string()),
-        "code" | "text" | "body" | "source" | "src" => Some("content".to_string()),
+        "code" | "content" | "body" | "source" | "src" => Some("text".to_string()),
         _ => None,
     }
 }
@@ -292,7 +293,7 @@ mod tests {
     #[test]
     fn test_two_colons_not_quoted() {
         // Two colons (word:word) is still a field prefix pattern
-        assert_eq!(preprocess_query("content:hello", false), "content:hello");
+        assert_eq!(preprocess_query("text:hello", false), "text:hello");
     }
 
     // Already quoted tests (normal mode)
@@ -356,8 +357,23 @@ mod tests {
     // Task 1.1.1: Field validation tests
 
     #[test]
-    fn test_validate_valid_content_field() {
-        assert!(validate_query_fields("content:test").is_ok());
+    fn test_validate_valid_text_field() {
+        assert!(validate_query_fields("text:foo").is_ok());
+    }
+
+    #[test]
+    fn test_validate_content_field_rejected() {
+        let result = validate_query_fields("content:foo");
+        assert!(result.is_err());
+        if let Err(ShebeError::InvalidQueryField {
+            field, suggestion, ..
+        }) = result
+        {
+            assert_eq!(field, "content");
+            assert_eq!(suggestion, Some("text".to_string()));
+        } else {
+            panic!("Expected InvalidQueryField error");
+        }
     }
 
     #[test]
@@ -383,7 +399,7 @@ mod tests {
         {
             assert_eq!(field, "file");
             assert_eq!(suggestion, Some("file_path".to_string()));
-            assert!(valid_fields.contains(&"content".to_string()));
+            assert!(valid_fields.contains(&"text".to_string()));
             assert!(valid_fields.contains(&"file_path".to_string()));
         } else {
             panic!("Expected InvalidQueryField error");
@@ -395,7 +411,7 @@ mod tests {
         let result = validate_query_fields("code:function");
         assert!(result.is_err());
         if let Err(ShebeError::InvalidQueryField { suggestion, .. }) = result {
-            assert_eq!(suggestion, Some("content".to_string()));
+            assert_eq!(suggestion, Some("text".to_string()));
         }
     }
 
@@ -436,11 +452,11 @@ mod tests {
     }
 
     #[test]
-    fn test_suggest_content_aliases() {
-        assert_eq!(suggest_field_alias("code"), Some("content".to_string()));
-        assert_eq!(suggest_field_alias("text"), Some("content".to_string()));
-        assert_eq!(suggest_field_alias("body"), Some("content".to_string()));
-        assert_eq!(suggest_field_alias("source"), Some("content".to_string()));
+    fn test_suggest_text_aliases() {
+        assert_eq!(suggest_field_alias("code"), Some("text".to_string()));
+        assert_eq!(suggest_field_alias("content"), Some("text".to_string()));
+        assert_eq!(suggest_field_alias("body"), Some("text".to_string()));
+        assert_eq!(suggest_field_alias("source"), Some("text".to_string()));
     }
 
     #[test]

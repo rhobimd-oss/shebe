@@ -104,7 +104,7 @@ impl McpToolHandler for SearchCodeHandler {
                                        (3) Multi-colon patterns auto-quoted (pkg:scope:name -> \"pkg:scope:name\"). \
                                        Examples: 'database connection', '\"exact phrase\"', \
                                        'auth AND (session OR token)' (boolean). \
-                                       Valid field prefixes: content, file_path.",
+                                       Valid field prefixes: text, file_path.",
                         "minLength": 1,
                         "maxLength": 500
                     },

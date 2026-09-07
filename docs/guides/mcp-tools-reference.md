@@ -80,10 +80,10 @@ Use parentheses for grouping.
 
 **Field Prefixes:**
 ```
-content:authenticate     # Search in code content only
+text:authenticate       # Search in code content only
 file_path:auth          # Search in file paths only
 ```
-Valid prefixes: `content`, `file_path`. Invalid prefixes (e.g., `file:`, `code:`) return
+Valid prefixes: `text`, `file_path`. Invalid prefixes (e.g., `file:`, `content:`) return
 helpful error messages with suggestions.
 
 ### Auto-Preprocessing
@@ -214,7 +214,7 @@ Each result includes:
 | -32602 | Invalid params        | Empty query                  | Provide non-empty query    |
 | -32602 | Invalid params        | k out of range (1-100)       | Use k between 1 and 100    |
 | -32602 | Invalid params        | Query too long (>500 chars)  | Shorten query              |
-| -32602 | Invalid params        | Invalid field prefix         | Use content: or file_path: |
+| -32602 | Invalid params        | Invalid field prefix         | Use text: or file_path:    |
 | -32001 | Session not found     | Invalid session ID           | Use list_sessions to find  |
 | -32004 | Search failed         | Query parsing error          | Check query syntax         |
 | -32603 | Internal error        | Tantivy error                | Report bug with query      |

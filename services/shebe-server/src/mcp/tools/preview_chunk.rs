@@ -39,11 +39,10 @@ impl PreviewChunkHandler {
         let index = self
             .services
             .storage
-            .open_session(session)
+            .open_session_read(session)
             .map_err(McpError::from)?;
 
         let reader: IndexReader = index
-            .index()
             .reader()
             .map_err(|e| McpError::InternalError(format!("Failed to open reader: {e}")))?;
 

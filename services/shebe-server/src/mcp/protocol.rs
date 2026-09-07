@@ -47,6 +47,7 @@ pub const SESSION_NOT_FOUND: i32 = -32001;
 pub const SESSION_ALREADY_EXISTS: i32 = -32002;
 pub const INDEXING_FAILED: i32 = -32003;
 pub const SEARCH_FAILED: i32 = -32004;
+pub const INDEX_LOCKED: i32 = -32005;
 
 /// MCP initialize request parameters
 #[derive(Debug, Clone, Serialize, Deserialize)]

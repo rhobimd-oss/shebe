@@ -194,10 +194,10 @@ async fn test_session_open_existing() {
     let repo = TestRepo::small();
     let _stats = index_test_repository(&state, repo.path(), "open-test").await;
 
-    // Open existing session
+    // Open existing session for reading
     let index = state
         .storage
-        .open_session("open-test")
+        .open_session_read("open-test")
         .expect("Failed to open session");
 
     // Should be able to use the opened index
@@ -209,9 +209,36 @@ async fn test_session_open_nonexistent_fails() {
     let state = create_test_services();
 
     // Attempt to open non-existent session
-    let result = state.storage.open_session("nonexistent-session");
+    let result = state.storage.open_session_read("nonexistent-session");
 
     assert!(result.is_err(), "Expected error when opening nonexistent");
+}
+
+#[tokio::test]
+async fn test_reader_opens_while_writer_lock_held() {
+    let state = create_test_services();
+
+    // Create and index a session
+    let repo = TestRepo::small();
+    let _stats = index_test_repository(&state, repo.path(), "lock-test").await;
+
+    // Take the writer lock on the session's own index, as a second
+    // indexing process would. The Tantivy lock is file-based, so one
+    // process reproduces the two-process contention.
+    let tantivy_dir = state.storage.get_session_path("lock-test").join("tantivy");
+    let raw_index = tantivy::Index::open_in_dir(&tantivy_dir).expect("Failed to open raw index");
+    let writer_lock = raw_index
+        .writer::<tantivy::TantivyDocument>(50_000_000)
+        .expect("Failed to take the writer lock");
+
+    // The read path takes no writer lock, so the open must succeed
+    let reader = state
+        .storage
+        .open_session_read("lock-test")
+        .expect("Reader must open while a writer holds the lock");
+
+    drop(reader);
+    drop(writer_lock);
 }
 
 #[tokio::test]

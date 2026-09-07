@@ -39,6 +39,24 @@ sccache_stats() {
     sccache --show-stats | grep -E "^(Compile requests|Cache hits|Cache misses)"
 }
 
+# The first compile request makes the server hash the rustc toolchain.
+# On a cold container this hash takes 45 to 60 seconds, and the sccache
+# client aborts the request at 60 seconds. Warm the digest here, where
+# no client timeout applies, so the cargo probes get a fast response.
+sccache_warm() {
+    rustc_path="$(rustup which rustc 2>/dev/null || command -v rustc)"
+    echo "[sccache] Warming compiler digest for $rustc_path ..."
+    for _attempt in 1 2 3; do
+        if sccache "$rustc_path" -vV > /dev/null 2>&1; then
+            echo "[sccache] Compiler digest ready"
+            return 0
+        fi
+        echo "[sccache] Warm attempt $_attempt failed, retrying..."
+    done
+    echo "[sccache] WARNING: digest warm-up failed, builds may be slow"
+    return 0
+}
+
 #------------------------------------------------------------------------------
 # Run commands WITH sccache
 #------------------------------------------------------------------------------
@@ -46,6 +64,7 @@ sccache_stats() {
 with_sccache() {
     sccache_start || return 1
     trap sccache_stop EXIT
+    sccache_warm
     echo "[sccache] Running: $*"
     "$@"
     local exit_code=$?

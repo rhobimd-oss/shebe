@@ -207,7 +207,7 @@ mod tests {
             chunks_created: 500,
             index_size_bytes: 1048576, // 1 MB
             config: SessionConfig::default(),
-            schema_version: 3,
+            schema_version: crate::core::storage::SCHEMA_VERSION,
         }];
 
         let output = handler.format_sessions(&sessions);
@@ -217,7 +217,11 @@ mod tests {
         assert!(output.contains("**Files:** 100"));
         assert!(output.contains("**Chunks:** 500"));
         assert!(output.contains("**Size:** 1.00 MB"));
-        assert!(output.contains("**Schema:** v3 (current)"));
+        let schema_badge = format!(
+            "**Schema:** v{} (current)",
+            crate::core::storage::SCHEMA_VERSION
+        );
+        assert!(output.contains(&schema_badge));
         assert!(output.contains("**Last indexed:**"));
         assert!(output.contains("2025-10-21"));
         assert!(output.contains("**Created:** 2025-10-21")); // Check for date only, not full timestamp

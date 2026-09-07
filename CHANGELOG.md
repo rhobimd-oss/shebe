@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-07
+
+Note: versions 0.5.9-rc and 0.5.10 were internal bumps on main without
+a release. Their changes are included in this section.
+
 ### Added
 - Cursor-based pagination for `list_dir` MCP tool
   - Opaque base64-encoded cursor parameter for page traversal
@@ -20,11 +25,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Response includes next offset hint when more content remains
 
 ### Changed
-- Version bump to 0.5.9-rc
-- Added `base64` 0.22 dependency for cursor encoding
+- Tantivy upgraded from 0.22 to 0.26.1 (index format 7, nanosecond dates)
+- Schema version bumped to 4: sessions indexed before v0.6.0 need a
+  reindex (`reindex_session` or `upgrade_session`)
+- CI images rebuilt on Rust 1.97.1 (20260724 generation); the declared
+  `rust-version` (MSRV) stays 1.88
+- Crate refresh: thiserror 2, colored 3, dirs 6, base64 0.23, toml 1,
+  criterion 0.8, plus semver-compatible updates
+- Added `base64` dependency for cursor encoding
 - Updated `list_dir` range display ("showing 101-200" replaces count)
 - Updated `get_server_info` tool descriptions to mention pagination
 - Updated `mcp-tools-reference.md` with pagination examples and workflows
+
+### Removed
+- Direct `oneshot` version pin: tantivy 0.26.1 requires oneshot >=0.1.13,
+  which satisfies the WP 026 security floor on its own
 
 ## [0.5.8] - 2026-02-03
 
@@ -292,7 +307,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 130 total tests (79 unit, 7 integration, 37 UTF-8, 3 doc)
 - OpenEMR validation: 4,210 files indexed successfully
 
-[Unreleased]: https://gitlab.com/shebe-oss/shebe/-/compare/v0.5.8...HEAD
+[Unreleased]: https://gitlab.com/shebe-oss/shebe/-/compare/v0.6.0...HEAD
+[0.6.0]: https://gitlab.com/shebe-oss/shebe/-/compare/v0.5.8...v0.6.0
 [0.5.8]: https://gitlab.com/shebe-oss/shebe/-/compare/v0.5.7...v0.5.8
 [0.5.7]: https://gitlab.com/shebe-oss/shebe/-/compare/v0.5.6...v0.5.7
 [0.5.6]: https://gitlab.com/shebe-oss/shebe/-/compare/v0.5.5...v0.5.6

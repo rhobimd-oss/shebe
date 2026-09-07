@@ -29,6 +29,7 @@ services:
   shebe-dev:
     image: registry.gitlab.com/rhobimd-oss/cicd/lang/rust-debian:20260724-b1.97-slim-trixie
     container_name: shebe-dev
+    network_mode: host
     working_dir: /workspace
     volumes:
       # Mount only the Rust service directory
@@ -55,6 +56,7 @@ services:
   shebe-dev-musl:
     image: registry.gitlab.com/rhobimd-oss/cicd/lang/rust-alpine:20260724-b1.97-alpine3.22
     container_name: shebe-dev-musl
+    network_mode: host
     working_dir: /workspace
     volumes:
       - ../services/shebe-server:/workspace:rw

@@ -3,7 +3,7 @@
 
 Complete API reference for all Shebe MCP tools.
 
-**Shebe Version:** 0.5.8 <br>
+**Shebe Version:** 0.6.0 <br>
 **Document Version:** 2.1 <br>
 **Created:** 2025-10-21 <br>
 **Protocol:** JSON-RPC 2.0 over stdio <br>
@@ -2093,7 +2093,7 @@ Session is now compatible with the current schema.
 ### Response Format (Already Current)
 
 ```markdown
-Session 'my-project' is already at schema v3 (current version). No upgrade needed.
+Session 'my-project' is already at schema v4 (current version). No upgrade needed.
 ```
 
 ### Performance

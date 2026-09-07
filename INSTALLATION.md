@@ -1,6 +1,6 @@
 # Shebe Installation Guide
 
-**Version:** 0.5.8 (latest release)
+**Version:** 0.6.0 (latest release)
 **Last Updated:** 2026-07-13
 
 ---
@@ -41,7 +41,7 @@ brew untap shebe-oss/tap
 Pre-built binaries from GitHub releases:
 
 ```bash
-export SHEBE_VERSION=v0.5.8
+export SHEBE_VERSION=v0.6.0
 curl -LO "https://github.com/shebe-oss/shebe/releases/download/${SHEBE_VERSION}/shebe-${SHEBE_VERSION}-linux-x86_64.tar.gz"
 curl -LO "https://github.com/shebe-oss/shebe/releases/download/${SHEBE_VERSION}/shebe-${SHEBE_VERSION}-linux-x86_64.tar.gz.sha256"
 
@@ -60,7 +60,7 @@ for all platforms.
 Pre-built binaries from the GitLab package registry:
 
 ```bash
-export SHEBE_VERSION=v0.5.8
+export SHEBE_VERSION=v0.6.0
 curl -LO "https://gitlab.com/shebe-oss/shebe/-/releases/${SHEBE_VERSION}/downloads/shebe-${SHEBE_VERSION}-linux-x86_64.tar.gz"
 curl -LO "https://gitlab.com/shebe-oss/shebe/-/releases/${SHEBE_VERSION}/downloads/shebe-${SHEBE_VERSION}-linux-x86_64.tar.gz.sha256"
 

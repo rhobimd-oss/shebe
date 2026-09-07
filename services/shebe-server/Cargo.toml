@@ -1,6 +1,6 @@
 [package]
 name = "shebe"
-version = "0.5.10"
+version = "0.6.0"
 edition = "2021"
 rust-version = "1.88"
 authors = ["RHOBIMD HEALTH"]
@@ -30,8 +30,7 @@ clap_complete = "4"
 colored = "3"
 
 # Search Engine
-tantivy = "0.22"
-oneshot = ">=0.1.12"  # security: fix use-after-free (faern/oneshot#74)
+tantivy = "0.26"
 
 # Async Runtime
 tokio = { version = "1", features = ["full"] }

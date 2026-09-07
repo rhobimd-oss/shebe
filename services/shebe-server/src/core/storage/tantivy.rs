@@ -14,7 +14,8 @@ use tantivy::{doc, Index, IndexReader, IndexWriter};
 /// Version 1: Initial schema (chunk_index STORED only)
 /// Version 2: Added INDEXED flag to chunk_index for preview_chunk queries
 /// Version 3: Added repository_path, last_indexed_at and patterns to SessionMetadata
-pub const SCHEMA_VERSION: u32 = 3;
+/// Version 4: Tantivy 0.26 (index format 7, nanosecond dates), field set unchanged
+pub const SCHEMA_VERSION: u32 = 4;
 
 /// Create the Tantivy schema for chunk indexing
 ///
@@ -325,10 +326,10 @@ mod tests {
 
     #[test]
     fn test_schema_version_constant() {
-        // Verify schema version is set to 2 after adding INDEXED flag to chunk_index
+        // Verify schema version is set to 4 for the tantivy 0.26 migration (index format 7)
         assert_eq!(
-            SCHEMA_VERSION, 3,
-            "SCHEMA_VERSION should be 3 after adding repository_path and patterns"
+            SCHEMA_VERSION, 4,
+            "SCHEMA_VERSION should be 4 after the tantivy 0.26 migration"
         );
     }
 
@@ -352,7 +353,10 @@ mod tests {
         let query = query_parser.parse_query("anything").unwrap();
 
         let top_docs = searcher
-            .search(&query, &tantivy::collector::TopDocs::with_limit(10))
+            .search(
+                &query,
+                &tantivy::collector::TopDocs::with_limit(10).order_by_score(),
+            )
             .unwrap();
 
         assert!(top_docs.is_empty(), "Empty index should return no results");
@@ -393,7 +397,10 @@ mod tests {
         let query = query_parser.parse_query("hello_world").unwrap();
 
         let top_docs = searcher
-            .search(&query, &tantivy::collector::TopDocs::with_limit(10))
+            .search(
+                &query,
+                &tantivy::collector::TopDocs::with_limit(10).order_by_score(),
+            )
             .unwrap();
 
         assert_eq!(top_docs.len(), 1, "Should find exactly one match");

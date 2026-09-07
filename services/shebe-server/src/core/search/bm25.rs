@@ -95,7 +95,7 @@ impl SearchService {
 
         // Execute search with BM25 ranking
         let top_docs = searcher
-            .search(&query, &TopDocs::with_limit(k_limit))
+            .search(&query, &TopDocs::with_limit(k_limit).order_by_score())
             .map_err(|e| ShebeError::SearchFailed(format!("Search failed: {e}")))?;
 
         // Extract results

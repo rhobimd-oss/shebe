@@ -74,7 +74,10 @@ impl PreviewChunkHandler {
         let query = BooleanQuery::new(vec![(Occur::Must, file_query), (Occur::Must, chunk_query)]);
 
         let top_docs = searcher
-            .search(&query, &tantivy::collector::TopDocs::with_limit(1))
+            .search(
+                &query,
+                &tantivy::collector::TopDocs::with_limit(1).order_by_score(),
+            )
             .map_err(|e| McpError::InternalError(format!("Search failed: {e}")))?;
 
         if top_docs.is_empty() {

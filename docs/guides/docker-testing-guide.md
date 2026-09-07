@@ -2,7 +2,7 @@
 
 **Purpose:** All Rust development and testing runs in Docker containers for consistency across environments
 
-**Shebe Version:** 0.3.0 <br>
+**Shebe Version:** 0.6.0 <br>
 **Document Version:** 2.0 <br>
 **Created:** 2025-11-01 <br>
 
@@ -12,8 +12,10 @@
 
 Shebe uses a Docker-first development workflow with two specialized containers:
 
-- **shebe-dev:** Interactive development container (local build: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-local)
-- **shebe-test:** CI/CD testing container (registry.gitlab.com/rhobimd-oss/cicd/rust:20251031-b1.88-slim)
+- **shebe-dev:** Interactive development container
+  (registry.gitlab.com/rhobimd-oss/cicd/lang/rust-debian:20260724-b1.97-slim-trixie)
+- **shebe-test:** CI/CD testing container
+  (registry.gitlab.com/rhobimd-oss/cicd/lang/rust-alpine:20260724-b1.97-alpine3.22)
 
 All `cargo` commands MUST run through the shebe-dev container via Makefile targets. This ensures
 consistency with CI/CD and eliminates "works on my machine" issues.
@@ -115,7 +117,7 @@ The container has:
 
 ```yaml
 shebe-dev:
-  image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-local
+  image: registry.gitlab.com/rhobimd-oss/cicd/lang/rust-debian:20260724-b1.97-slim-trixie
   container_name: shebe-dev
   working_dir: /workspace
   volumes:
@@ -134,7 +136,7 @@ Used by all Makefile development targets (build, test, fmt, clippy, check, shell
 
 ```yaml
 shebe-test:
-  image: registry.gitlab.com/rhobimd-oss/cicd/rust:20251031-b1.88-slim
+  image: registry.gitlab.com/rhobimd-oss/cicd/lang/rust-alpine:20260724-b1.97-alpine3.22
   container_name: shebe-test
   working_dir: /workspace/services/shebe-server
   volumes:
@@ -280,11 +282,12 @@ Error response from daemon: pull access denied for registry.gitlab.com/rhobimd-o
 ```
 
 **Solution:**
-The shebe-dev image (registry.gitlab.com/rhobimd-oss/cicd/rust:20251101-local) is a local build.
+The shebe-dev image (registry.gitlab.com/rhobimd-oss/cicd/lang/rust-debian:20260724-b1.97-slim-trixie)
+comes from the GitLab registry.
 
-1. Check if image exists: `docker images | grep rhobimd-oss/cicd/rust`
-2. If missing, you may need to build it or use a public Rust image
-3. Alternatively, modify `deploy/docker-compose.yml` to use `rust:1.88-slim`
+1. Log in to the registry: `docker login registry.gitlab.com`
+2. Pull the image: `docker compose -f deploy/docker-compose.yml pull shebe-dev`
+3. Alternatively, modify `deploy/docker-compose.yml` to use `rust:1.97-slim`
 
 ### Issue: Slow builds
 
@@ -396,7 +399,7 @@ docker compose run --rm shebe-test cargo fmt -- --check
 3. **Run tests before commit:** Pre-commit hook enforces this (392 tests must pass)
 4. **Clean cache periodically:** Run `make clean` if builds behave strangely
 5. **Keep containers updated:** shebe-dev and shebe-test images should match CI/CD
-6. **Maintain test coverage:** Minimum 85% required (currently 86.76%)
+6. **Maintain test coverage:** Minimum 85% required (currently 87.47%)
 7. **Zero clippy warnings:** All production code must pass clippy with -D warnings
 
 ---
@@ -406,7 +409,7 @@ docker compose run --rm shebe-test cargo fmt -- --check
 | Feature           | shebe-dev                              | shebe-test                         |
 |-------------------|----------------------------------------|------------------------------------|
 | Purpose           | Interactive development                | CI/CD testing                      |
-| Image             | rhobimd-oss/cicd/rust:20251101-local   | rhobimd-oss/cicd/rust:20251031-b1.88-slim |
+| Image             | lang/rust-debian:20260724-b1.97-slim-trixie | lang/rust-alpine:20260724-b1.97-alpine3.22 |
 | Working Dir       | /workspace (services/shebe-server)     | /workspace/services/shebe-server   |
 | Mount             | Only shebe-server directory            | Entire repository                  |
 | Test Runner       | cargo nextest                          | cargo nextest                      |
